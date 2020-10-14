@@ -10,6 +10,3 @@
 [submodule "3rd/asio"]
 	path = 3rd/asio
 	url = https://github.com/ouxianghui/asio.git
-[submodule "asio"]
-	path = asio
-	url = C:\\Users\\Jackie\\Downloads\\janus_client\\3rd\\asio
