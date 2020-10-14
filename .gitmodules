@@ -1,0 +1,15 @@
+[submodule "3rd/x2struct"]
+	path = 3rd/x2struct
+	url = https://github.com/xyz347/x2struct.git
+[submodule "3rd/websocketpp"]
+	path = 3rd/websocketpp
+	url = https://github.com/zaphoyd/websocketpp.git
+[submodule "3rd/spdlog"]
+	path = 3rd/spdlog
+	url = https://github.com/gabime/spdlog.git
+[submodule "3rd/asio"]
+	path = 3rd/asio
+	url = https://github.com/ouxianghui/asio.git
+[submodule "asio"]
+	path = asio
+	url = C:\\Users\\Jackie\\Downloads\\janus_client\\3rd\\asio
