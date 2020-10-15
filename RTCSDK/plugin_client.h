@@ -66,8 +66,8 @@ namespace vi {
 		void detach(std::shared_ptr<DetachEvent> event) override;
 
 	protected:
-		int64_t _id;
-		int64_t _privateId;
+		uint64_t _id;
+		uint64_t _privateId;
 		std::shared_ptr<PluginContext> _pluginContext;
 	};
 }

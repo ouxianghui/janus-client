@@ -13,12 +13,12 @@
 
 namespace vi {
 
-	std::shared_ptr<spdlog::logger> Logger::_logger;
+	//std::shared_ptr<spdlog::logger> Logger::_logger;
 	void Logger::startup()
 	{
 		//spdlog::cfg::load_env_levels();
 
-		std::string pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [%t] %v");
+		std::string pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [%t] [%s:%#, %!] %v");
 
 		auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
 		consoleSink->set_level(spdlog::level::trace);

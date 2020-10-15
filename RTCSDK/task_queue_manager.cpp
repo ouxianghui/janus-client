@@ -25,7 +25,7 @@ namespace vi {
 
 		_factory = webrtc::CreateDefaultTaskQueueFactory();
 
-		_queuesMap[QueueName::WORKER] = _factory->CreateTaskQueue("vi::WORKER", webrtc::TaskQueueFactory::Priority::NORMAL);
+		//_queuesMap[QueueName::WORKER] = _factory->CreateTaskQueue("vi::WORKER", webrtc::TaskQueueFactory::Priority::NORMAL);
 	}
 
 	webrtc::TaskQueueBase* TaskQueueManager::getQueue(QueueName name)

@@ -8,6 +8,11 @@
 
 #include <memory>
 #include "utils/singleton.h"
+
+#if !defined(SPDLOG_ACTIVE_LEVEL)
+#define SPDLOG_ACTIVE_LEVEL SPDLOG_LEVEL_TRACE
+#endif
+
 #include "spdlog/spdlog.h"
 
 namespace vi {
@@ -15,21 +20,21 @@ namespace vi {
 class Logger : public core::Singleton<Logger>
 {
 public:
-	static void startup();
+	void startup();
 
-	static void shutdown();
+	void shutdown();
 
-	static std::shared_ptr<spdlog::logger>& logger();
+	std::shared_ptr<spdlog::logger>& logger();
 
 private:
-	static std::shared_ptr<spdlog::logger> _logger; 
+	std::shared_ptr<spdlog::logger> _logger; 
 };
 
 }
 
-#define TLOG(...) vi::Logger::logger()->trace(##__VA_ARGS__);
-#define DLOG(...) vi::Logger::logger()->debug(##__VA_ARGS__);
-#define ILOG(...) vi::Logger::logger()->info(##__VA_ARGS__);
-#define WLOG(...) vi::Logger::logger()->warn(##__VA_ARGS__);
-#define ELOG(...) vi::Logger::logger()->error(##__VA_ARGS__);
-#define CLOG(...) vi::Logger::logger()->critical(##__VA_ARGS__);
+#define TLOG(...) SPDLOG_LOGGER_TRACE(vi::Logger::instance()->logger(), __VA_ARGS__)
+#define DLOG(...) SPDLOG_LOGGER_DEBUG(vi::Logger::instance()->logger(), __VA_ARGS__)
+#define ILOG(...) SPDLOG_LOGGER_INFO(vi::Logger::instance()->logger(), __VA_ARGS__)
+#define WLOG(...) SPDLOG_LOGGER_WARN(vi::Logger::instance()->logger(), __VA_ARGS__)
+#define ELOG(...) SPDLOG_LOGGER_ERROR(vi::Logger::instance()->logger(), __VA_ARGS__)
+#define CLOG(...) SPDLOG_LOGGER_CRITICAL(vi::Logger::instance()->logger(), __VA_ARGS__)

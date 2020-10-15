@@ -61,7 +61,7 @@ static void initOpenGL() {
 
 int main(int argc, char *argv[])
 {
-	vi::Logger::startup();
+	vi::Logger::instance()->startup();
 
 	registerMetaTypes();
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
 	rtc::CleanupSSL();
 
-	vi::Logger::shutdown();
+	vi::Logger::instance()->shutdown();
 
 	return ret; 
 }
