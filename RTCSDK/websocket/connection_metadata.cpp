@@ -73,10 +73,10 @@ namespace vi {
 	void ConnectionMetadata::onMessage(client* c, websocketpp::connection_hdl, client::message_ptr msg) {
 		if (auto listener = _listener.lock()) {
 			if (msg->get_opcode() == websocketpp::frame::opcode::text) {
-				DLOG("> received text message: {}", msg->get_payload());
+				//DLOG("> received text message: {}", msg->get_payload());
 				listener->onTextMessage(msg->get_payload());
 			} else if (msg->get_opcode() == websocketpp::frame::opcode::binary) {
-				DLOG("> received binary message {}", websocketpp::utility::to_hex(msg->get_payload()));
+				//DLOG("> received binary message {}", websocketpp::utility::to_hex(msg->get_payload()));
 				std::vector<uint8_t> data(msg->get_payload().begin(), msg->get_payload().end());
 				listener->onBinaryMessage(data);
 			}

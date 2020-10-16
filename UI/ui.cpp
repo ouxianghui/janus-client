@@ -108,7 +108,7 @@ void UI::onActionRegisterTriggered()
 	request.request = "join";
 	request.room = 1234;
 	request.ptype = "publisher";
-	request.display = "dfaa";// ui.lineEditUserName->text().toStdString();
+	request.display = "jackie";// ui.lineEditUserName->text().toStdString();
 
 	if (_vr) {
 		std::shared_ptr<vi::SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();

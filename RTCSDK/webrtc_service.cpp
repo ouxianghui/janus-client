@@ -504,6 +504,7 @@ namespace vi {
 		}
 		auto& media = event->media.value();
 		if (!context->pc) {
+			// new PeerConnection
 			media.update = false;
 			media.keepAudio = false;
 			media.keepVideo = false;
@@ -527,7 +528,7 @@ namespace vi {
 					media.removeAudio = false;
 					media.audioSend = true;
 					if (context->myStream && context->myStream->GetAudioTracks().size() > 0) {
-						DLOG("Can't add audio stream, there already is one");
+						ELOG("Can't add audio stream, there already is one");
 						if (event->callback) {
 							const auto& cb = event->callback;
 							(*cb)(false, "Can't add audio stream, there already is one");
@@ -589,7 +590,7 @@ namespace vi {
 					media.removeVideo = false;
 					media.videoSend = true;
 					if (context->myStream && context->myStream->GetVideoTracks().size() > 0) {
-						DLOG("Can't add video stream, there already is one");
+						ELOG("Can't add video stream, there already is one");
 						if (event->callback) {
 							const auto& cb = event->callback;
 							(*cb)(false, "Can't add video stream, there already is one");
@@ -651,9 +652,8 @@ namespace vi {
 			// If we're updating and keeping all tracks, let's skip the getUserMedia part
 			if ((HelperUtils::isAudioSendEnabled(media) && media.keepAudio) &&
 				(HelperUtils::isVideoSendEnabled(media) && media.keepVideo)) {
-				// TODO:
-				//pluginHandle.consentDialog(false);
-				//streamsDone(handleId, jsep, media, callbacks, config.myStream);
+				// TODO: notify ?
+				//streams done
 				prepareStreams(handleId, event, context->myStream);
 				return;
 			}
@@ -662,11 +662,11 @@ namespace vi {
 		if (media.update && !context->streamExternal) {
 			if (media.removeAudio || media.replaceAudio) {
 				if (context->myStream && context->myStream->GetAudioTracks().size() > 0) {
-					rtc::scoped_refptr<webrtc::AudioTrackInterface> s = context->myStream->GetAudioTracks()[0];
-					DLOG("Removing audio track");
-					context->myStream->RemoveTrack(s);
+					rtc::scoped_refptr<webrtc::AudioTrackInterface> at = context->myStream->GetAudioTracks()[0];
+					DLOG("Removing audio track, id = {}", at->id());
+					context->myStream->RemoveTrack(at);
 					try {
-						s->set_enabled(false);
+						at->set_enabled(false);
 					}
 					catch (...) {
 					}
@@ -680,7 +680,7 @@ namespace vi {
 					if (ra) {
 						for (const auto& sender : context->pc->GetSenders()) {
 							if (sender && sender->track() && sender->track()->kind() == "audio") {
-								DLOG("Removing audio sender");
+								DLOG("Removing audio sender, id = {}, ssrc = {}", sender->id(), sender->ssrc());
 								context->pc->RemoveTrack(sender);
 							}
 						}
@@ -689,11 +689,11 @@ namespace vi {
 			}
 			if (media.removeVideo || media.replaceVideo) {
 				if (context->myStream && context->myStream->GetVideoTracks().size() > 0) {
-					rtc::scoped_refptr<webrtc::VideoTrackInterface> s = context->myStream->GetVideoTracks()[0];
-					DLOG("Removing video track");
-					context->myStream->RemoveTrack(s);
+					rtc::scoped_refptr<webrtc::VideoTrackInterface> vt = context->myStream->GetVideoTracks()[0];
+					DLOG("Removing video track, id = {}", vt->id());
+					context->myStream->RemoveTrack(vt);
 					try {
-						s->set_enabled(false);
+						vt->set_enabled(false);
 					}
 					catch (...) {
 					}
@@ -707,7 +707,7 @@ namespace vi {
 					if (ra) {
 						for (const auto& sender : context->pc->GetSenders()) {
 							if (sender && sender->track() && sender->track()->kind() == "video") {
-								DLOG("Removing video sender");
+								DLOG("Removing video sender, id = {}, ssrc = {}", sender->id(), sender->ssrc());
 								context->pc->RemoveTrack(sender);
 							}
 						}
@@ -724,27 +724,14 @@ namespace vi {
 			if (media.update) {
 				if (context->myStream && context->myStream != stream && !context->streamExternal) {
 					// We're replacing a stream we captured ourselves with an external one
-					try {
-						// Try a MediaStreamTrack.stop() for each track
-						const auto& aTracks = context->myStream->GetAudioTracks();
-						for (const auto& track : aTracks) {
-							track->set_enabled(false);
-						}
-						const auto& vTracks = context->myStream->GetVideoTracks();
-						for (const auto& track : vTracks) {
-							track->set_enabled(false);
-						}
-					}
-					catch (...) {
-						// Do nothing if this fails
-					}
+					stopAllTracks(context->myStream);
 					context->myStream = nullptr;
 				}
 			}
 			// Skip the getUserMedia part
 			context->streamExternal = true;
-			//pluginHandle.consentDialog(false);
-			//streamsDone(handleId, jsep, media, callbacks, stream);
+			// TODO: notify ?
+			// streams done
 			prepareStreams(handleId, event, stream);
 			return;
 		}
@@ -770,7 +757,7 @@ namespace vi {
 			prepareStreams(handleId, event, mstream);
 		}
 		else {
-			//streamsDone(handleId, jsep, media, callbacks, stream);
+			// No need to do a getUserMedia, create offer/answer right away
 			prepareStreams(handleId, event, nullptr);
 		}
 	}
@@ -858,16 +845,16 @@ namespace vi {
 		prepareWebrtcPeer(handleId, event);
 	}
 
-	void WebRTCService::cleanupWebrtc(int64_t handleId, bool sendRequest)
+	void WebRTCService::cleanupWebrtc(int64_t handleId, bool hangupRequest)
 	{
-		DLOG("cleaning ...");
+		DLOG("cleaning webrtc ...");
 		if (_wrehs.find(handleId) == _wrehs.end()) {
 			return;
 		}
 		const auto& wreh = _wrehs[handleId];
 		const auto& context = wreh->pluginContext()->webrtcContext;
 		if (context) {
-			if (sendRequest == true) {
+			if (hangupRequest == true) {
 				auto lambda = [wself = weak_from_this()](std::shared_ptr<JanusResponse> model) {
 					DLOG("model->janus = {}", model->janus);
 					if (auto self = wself.lock()) {
@@ -881,14 +868,7 @@ namespace vi {
 				// Try a MediaStreamTrack.stop() for each track
 				if (!context->streamExternal && context->myStream) {
 					DLOG("Stopping local stream tracks");
-					auto audioTracks = context->myStream->GetAudioTracks();
-					for (auto t : audioTracks) {
-						
-					}
-					auto videoTracks = context->myStream->GetVideoTracks();
-					for (auto t : videoTracks) {
-
-					}
+					stopAllTracks(context->myStream);
 				}
 			}
 			catch (...) {
@@ -916,14 +896,15 @@ namespace vi {
 		wreh->onCleanup();
 	}
 
-	void WebRTCService::hangup(int64_t handleId, bool sendRequest) 
+	void WebRTCService::hangup(int64_t handleId, bool hangupRequest)
 	{
-		cleanupWebrtc(handleId, sendRequest);
+		cleanupWebrtc(handleId, hangupRequest);
 	}
 
 	void WebRTCService::destroyHandle(int64_t handleId, std::shared_ptr<DetachEvent> event) 
 	{
 		cleanupWebrtc(handleId);
+
 		if (_wrehs.find(handleId) == _wrehs.end()) {
 			DLOG("Invalid handle");
 			if (event && event->callback) {
@@ -944,15 +925,16 @@ namespace vi {
 			return;
 		}
 		if (!_connected) {
-			DLOG("Is the server down? (connected=false)");
+			DLOG("Is the server down? (connected = false)");
 			return;
 		}
 
 		const auto& wreh = _wrehs[handleId];
 		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
-		auto lambda = [wself](std::shared_ptr<JanusResponse> model) {
+		auto lambda = [wself, handleId](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
+				self->_wrehs.erase(handleId);
 			}
 		};
 		std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
@@ -967,11 +949,14 @@ namespace vi {
 	// ISFUClientListener
 	void WebRTCService::onOpened()
 	{
+		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
 		event->reconnect = false;
-		auto lambda = [](bool success, const std::string& message) {
-			std::string text = message;
-
+		auto lambda = [wself](bool success, const std::string& message) {
+			if (auto self = wself.lock()) {
+				// TODO: not in SERVICE thread
+				self->_connected = success;
+			}
 		};
 		event->callback = std::make_shared<vi::EventCallback>(lambda);
 		createSession(event);
@@ -979,12 +964,12 @@ namespace vi {
 
 	void WebRTCService::onClosed()
 	{
-
+		_connected = false;
 	}	
 	
 	void WebRTCService::onFailed(int errorCode, const std::string& reason)
 	{
-
+		_connected = false;
 	}
 
 	void WebRTCService::onMessage(std::shared_ptr<JanusResponse> model)
@@ -994,6 +979,10 @@ namespace vi {
 		if (model->janus == "keepalive") {
 			DLOG("Got a keepalive on session: {}", _sessionId);
 			return;
+		}
+		else if (model->janus == "server_info") {
+			// Just info on the Janus instance
+			DLOG("Got info on the Janus instance: {}", model->janus.c_str());
 		}
 		else if (model->janus == "trickle") {
 			// We got a trickle candidate from Janus
@@ -1008,13 +997,12 @@ namespace vi {
 			auto& context = wreh->pluginContext()->webrtcContext;
 			if (context->pc && context->remoteSdp) {
 				// Add candidate right now
-				if (!hasCandidata 
-					|| (hasCandidata && model->xhas("completed") && model->candidate.completed == true)) {
+				if (!hasCandidata || (hasCandidata && model->xhas("completed") && model->candidate.completed == true)) {
 					// end-of-candidates
 					context->pc->AddIceCandidate(nullptr);
 				}
 				else {
-					if (hasCandidata &&  model->candidate.xhas("sdpMid") && model->candidate.xhas("sdpMLineIndex")) {
+					if (hasCandidata && model->candidate.xhas("sdpMid") && model->candidate.xhas("sdpMLineIndex")) {
 						const auto& candidate = model->candidate.candidate;
 						DLOG("Got a trickled candidate on session: ", _sessionId);
 						DLOG("Adding remote candidate: {}", candidate.c_str());
@@ -1132,10 +1120,12 @@ namespace vi {
 		}
 		else if (model->janus == "timeout") {
 			ELOG("Timeout on session: {}", _sessionId);
-			//if (websockets) {
-			//	ws.close(3504, "Gateway timeout");
-			//}
+			// TODO:
 			return;
+		}
+		else if (model->janus == "error") {
+			// something wrong happened
+			DLOG("Something wrong happened: {}", model->janus.c_str());
 		}
 		else {
 			WLOG("Unknown message/event {} on session: {}'", model->janus.c_str(),  _sessionId);
@@ -1198,12 +1188,34 @@ namespace vi {
 		return _wrehs[handleId];
 	}
 
+	void WebRTCService::stopAllTracks(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
+		try {
+			for (const auto& track : stream->GetAudioTracks()) {
+				if (track) {
+					track->set_enabled(false);
+				}
+			}
+			for (const auto& track : stream->GetVideoTracks()) {
+				if (track) {
+					track->set_enabled(false);
+				}
+			}
+		}
+		catch (...) {
+			// Do nothing if this fails
+		}
+	}
+
 	void WebRTCService::prepareStreams(int64_t handleId,
 		std::shared_ptr<PrepareWebRTCEvent> event,
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
 		if (_wrehs.find(handleId) == _wrehs.end()) {
 			ELOG("Invalid handle");
+			// Close all tracks if the given stream has been created internally
+			if (!event->stream) {
+				stopAllTracks(event->stream);
+			}
 			if (event->callback) {
 				const auto& cb = event->callback;
 				(*cb)(false, "Invalid handle");
@@ -1219,17 +1231,21 @@ namespace vi {
 			DLOG("video tracks: {}", stream->GetVideoTracks().size());
 		}
 
+		// We're now capturing the new stream: check if we're updating or if it's a new thing
 		bool addTracks = false;
 		if (!context->myStream || !event->media->update || context->streamExternal) {
 			context->myStream = stream;
 			addTracks = true;
 		}
 		else {
-			if ((!event->media->update && HelperUtils::isAudioSendEnabled(event->media)) ||
-				(event->media->update && (event->media->addAudio || event->media->replaceAudio)) ||
+			// We only need to update the existing stream
+			if (((!event->media->update && HelperUtils::isAudioSendEnabled(event->media)) || 
+				(event->media->update && (event->media->addAudio || event->media->replaceAudio))) &&
 				stream->GetAudioTracks().size() > 0) {
+				context->myStream->AddTrack(stream->GetAudioTracks()[0]);
 				if (_unifiedPlan) {
 					// Use Transceivers
+					DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
 					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> audioTransceiver = nullptr;
 					auto transceivers = context->pc->GetTransceivers();
 					for (const auto& t : transceivers) {
@@ -1241,22 +1257,26 @@ namespace vi {
 					}
 					if (audioTransceiver && audioTransceiver->sender()) {
 						// TODO:
-						//audioTransceiver->sender()->ReplaceTrack(stream->GetAudioTracks()[0]);
+						DLOG("Replacing audio track");
 						audioTransceiver->sender()->SetTrack(stream->GetAudioTracks()[0]);
 					}
 					else {
+						DLOG("Adding audio track");
 						context->pc->AddTrack(stream->GetAudioTracks()[0], { stream->id() });
 					}
 				}
 				else {
+					DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
 					context->pc->AddTrack(stream->GetAudioTracks()[0], { stream->id() });
 				}
 			}
-			if ((!event->media->update && HelperUtils::isVideoSendEnabled(event->media)) ||
-				(event->media->update && (event->media->addVideo || event->media->replaceVideo)) ||
+			if (((!event->media->update && HelperUtils::isVideoSendEnabled(event->media)) ||
+				(event->media->update && (event->media->addVideo || event->media->replaceVideo))) &&
 				stream->GetVideoTracks().size() > 0) {
+				context->myStream->AddTrack(stream->GetVideoTracks()[0]);
 				if (_unifiedPlan) {
 					// Use Transceivers
+					DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
 					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> videoTransceiver = nullptr;
 					auto transceivers = context->pc->GetTransceivers();
 						for (const auto& t : transceivers) {
@@ -1268,18 +1288,22 @@ namespace vi {
 					}
 					if (videoTransceiver && videoTransceiver->sender()) {
 						// TODO:
-						//videoTransceiver->sender()->ReplaceTrack(stream->GetVideoTracks()[0]);
+						DLOG("Replacing video track");
 						videoTransceiver->sender()->SetTrack(stream->GetVideoTracks()[0]);
 					}
 					else {
+						DLOG("Adding video track");
 						context->pc->AddTrack(stream->GetVideoTracks()[0], { stream->id() });
 					}
 				}
 				else {
+					DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
 					context->pc->AddTrack(stream->GetVideoTracks()[0], { stream->id() });
 				}
 			}
 		}
+
+		// If we still need to create a PeerConnection, let's do that
 		if (!context->pc) {
 			webrtc::PeerConnectionInterface::RTCConfiguration pcConfig;
 			for (const auto& server : _iceServers) {
@@ -1293,11 +1317,15 @@ namespace vi {
 			//pcConfig.bundle_policy = webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
 			//pcConfig.type = webrtc::PeerConnectionInterface::kRelay;
 			//pcConfig.use_media_transport = true;
+			
+			DLOG("Creating PeerConnection");
 
 			std::weak_ptr<IWebRTCEventHandler> wwreh(wreh);
 			std::weak_ptr<WebRTCService> wself(weak_from_this());
 
 			context->pcObserver = std::make_unique<PCObserver>();
+
+			DLOG("Preparing local SDP and gathering candidates (trickle = {})", wreh->pluginContext()->webrtcContext->trickle ? "true" : "false");
 
 			auto icccb = std::make_shared<IceConnectionChangeCallback>([wwreh](webrtc::PeerConnectionInterface::IceConnectionState newState) {
 				if (auto wreh = wwreh.lock()) {
@@ -1319,29 +1347,42 @@ namespace vi {
 				if (!self || !wreh) {
 					return;
 				}
-				auto handleId = wreh->pluginContext()->handleId;
-				CandidateData data;
-				candidate->ToString(&data.candidate);
-				data.sdpMid = candidate->sdp_mid();
-				data.sdpMLineIndex = (int)candidate->sdp_mline_index();
-				data.completed = false;
 
-				if (wreh->pluginContext()->webrtcContext->trickle) {
-					self->_client->sendTrickleCandidate(self->_sessionId, handleId, data, nullptr);
-				}
+				auto handleId = wreh->pluginContext()->handleId;
+				if (candidate) {
+					if (wreh->pluginContext()->webrtcContext->trickle) {
+						CandidateData data;
+						candidate->ToString(&data.candidate);
+						data.sdpMid = candidate->sdp_mid();
+						data.sdpMLineIndex = (int)candidate->sdp_mline_index();
+						data.completed = false;
+						self->_client->sendTrickleCandidate(self->_sessionId, handleId, data, nullptr);
+					}
+				} 
 				else {
-					self->sendSDP(handleId, event);
+					DLOG("End of candidates.");
+					wreh->pluginContext()->webrtcContext->iceDone = true;
+					if (wreh->pluginContext()->webrtcContext->trickle) {
+						CandidateData data;
+						data.completed = true;
+						self->_client->sendTrickleCandidate(self->_sessionId, handleId, data, nullptr);
+					}
+					else {
+						self->sendSDP(handleId, event);
+					}
 				}
+
 			});
 			context->pcObserver->setIceCandidateCallback(iccb);
 
 			auto atcb = std::make_shared<AddTrackCallback>([wwreh, wself, event](rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+				DLOG("Adding Remote Track");
 				auto self = wself.lock();
 				auto wreh = wwreh.lock();
 				if (!self || !wreh) {
 					return;
 				}
-				//auto handleId = wreh->pluginContext()->handleId;
+
 				auto& context = wreh->pluginContext()->webrtcContext;
 				context->remoteStream = transceiver->receiver()->streams()[0];
 				wreh->onCreateRemoteStream(context->remoteStream);
@@ -1349,12 +1390,13 @@ namespace vi {
 			context->pcObserver->setAddTrackCallback(atcb);
 
 			auto rtcb = std::make_shared<RemoveTrackCallback>([wwreh, wself, event](rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+				DLOG("Removing Remote Track");
 				auto self = wself.lock();
 				auto wreh = wwreh.lock();
 				if (!self || !wreh) {
 					return;
 				}
-				//auto handleId = wreh->pluginContext()->handleId;
+
 				auto& context = wreh->pluginContext()->webrtcContext;
 				if (context->remoteStream && !receiver->streams().empty() && (receiver->streams()[0]->id() == context->remoteStream->id())) {
 					wreh->onDeleteRemoteStream(context->remoteStream);
@@ -1366,6 +1408,7 @@ namespace vi {
 			context->pc = _pcf->CreatePeerConnection(pcConfig, nullptr, nullptr, context->pcObserver.get());
 
 			if (addTracks && stream) {
+				DLOG("Adding local stream");
 				bool simulcast2 = event->simulcast2.value_or(false);
 				for (auto track : stream->GetAudioTracks()) {
 					std::string id = stream->id();
@@ -1383,6 +1426,7 @@ namespace vi {
 						}
 					}
 					else {
+						DLOG("Enabling rid-based simulcasting, track-id: {}", track->id());
 						webrtc::RtpTransceiverInit init;
 						init.direction = webrtc::RtpTransceiverDirection::kSendRecv;
 						init.stream_ids = { stream->id() };
@@ -1413,9 +1457,9 @@ namespace vi {
 				}
 			}
 
-			if (event->media
-				&& HelperUtils::isDataEnabled(event->media.value())
-				&& context->dataChannels.find("JanusDataChannel") == context->dataChannels.end()) {
+			if (HelperUtils::isDataEnabled(event->media.value()) && 
+				context->dataChannels.find("JanusDataChannel") == context->dataChannels.end()) {
+				DLOG("Creating default data channel");
 				auto dccb = std::make_shared<DataChannelCallback>([wself = weak_from_this(), handleId](rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel) {
 					DLOG("Data channel created by Janus.");
 					if (auto self = wself.lock()) {
@@ -1471,12 +1515,20 @@ namespace vi {
 	void WebRTCService::sendSDP(int64_t handleId, std::shared_ptr<PrepareWebRTCEvent> event)
 	{
 		if (_wrehs.find(handleId) == _wrehs.end()) {
-			DLOG("Invalid handle, not sending anything");
+			ELOG("Invalid handle, not sending anything");
 			return;
 		}
 
 		const auto& wreh = _wrehs[handleId];
 		const auto& context = wreh->pluginContext()->webrtcContext;
+
+		DLOG("Sending offer/answer SDP...");
+
+		if (!context->mySdp) {
+			WLOG("Local SDP instance is invalid, not sending anything...");
+			return;
+		}
+
 		if (auto ld = context->pc->local_description()) {
 			std::string sdp;
 			ld->ToString(&sdp);
@@ -1492,13 +1544,16 @@ namespace vi {
 	void WebRTCService::createDataChannel(int64_t handleId, const std::string& dcLabel, rtc::scoped_refptr<webrtc::DataChannelInterface> incoming)
 	{
 		if (_wrehs.find(handleId) == _wrehs.end()) {
-			DLOG("Invalid handle");
+			ELOG("Invalid handle");
 			return;
 		}
 
 		const auto& wreh = _wrehs[handleId];
 		const auto& context = wreh->pluginContext()->webrtcContext;
 
+		if (!context->pc) {
+			ELOG("Invalid peerconnection");
+		}
 		if (incoming) {
 			context->dataChannels[dcLabel] = incoming;
 		}
@@ -1658,10 +1713,16 @@ namespace vi {
 		const auto& wreh = _wrehs[handleId];
 		const auto& context = wreh->pluginContext()->webrtcContext;
 
-		auto& media = event->media.value();
+		bool simulcast = event->simulcast.value_or(false);
+		if (!simulcast) {
+			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
+		}
+		else {
+			DLOG("Creating offer (iceDone = {}, simulcast = {})", context->iceDone ? "true" : "false", simulcast ? "enabled" : "disabled");
+		}
 
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
+		auto& media = event->media.value();
 		if (_unifiedPlan) {
 			configTracks(media, context->pc);
 		}
@@ -1673,7 +1734,6 @@ namespace vi {
 		options.ice_restart = event->iceRestart.value_or(false);
 
 		bool sendVideo = HelperUtils::isVideoSendEnabled(media);
-		bool simulcast = event->simulcast.value_or(false);
 
 		if (sendVideo && simulcast) {
 			std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = context->pc->GetSenders();
@@ -1729,6 +1789,12 @@ namespace vi {
 					(*cb)(false, "failure");
 				}
 			}));
+
+			std::string sdp;
+			desc->ToString(&sdp);
+			JsepConfig jsep{ desc->type(), sdp, false };
+
+			context->mySdp = jsep;
 			context->pc->SetLocalDescription(ssdo, desc);
 			context->options = options;
 			if (!context->iceDone && !context->trickle.value_or(false)) {
@@ -1737,9 +1803,6 @@ namespace vi {
 				return;
 			}
 
-			std::string sdp;
-			desc->ToString(&sdp);
-			JsepConfig jsep{ desc->type(), sdp, false };
 			if (event->answerOfferCallback) {
 				const auto& cb = event->answerOfferCallback;
 				(*cb)(true, "", jsep);
@@ -1770,10 +1833,16 @@ namespace vi {
 		const auto& wreh = _wrehs[handleId];
 		const auto& context = wreh->pluginContext()->webrtcContext;
 
-		auto& media = event->media.value();
+		bool simulcast = event->simulcast.value_or(false);
+		if (!simulcast) {
+			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
+		}
+		else {
+			DLOG("Creating offer (iceDone = {}, simulcast = {})", context->iceDone ? "true" : "false", simulcast ? "enabled" : "disabled");
+		}
 
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
-
+		auto& media = event->media.value();
 		if (_unifiedPlan) {
 			configTracks(media, context->pc);
 		}
@@ -1787,7 +1856,6 @@ namespace vi {
 		options.ice_restart = event->iceRestart.value_or(false);
 
 		bool sendVideo = HelperUtils::isVideoSendEnabled(media);
-		bool simulcast = event->simulcast.value_or(false);
 
 		if (sendVideo && simulcast) {
 			DLOG("Enabling Simulcasting");
@@ -1839,6 +1907,12 @@ namespace vi {
 					(*cb)(false, "failure");
 				}
 			}));
+
+			std::string sdp;
+			desc->ToString(&sdp);
+			JsepConfig jsep{ desc->type(), sdp, false };
+
+			context->mySdp = jsep;
 			context->pc->SetLocalDescription(ssdo, desc);
 			context->options = options;
 			if (!context->iceDone && !context->trickle.value_or(false)) {
@@ -1847,9 +1921,6 @@ namespace vi {
 				return;
 			}
 
-			std::string sdp;
-			desc->ToString(&sdp);
-			JsepConfig jsep{ desc->type(), sdp, false };
 			if (event->answerOfferCallback) {
 				const auto& cb = event->answerOfferCallback;
 				(*cb)(true, "", jsep);
@@ -1881,7 +1952,6 @@ namespace vi {
 			}
 			if (event->notifyDestroyed) {
 				// TODO:
-				//gatewayCallbacks.destroyed();
 			}
 			return;
 		}
@@ -1899,16 +1969,27 @@ namespace vi {
 				dh->callback = std::make_shared<vi::EventCallback>(lambda);
 				destroyHandle(hId, dh);
 			}
-			//_client->removeListener(shared_from_this());
+
 			_wrehs.clear();
 		}
 		if (!_connected) {
-			DLOG("Is the server down? (connected=false)");
+			DLOG("Is the server down? (connected = false)");
 			if(event->callback) {
 				const auto& cb = event->callback;
 				(*cb)(true, "");
 			}
 			return;
 		}
+
+		// TODO: destroy session from janus 
+		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto lambda = [wself](std::shared_ptr<JanusResponse> model) {
+			DLOG("model->janus = {}", model->janus);
+			if (auto self = wself.lock()) {
+				self->_client->removeListener(self);
+			}
+		};
+		std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
+		_client->destroySession(_sessionId, callback);
 	}
 }

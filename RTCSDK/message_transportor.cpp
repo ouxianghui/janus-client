@@ -17,7 +17,7 @@ namespace vi {
 	{
 		_websocket = std::make_shared<WebsocketEndpoint>();
 		if (_url.empty()) {
-			_url = "ws://182.61.33.148:8188/janus";
+			_url = "ws://192.168.0.108:8188/ws";
 		}
 	}
 
@@ -141,7 +141,7 @@ namespace vi {
 		if (model->janus == "event") {
 			std::string event = model->janus;
 		}
-		if (model->xhas("transaction") && (model->janus == "ack" || model->janus == "success" || model->janus == "error")) {
+		if (model->xhas("transaction") && (model->janus == "ack" || model->janus == "success" || model->janus == "error" || model->janus == "server_info")) {
 			std::lock_guard<std::mutex> locker(_callbackMutex);
 			const std::string& transaction = model->transaction;
 			if (_callbacksMap.find(transaction) != _callbacksMap.end()) {

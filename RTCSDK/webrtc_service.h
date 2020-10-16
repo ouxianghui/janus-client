@@ -107,7 +107,7 @@ namespace vi {
 
 		void prepareWebrtcPeer(int64_t handleId, std::shared_ptr<PrepareWebRTCPeerEvent> event);
 
-		void cleanupWebrtc(int64_t handleId, bool sendRequest = true);
+		void cleanupWebrtc(int64_t handleId, bool hangupRequest = true);
 
 		void destroyHandle(int64_t handleId, std::shared_ptr<DetachEvent> event);
 
@@ -132,6 +132,8 @@ namespace vi {
 
 		void configTracks(const MediaConfig& media, rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc);
 
+		void stopAllTracks(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+
 	private:
 		std::string _server;	
 
@@ -139,7 +141,7 @@ namespace vi {
 
 		std::string _opaqueId;
 
-		std::string _apiSecret = "jacky";
+		std::string _apiSecret;
 
 		bool _unifiedPlan = true;
 
