@@ -66,12 +66,9 @@ namespace vi {
 
 	void WebRTCService::init()
 	{
-		rtc::Thread* current = rtc::Thread::Current();
-
 		std::string url = "ws://192.168.0.108:8188/ws";
 
-		auto connectionListener = std::make_shared<ConnectionListener>();
-		auto proxy = vi::ConnectionListenerProxy::Create(current, connectionListener);
+		auto proxy = vi::ConnectionListenerProxy::Create(rtc::Thread::Current(), std::make_shared<ConnectionListener>());
 		auto transport = std::make_shared<MessageTransport>(proxy);
 		proxy->attach(transport);
 
