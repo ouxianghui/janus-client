@@ -835,8 +835,8 @@ namespace vi {
 					(*cb)(true, "success");
 				}
 			}));
-			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](const std::string& error) {
-				DLOG("SetRemoteDescription() failure: {}", error.c_str());
+			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](webrtc::RTCError error) {
+				DLOG("SetRemoteDescription() failure: {}", error.message());
 				if (event->callback) {
 					const auto& cb = event->callback;
 					(*cb)(false, "failure");
@@ -1456,8 +1456,8 @@ namespace vi {
 						self->_createAnswer(handleId, event);
 					}
 				}));
-				ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](const std::string& error) {
-					DLOG("SetRemoteDescription() failure: {}", error.c_str());
+				ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](webrtc::RTCError error) {
+					DLOG("SetRemoteDescription() failure: {}", error.message());
 					if (event->callback) {
 						const auto& cb = event->callback;
 						(*cb)(false, "failure");
@@ -1722,8 +1722,8 @@ namespace vi {
 			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([context, event]() {
 				DLOG("Set session description success.");
 			}));
-			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](const std::string& error) {
-				DLOG("SetRemoteDescription() failure: {}", error.c_str());
+			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](webrtc::RTCError error) {
+				DLOG("SetLocalDescription() failure: {}", error.message());
 				if (event->callback) {
 					const auto& cb = event->callback;
 					(*cb)(false, "failure");
@@ -1746,7 +1746,8 @@ namespace vi {
 			}
 		});
 
-		std::shared_ptr<CreateSessionDescFailureCallback> failure = std::make_shared<CreateSessionDescFailureCallback>([event](const std::string& error) {
+		std::shared_ptr<CreateSessionDescFailureCallback> failure = std::make_shared<CreateSessionDescFailureCallback>([event](webrtc::RTCError error) {
+			DLOG("createOfferObserver() failure: {}", error.message());
 			if (event->callback) {
 				const auto& cb = event->callback;
 				(*cb)(false, "failure");
@@ -1831,8 +1832,8 @@ namespace vi {
 			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([context, event]() {
 				DLOG("Set session description success.");
 			}));
-			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](const std::string& error) {
-				DLOG("SetRemoteDescription() failure: {}", error.c_str());
+			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event](webrtc::RTCError error) {
+				DLOG("SetLocalDescription() failure: {}", error.message());
 				if (event->callback) {
 					const auto& cb = event->callback;
 					(*cb)(false, "failure");
@@ -1855,7 +1856,8 @@ namespace vi {
 			}
 		});
 
-		std::shared_ptr<CreateSessionDescFailureCallback> failure = std::make_shared<CreateSessionDescFailureCallback>([event](const std::string& error) {
+		std::shared_ptr<CreateSessionDescFailureCallback> failure = std::make_shared<CreateSessionDescFailureCallback>([event](webrtc::RTCError error) {
+			DLOG("CreateAnswer() failure: {}", error.message());
 			if (event->callback) {
 				const auto& cb = event->callback;
 				(*cb)(false, "failure");

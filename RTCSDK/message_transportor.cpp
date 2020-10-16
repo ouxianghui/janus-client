@@ -87,7 +87,7 @@ namespace vi {
 	// IConnectionListener
 	void MessageTransport::onOpen()
 	{
-		DLOG("MessageTransportor::onOpen()");
+		DLOG("opened");
 		std::lock_guard<std::mutex> locker(_listenerMutex);
 		for (const auto& listener : _listeners) {
 			if (auto li = listener.lock()) {
@@ -98,12 +98,12 @@ namespace vi {
 
 	void MessageTransport::onFail(int errorCode, const std::string& reason)
 	{
-		DLOG("MessageTransportor::onFail(), errorCode = {}, reason = {}", errorCode, reason.c_str());
+		DLOG("errorCode = {}, reason = {}", errorCode, reason.c_str());
 	}
 
 	void MessageTransport::onClose(int closeCode, const std::string& reason)
 	{
-		DLOG("MessageTransportor::onClose(), errorCode = {}, reaseon = {}", closeCode, reason.c_str());
+		DLOG("errorCode = {}, reaseon = {}", closeCode, reason.c_str());
 		std::lock_guard<std::mutex> locker(_listenerMutex);
 		for (const auto& listener : _listeners) {
 			if (auto li = listener.lock()) {
@@ -114,13 +114,13 @@ namespace vi {
 
 	bool MessageTransport::onValidate()
 	{
-		DLOG("MessageTransportor::onValidate()");
+		DLOG("validate");
 		return true;
 	}
 
 	void MessageTransport::onTextMessage(const std::string& text)
 	{
-		DLOG("MessageTransportor::onTextMessage(), text = {}", text.c_str());
+		DLOG("text = {}", text.c_str());
 
 		// |unpublished| can be int or string, replace string 'ok' to 0
 		std::string data = text;
@@ -164,22 +164,22 @@ namespace vi {
 
 	void MessageTransport::onBinaryMessage(const std::vector<uint8_t>& data)
 	{
-		DLOG("MessageTransportor::onBinaryMessage(), data.size() = {}", data.size());
+		DLOG("data.size() = {}", data.size());
 	}
 
 	bool MessageTransport::onPing(const std::string& text)
 	{
-		DLOG("MessageTransportor::onPing(), text = {}", text.c_str());
+		DLOG("text = {}", text.c_str());
 		return true;
 	}
 
 	void MessageTransport::onPong(const std::string& text)
 	{
-		DLOG("MessageTransportor::onPong(), text = {}", text.c_str());
+		DLOG("text = {}", text.c_str());
 	}
 
 	void MessageTransport::onPongTimeout(const std::string& text)
 	{
-		DLOG("MessageTransportor::onPongTimeout(), text = {}", text.c_str());
+		DLOG("text = {}", text.c_str());
 	}
 }

@@ -39,7 +39,7 @@ namespace vi {
 	};
 
 	using CreateSessionDescSuccessCallback = std::function<void(webrtc::SessionDescriptionInterface* desc)>;
-	using CreateSessionDescFailureCallback = std::function<void(const std::string& error)>;
+	using CreateSessionDescFailureCallback = std::function<void(webrtc::RTCError error)>;
 
 	class CreateSessionDescObserver : public webrtc::CreateSessionDescriptionObserver {
 	public:
@@ -68,7 +68,7 @@ namespace vi {
 		{
 			if (_failure) {
 				const auto& cb = _failure;
-				//(*cb)(error);
+				(*cb)(error);
 			}
 		}
 
@@ -78,7 +78,7 @@ namespace vi {
 	};
 
 	using SetSessionDescSuccessCallback = std::function<void()>;
-	using SetSessionDescFailureCallback = std::function<void(const std::string& error)>;
+	using SetSessionDescFailureCallback = std::function<void(webrtc::RTCError error)>;
 
 	class SetSessionDescObserver : public webrtc::SetSessionDescriptionObserver {
 	public:
@@ -105,7 +105,7 @@ namespace vi {
 		void OnFailure(webrtc::RTCError error) override
 		{
 			if (_failure) {
-				//(*_failure)(error);
+				(*_failure)(error);
 			}
 		}
 

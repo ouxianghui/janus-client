@@ -29,7 +29,7 @@
 #include "local_video_capture.h"
 #include "gl_video_renderer.h"
 #include "task_scheduler.h"
-#include "logger/logger.h"
+#include "logger/logger_installer.h"
 
 using namespace core;
 
@@ -61,7 +61,7 @@ static void initOpenGL() {
 
 int main(int argc, char *argv[])
 {
-	vi::Logger::instance()->startup();
+	vi::LoggerInstaller::instance()->install();
 
 	registerMetaTypes();
 
@@ -91,7 +91,7 @@ int main(int argc, char *argv[])
 
 	rtc::CleanupSSL();
 
-	vi::Logger::instance()->shutdown();
+	vi::LoggerInstaller::instance()->uninstall();
 
 	return ret; 
 }
