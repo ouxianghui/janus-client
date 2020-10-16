@@ -17,7 +17,7 @@
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\logger_installer.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />
-    <ClCompile Include="message_transportor.cpp" />
+    <ClCompile Include="message_transport.cpp" />
     <ClCompile Include="participant.cpp" />
     <ClCompile Include="plugin_client.cpp" />
     <ClCompile Include="rtc_sdk.cpp" />
@@ -71,7 +71,7 @@
     <ClInclude Include="service\notification_service.h" />
     <ClInclude Include="service\observable.h" />
     <ClInclude Include="service\unified_factory.h" />
-    <ClInclude Include="sfu_listener_proxy.h" />
+    <ClInclude Include="connect_listener_proxy.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="task_queue_manager.h" />
     <ClInclude Include="task_scheduler.h" />

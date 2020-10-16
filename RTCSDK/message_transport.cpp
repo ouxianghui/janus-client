@@ -12,13 +12,15 @@
 #include "logger/logger.h"
 
 namespace vi {
-	MessageTransport::MessageTransport(const std::string& url)
-		: _url(url)
+	MessageTransport::MessageTransport()
 	{
 		_websocket = std::make_shared<WebsocketEndpoint>();
-		if (_url.empty()) {
-			_url = "ws://192.168.0.108:8188/ws";
-		}
+	}
+
+	MessageTransport::MessageTransport(std::shared_ptr<IConnectionListener> listener)
+		: _connectionListener(listener)
+	{
+		_websocket = std::make_shared<WebsocketEndpoint>();
 	}
 
 	MessageTransport::~MessageTransport()
@@ -49,8 +51,10 @@ namespace vi {
 
 	void MessageTransport::connect(const std::string& url)
 	{
+		_url = url;
 		if (_websocket) {
-			_connectionId = _websocket->connect(_url, shared_from_this(), "janus-protocol");
+			_connectionListener = _connectionListener ? _connectionListener : shared_from_this();
+			_connectionId = _websocket->connect(_url, _connectionListener, "janus-protocol");
 		}
 	}
 

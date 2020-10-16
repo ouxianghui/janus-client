@@ -19,7 +19,6 @@
 
 namespace vi {
 	class TaskScheduler;
-	class SFUListenerInterface;
 	class CapturerTrackSource;
 	class WebRTCService
 		: public WebRTCServiceInterface
@@ -168,8 +167,6 @@ namespace vi {
 		bool _reconnect = false;
 
 		std::unordered_map<int64_t, std::shared_ptr<IWebRTCEventHandler>> _wrehs;
-
-		std::shared_ptr<SFUListenerInterface> _proxy;
 
 		std::shared_ptr<ISFUClient> _client;
 

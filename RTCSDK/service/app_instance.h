@@ -55,3 +55,4 @@ private:
 #define rtcApp core::AppInstance::instance()
 #define UFactory rtcApp->getUnifiedFactory()
 #define FetchService(S) UFactory->getBizServiceFactory()->getService<S>()
+#define TMgr rtcApp->getThreadManager()

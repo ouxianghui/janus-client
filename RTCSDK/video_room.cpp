@@ -284,13 +284,13 @@ namespace vi {
 
 	void VideoRoom::createParticipant(int64_t id, const std::string& displayName, const std::string& audio, const std::string& video)
 	{
+		//return;
 		auto participant = std::make_shared<Participant>(_pluginContext->plugin, 
 														 _pluginContext->opaqueId, 
 														 id,
 														 _privateId,
 														 displayName,
 														 _pluginContext->webrtcService.lock());
-
 		participant->attach();
 		participant->setListenerProxy(_listenerProxy);
 		_participantsMap[id] = participant;

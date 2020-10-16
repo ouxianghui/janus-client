@@ -15,7 +15,6 @@
 #include "Service/observable.h"
 
 namespace vi {
-	class IMessageTransportListener;
 	class MessageTransport
 		: public IMessageTransport
 		, public IConnectionListener
@@ -23,11 +22,13 @@ namespace vi {
 		, public std::enable_shared_from_this<MessageTransport>
 	{
 	public:
-		MessageTransport(const std::string& url);
+		MessageTransport();
+
+		MessageTransport(std::shared_ptr<IConnectionListener> listener);
+
 		~MessageTransport() override;
 
 		// IMessageTransportor
-
 	    void addListener(std::shared_ptr<IMessageTransportListener> listener) override;
 
 		void removeListener(std::shared_ptr<IMessageTransportListener> listener) override;
@@ -75,5 +76,7 @@ namespace vi {
 
 		std::mutex _listenerMutex;
 		std::vector<std::weak_ptr<IMessageTransportListener>> _listeners;
+
+		std::shared_ptr<IConnectionListener> _connectionListener;
 	};
 }

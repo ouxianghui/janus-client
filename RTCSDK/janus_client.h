@@ -24,6 +24,8 @@ namespace vi {
 	public:
 		JanusClient(const std::string& url);
 
+		JanusClient(const std::string& url, std::shared_ptr<IMessageTransport> transport);
+
 		~JanusClient() override;
 
 		void setToken(const std::string& token);

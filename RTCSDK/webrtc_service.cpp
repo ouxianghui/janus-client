@@ -29,7 +29,7 @@
 #include "service/app_instance.h"
 #include "task_scheduler.h"
 #include "rtc_base/thread.h"
-#include "sfu_listener_proxy.h"
+#include "connect_listener_proxy.h"
 #include "logger/logger.h"
 
 namespace vi {
@@ -68,12 +68,15 @@ namespace vi {
 	{
 		rtc::Thread* current = rtc::Thread::Current();
 
-		auto listener = std::make_shared<SFUListener>();
-		_proxy = vi::SFUListenerProxy::Create(current, listener);
-		_proxy->attach(shared_from_this());
+		std::string url = "ws://192.168.0.108:8188/ws";
 
-		_client = std::make_shared<vi::JanusClient>("ws://192.168.0.108:8188/ws");
-		_client->addListener(_proxy);
+		auto connectionListener = std::make_shared<ConnectionListener>();
+		auto proxy = vi::ConnectionListenerProxy::Create(current, connectionListener);
+		auto transport = std::make_shared<MessageTransport>(proxy);
+		proxy->attach(transport);
+
+		_client = std::make_shared<vi::JanusClient>(url, transport);
+		_client->addListener(shared_from_this());
 		_client->init();
 
 		_taskScheduler = std::make_shared<vi::TaskScheduler>();
@@ -947,6 +950,7 @@ namespace vi {
 	}
 
 	// ISFUClientListener
+
 	void WebRTCService::onOpened()
 	{
 		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
@@ -955,7 +959,6 @@ namespace vi {
 		auto lambda = [wself](bool success, const std::string& message) {
 			if (auto self = wself.lock()) {
 				// TODO: not in SERVICE thread
-				self->_connected = success;
 			}
 		};
 		event->callback = std::make_shared<vi::EventCallback>(lambda);

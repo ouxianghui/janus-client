@@ -17,7 +17,14 @@ namespace vi {
 	JanusClient::JanusClient(const std::string& url)
 		: _url(url)
 	{
-		_transport = std::make_shared<MessageTransport>(_url);
+
+	}
+
+	JanusClient::JanusClient(const std::string& url, std::shared_ptr<IMessageTransport> transport)
+		: _url(url)
+		, _transport(transport)
+	{
+
 	}
 
 	JanusClient::~JanusClient()
@@ -45,8 +52,11 @@ namespace vi {
 		removeBizObserver<ISFUClientListener>(_listeners, listener);
 	}
 
-	void JanusClient::init() 
+	void JanusClient::init()
 	{
+		if (!_transport) {
+			_transport = std::make_shared<MessageTransport>();
+		}
 		_transport->addListener(shared_from_this());
 		_transport->connect(_url);
 	}
