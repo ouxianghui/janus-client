@@ -18,6 +18,7 @@ namespace vi {
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
+		_listeners = std::make_shared<std::vector<std::weak_ptr<IVideoRoomListener>>>();
 	}
 
 	VideoRoom::~VideoRoom()
@@ -29,20 +30,17 @@ namespace vi {
 
 	void VideoRoom::init()
 	{
-		// All callbacks are in main thread
-		rtc::Thread* mainThread = rtcApp->getThreadManager()->getMainThread();
-		auto listener = std::make_shared<VideoRoomListener>();
-		_listenerProxy = VideoRoomListenerProxy::Create(mainThread, listener);
+
 	}
 
 	void VideoRoom::addListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
-		_listenerProxy->attach(listener);
+		addBizObserver<IVideoRoomListener>(*_listeners, listener);
 	}
 
 	void VideoRoom::removeListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
-		_listenerProxy->detach(listener);
+		removeBizObserver<IVideoRoomListener>(*_listeners, listener);
 	}
 
 	std::shared_ptr<PluginClient> VideoRoom::getParticipant(int64_t pid)
@@ -200,12 +198,16 @@ namespace vi {
 
 	void VideoRoom::onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
-		_listenerProxy->onCreateStream(_id, stream);
+		notifyObserver4Change<IVideoRoomListener>(*_listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
+			listener->onCreateStream(pid, stream);
+		});
 	}
 
 	void VideoRoom::onDeleteLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
-		_listenerProxy->onDeleteStream(_id, stream);
+		notifyObserver4Change<IVideoRoomListener>(*_listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
+			listener->onDeleteStream(pid, stream);
+		});
 	}
 
 	void VideoRoom::onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
@@ -290,10 +292,12 @@ namespace vi {
 														 id,
 														 _privateId,
 														 displayName,
-														 _pluginContext->webrtcService.lock());
+														 _pluginContext->webrtcService.lock(),
+														 _listeners);
 		participant->attach();
-		participant->setListenerProxy(_listenerProxy);
 		_participantsMap[id] = participant;
-		_listenerProxy->onCreateParticipant(participant);
+		notifyObserver4Change<IVideoRoomListener>(*_listeners, [participant](const std::shared_ptr<IVideoRoomListener>& listener) {
+			listener->onCreateParticipant(participant);
+		});
 	}
 }

@@ -12,6 +12,7 @@
 namespace vi {
 	TaskQueueManager::TaskQueueManager()
 	{
+		init();
 	}
 
 	TaskQueueManager::~TaskQueueManager()
@@ -25,12 +26,13 @@ namespace vi {
 
 		_factory = webrtc::CreateDefaultTaskQueueFactory();
 
-		//_queuesMap[QueueName::WORKER] = _factory->CreateTaskQueue("vi::WORKER", webrtc::TaskQueueFactory::Priority::NORMAL);
+		_queuesMap[QueueName::CORE] = _factory->CreateTaskQueue("vi::CORE", webrtc::TaskQueueFactory::Priority::NORMAL);
 	}
 
-	webrtc::TaskQueueBase* TaskQueueManager::getQueue(QueueName name)
+	webrtc::TaskQueueBase* TaskQueueManager::queue(QueueName name)
 	{
 		std::lock_guard<std::mutex> lock(_mutex);
+
 		if (_queuesMap.find(name) != _queuesMap.end()) {
 			return _queuesMap[name].get();
 		}

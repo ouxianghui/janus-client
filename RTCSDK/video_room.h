@@ -7,13 +7,13 @@
 #pragma once
 
 #include "plugin_client.h"
-#include "Service/observable.h"
+#include "service/observable.h"
 #include "i_video_room_listener.h"
-#include "video_room_listener_proxy.h"
 
 namespace vi {
 	class VideoRoom
 		: public PluginClient
+		, public core::Observable
 	{
 	public:
 		VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs);
@@ -69,6 +69,6 @@ namespace vi {
 	private:
 		std::map<int64_t, std::shared_ptr<PluginClient>> _participantsMap;
 
-		std::shared_ptr<VideoRoomListenerProxy> _listenerProxy;
+		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;
 	};
 }

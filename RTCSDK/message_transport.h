@@ -24,8 +24,6 @@ namespace vi {
 	public:
 		MessageTransport();
 
-		MessageTransport(std::shared_ptr<IConnectionListener> listener);
-
 		~MessageTransport() override;
 
 		// IMessageTransportor
@@ -76,7 +74,5 @@ namespace vi {
 
 		std::mutex _listenerMutex;
 		std::vector<std::weak_ptr<IMessageTransportListener>> _listeners;
-
-		std::shared_ptr<IConnectionListener> _connectionListener;
 	};
 }

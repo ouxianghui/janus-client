@@ -30,6 +30,7 @@
 #include "gl_video_renderer.h"
 #include "task_scheduler.h"
 #include "logger/logger_installer.h"
+#include "thread_manager.h"
 
 using namespace core;
 
@@ -65,10 +66,12 @@ int main(int argc, char *argv[])
 
 	registerMetaTypes();
 
-	rtc::WinsockInitializer winsock_init;
-	rtc::Win32SocketServer w32_ss;
-	rtc::Win32Thread w32_thread(&w32_ss);
-	rtc::ThreadManager::Instance()->SetCurrentThread(&w32_thread);
+	rtc::WinsockInitializer winsockInit;
+	rtc::Win32SocketServer w32ss;
+	rtc::Win32Thread w32Thread(&w32ss);
+	rtc::ThreadManager::Instance()->SetCurrentThread(&w32Thread);
+
+	TMgr->init();
 
 	rtc::InitializeSSL();
 
@@ -90,6 +93,8 @@ int main(int argc, char *argv[])
 	rtcApp->clearnup();
 
 	rtc::CleanupSSL();
+
+	TMgr->destroy();
 
 	vi::LoggerInstaller::instance()->uninstall();
 

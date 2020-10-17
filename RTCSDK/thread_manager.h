@@ -9,27 +9,38 @@
 #include "rtc_base/thread.h"
 #include <unordered_map>
 #include <mutex>
+#include "utils/singleton.h"
+#include <atomic>
 
 namespace vi {
 	enum class ThreadName : int{
 		MAIN = 0,
 		WORKER = 1,
-		WEBRTC_SERVICE = 2,
-		VIDEO_ROOM = 3
+		SERVICE = 2,
 	};
 
-	class ThreadManager
+	class ThreadManager : public core::Singleton<ThreadManager>
 	{
 	public:
-		ThreadManager();
-
 		~ThreadManager();
 
 		void init();
 
-		rtc::Thread* getMainThread();
+		void destroy();
 
-		rtc::Thread* getThread(ThreadName name);
+		rtc::Thread* thread(ThreadName name);
+
+	private:
+		ThreadManager();
+
+		ThreadManager(const ThreadManager&) = delete;
+
+		ThreadManager(ThreadManager&&) = delete;
+
+		ThreadManager& operator=(const ThreadManager&) = delete;
+
+	private:
+		void stopAll();
 
 	private:
 		std::unordered_map<ThreadName, std::shared_ptr<rtc::Thread>> _threadsMap;
@@ -37,5 +48,11 @@ namespace vi {
 		std::mutex _mutex;
 
 		rtc::Thread* _mainThread = nullptr;
+
+		std::atomic_bool _destroy;
+
+		friend class core::Singleton<ThreadManager>;
 	};
 }
+
+#define TMgr vi::ThreadManager::instance()

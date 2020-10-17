@@ -29,8 +29,9 @@
 #include "service/app_instance.h"
 #include "task_scheduler.h"
 #include "rtc_base/thread.h"
-#include "connect_listener_proxy.h"
 #include "logger/logger.h"
+#include "service/app_instance.h"
+#include "thread_manager.h"
 
 namespace vi {
 
@@ -67,12 +68,7 @@ namespace vi {
 	void WebRTCService::init()
 	{
 		std::string url = "ws://192.168.0.108:8188/ws";
-
-		auto proxy = vi::ConnectionListenerProxy::Create(rtc::Thread::Current(), std::make_shared<ConnectionListener>());
-		auto transport = std::make_shared<MessageTransport>(proxy);
-		proxy->attach(transport);
-
-		_client = std::make_shared<vi::JanusClient>(url, transport);
+		_client = std::make_shared<vi::JanusClient>(url, rtc::Thread::Current());
 		_client->addListener(shared_from_this());
 		_client->init();
 

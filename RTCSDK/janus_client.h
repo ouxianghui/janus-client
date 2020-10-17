@@ -11,7 +11,11 @@
 #include "i_sfu_client.h"
 #include "Websocket/websocket_endpoint.h"
 #include "i_message_transport_listener.h"
-#include "Service/observable.h"
+#include "service/observable.h"
+
+namespace rtc {
+	class Thread;
+}
 
 namespace vi {
 	class IMessageTransportor;
@@ -22,9 +26,7 @@ namespace vi {
 		, public std::enable_shared_from_this<JanusClient>
 	{
 	public:
-		JanusClient(const std::string& url);
-
-		JanusClient(const std::string& url, std::shared_ptr<IMessageTransport> transport);
+		JanusClient(const std::string& url, rtc::Thread* callbackThread = nullptr);
 
 		~JanusClient() override;
 
@@ -68,7 +70,11 @@ namespace vi {
 		void onMessage(std::shared_ptr<JanusResponse> model) override;
 
 	private:
+		std::shared_ptr<JCCallback> wrapAsyncCallback(std::shared_ptr<JCCallback> callback);
+
+	private:
 		std::string _url;
+		rtc::Thread* _thread;
 		std::string _token;
 		std::string _apisecret;
 		std::shared_ptr<IMessageTransport> _transport;

@@ -8,6 +8,7 @@
 
 #include <unordered_map>
 #include <mutex>
+#include "utils/singleton.h"
 
 namespace webrtc {
 	class TaskQueueFactory;
@@ -17,18 +18,27 @@ namespace webrtc {
 
 namespace vi {
 	enum class QueueName : int {
-		WORKER = 0
+		CORE = 0
 	};
 
-	class TaskQueueManager
+	class TaskQueueManager : public core::Singleton<TaskQueueManager>
 	{
 	public:
-		TaskQueueManager();
 		~TaskQueueManager();
 
+		webrtc::TaskQueueBase* queue(QueueName name);
+
+	private:
 		void init();
 
-		webrtc::TaskQueueBase* getQueue(QueueName name);
+	private:
+		TaskQueueManager();
+
+		TaskQueueManager(const TaskQueueManager&) = delete;
+
+		TaskQueueManager(TaskQueueManager&) = delete;
+
+		TaskQueueManager& operator=(const TaskQueueManager&) = delete;
 
 	private:
 		std::unique_ptr<webrtc::TaskQueueFactory> _factory;
@@ -36,6 +46,10 @@ namespace vi {
 		std::unordered_map<QueueName, std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter>> _queuesMap;
 
 		std::mutex _mutex;
+
+		friend class core::Singleton<TaskQueueManager>;
 	};
 }
+
+#define QMgr vi::TaskQueueManager::instance()
 

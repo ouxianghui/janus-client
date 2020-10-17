@@ -71,14 +71,12 @@
     <ClInclude Include="service\notification_service.h" />
     <ClInclude Include="service\observable.h" />
     <ClInclude Include="service\unified_factory.h" />
-    <ClInclude Include="connect_listener_proxy.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="task_queue_manager.h" />
     <ClInclude Include="task_scheduler.h" />
     <ClInclude Include="text_room.h" />
     <ClInclude Include="thread_manager.h" />
     <ClInclude Include="video_room.h" />
-    <ClInclude Include="video_room_listener_proxy.h" />
     <ClInclude Include="weak_proxy.h" />
     <ClInclude Include="webrtc_service.h" />
     <ClInclude Include="webrtc_service_events.h" />

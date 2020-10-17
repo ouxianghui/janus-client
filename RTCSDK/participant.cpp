@@ -13,9 +13,11 @@ namespace vi {
 		int64_t id,
 		int64_t privateId,
 		const std::string& displayName,
-		std::shared_ptr<WebRTCServiceInterface> wrs)
+		std::shared_ptr<WebRTCServiceInterface> wrs,
+		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> listeners)
 		: PluginClient(wrs)
 		, _displayName(displayName)
+		, _listeners(listeners)
 	{
 		_pluginContext->plugin = plugin;
 		_pluginContext->opaqueId = opaqueId;
@@ -25,11 +27,6 @@ namespace vi {
 
 	Participant::~Participant()
 	{
-	}
-
-	void Participant::setListenerProxy(std::weak_ptr<VideoRoomListenerProxy> proxy)
-	{
-		_listenerProxy = proxy;
 	}
 
 	void Participant::onAttached(bool success)
@@ -154,15 +151,20 @@ namespace vi {
 		//	stream->GetVideoTracks()[0]->AddOrUpdateSink(renderer.get(), wants);
 		//}
 
-		if (auto listener = _listenerProxy.lock()) {
-			listener->onCreateStream(_id, stream);
+		if (auto listeners = _listeners.lock()) {
+			notifyObserver4Change<IVideoRoomListener>(*listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
+				listener->onCreateStream(pid, stream);
+			});
 		}
+
 	}
 
 	void Participant::onDeleteRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
-		if (auto listener = _listenerProxy.lock()) {
-			listener->onDeleteStream(_id, stream);
+		if (auto listeners = _listeners.lock()) {
+			notifyObserver4Change<IVideoRoomListener>(*listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
+				listener->onDeleteStream(pid, stream);
+			});
 		}
 	}
 

@@ -17,12 +17,6 @@ namespace vi {
 		_websocket = std::make_shared<WebsocketEndpoint>();
 	}
 
-	MessageTransport::MessageTransport(std::shared_ptr<IConnectionListener> listener)
-		: _connectionListener(listener)
-	{
-		_websocket = std::make_shared<WebsocketEndpoint>();
-	}
-
 	MessageTransport::~MessageTransport()
 	{
 
@@ -53,8 +47,7 @@ namespace vi {
 	{
 		_url = url;
 		if (_websocket) {
-			_connectionListener = _connectionListener ? _connectionListener : shared_from_this();
-			_connectionId = _websocket->connect(_url, _connectionListener, "janus-protocol");
+			_connectionId = _websocket->connect(_url, shared_from_this(), "janus-protocol");
 		}
 	}
 

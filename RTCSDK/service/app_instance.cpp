@@ -14,7 +14,6 @@
 #include "webrtc_service_interface.h"
 #include "webrtc_service_proxy.h"
 #include "thread_manager.h"
-#include "task_queue_manager.h"
 
 namespace core {
 
@@ -25,23 +24,10 @@ AppInstance::AppInstance()
 AppInstance::~AppInstance()
 {
 	DLOG("~AppInstance()");
-	_webrtcService = nullptr;
-	_threadManager = nullptr;
-	_taskQueueManager = nullptr;
 }
 
 void AppInstance::initApp()
 {
-	if (!_threadManager) {
-		_threadManager = std::make_shared<vi::ThreadManager>();
-		_threadManager->init();
-	}
-
-	if (!_taskQueueManager) {
-		_taskQueueManager = std::make_shared<vi::TaskQueueManager>();
-		_taskQueueManager->init();
-	}
-
     // init services here
     installBizServices();
 
@@ -52,6 +38,7 @@ void AppInstance::clearnup()
 {
 	//auto wrs = FetchService(vi::WebRTCServiceInterface);
 	_webrtcService->cleanup();
+	_webrtcService = nullptr;
 }
 
 std::shared_ptr<IUnifiedFactory> AppInstance::getUnifiedFactory()
@@ -61,16 +48,6 @@ std::shared_ptr<IUnifiedFactory> AppInstance::getUnifiedFactory()
         _unifiedFactory->init();
     }
     return _unifiedFactory;
-}
-
-std::shared_ptr<vi::ThreadManager> AppInstance::getThreadManager()
-{
-	return _threadManager;
-}
-
-std::shared_ptr<vi::TaskQueueManager> AppInstance::getTaskQueueManager()
-{
-	return _taskQueueManager;
 }
 
 std::shared_ptr<vi::WebRTCServiceInterface> AppInstance::getWebrtcService()
@@ -88,7 +65,7 @@ void AppInstance::installBizServices()
 
 void AppInstance::installWebRTCService()
 {
-	rtc::Thread* wst = getThreadManager()->getThread(vi::ThreadName::WEBRTC_SERVICE);
+	rtc::Thread* wst = TMgr->thread(vi::ThreadName::SERVICE);
 
 	_webrtcService = vi::WebRTCServiceProxy::Create(wst, std::make_shared<vi::WebRTCService>());
 

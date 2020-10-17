@@ -7,11 +7,13 @@
 #pragma once
 
 #include "plugin_client.h"
-#include "video_room_listener_proxy.h"
+#include "service/observable.h"
+#include "i_video_room_listener.h"
 
 namespace vi {
 	class Participant
 		: public PluginClient
+		, public core::Observable
 	{
 	public:
 		Participant(const std::string& plugin, 
@@ -19,11 +21,10 @@ namespace vi {
 			int64_t id,
 			int64_t privateId,
 			const std::string& displayName, 
-			std::shared_ptr<WebRTCServiceInterface> wrs);
+			std::shared_ptr<WebRTCServiceInterface> wrs,
+			std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> listeners);
 
 		~Participant();
-
-		void setListenerProxy(std::weak_ptr<VideoRoomListenerProxy> proxy);
 
 	protected:
 		void onAttached(bool success) override;
@@ -61,8 +62,7 @@ namespace vi {
 		bool _audioOn;
 		std::string _displayName;
 		std::weak_ptr<rtc::VideoSinkInterface<webrtc::VideoFrame>> _renderer;
-
-		std::weak_ptr<VideoRoomListenerProxy> _listenerProxy;
+		std::weak_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;
 	};
 }
 
