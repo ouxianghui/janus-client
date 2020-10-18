@@ -31,6 +31,8 @@
 #include "task_scheduler.h"
 #include "logger/logger_installer.h"
 #include "thread_manager.h"
+#include "participant.h"
+#include "api/media_stream_interface.h"
 
 using namespace core;
 
@@ -39,6 +41,11 @@ static void registerMetaTypes()
 	qRegisterMetaType<std::function<void()>>("std::function<void()>");
 	qRegisterMetaType<std::string>("std::string");
 	qRegisterMetaType<std::vector<std::string>>("std::vector<std::string>");
+
+	qRegisterMetaType<uint64_t>("uint64_t");
+	qRegisterMetaType<std::shared_ptr<vi::Participant>>("std::shared_ptr<vi::Participant>");
+	//qRegisterMetaType<webrtc::MediaStreamInterface>("webrtc::MediaStreamInterface");
+	qRegisterMetaType<rtc::scoped_refptr<webrtc::MediaStreamInterface>>("rtc::scoped_refptr<webrtc::MediaStreamInterface>");
 
 	//// For Network Model
 	//qRegisterMetaType<std::shared_ptr<NetworkRequest>>("std::shared_ptr<NetworkRequest>");

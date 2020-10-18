@@ -5,7 +5,6 @@
 #include <memory>
 #include "i_webrtc_service_listener.h"
 #include "video_room.h"
-#include "i_video_room_listener.h"
 #include "gl_video_renderer.h"
 #include "api/create_peerconnection_factory.h"
 #include "gallery_view.h"
@@ -15,10 +14,11 @@ namespace vi {
 	class Participant;
 }
 
+class VideoRoomListenerProxy;
+
 class UI
 	: public QMainWindow
 	, public vi::IWebRTCServiceListener
-	, public vi::IVideoRoomListener
 	, public std::enable_shared_from_this<UI>
 {
 	Q_OBJECT
@@ -32,20 +32,20 @@ public:
 
 	std::shared_ptr<GLVideoRenderer> _renderer;
 
-private:
+private slots:
 	// IWebRTCServiceListener
 	void onStatus(vi::ServiceStauts status) override;
 
 	// IVideoRoomListener
-	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;
+	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
 																	   
-	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant) override;
+	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant);
 																	   
-	void onDeleteParticipant(std::shared_ptr<vi::Participant> participant) override;
+	void onDeleteParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void onCreateStream(int64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
-	void onDeleteStream(int64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
 private slots:
 	void onActionStartTriggered();
@@ -62,4 +62,6 @@ private:
 	std::shared_ptr<vi::VideoRoom> _vr;
 
 	GalleryView* _galleryView;
+
+	std::shared_ptr<VideoRoomListenerProxy> _videoRoomListenerProxy;
 };

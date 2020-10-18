@@ -20,6 +20,7 @@
 #include "gl_video_renderer.h"
 #include "participant.h"
 #include "logger/logger.h"
+#include "video_room_listener_proxy.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -27,6 +28,13 @@ UI::UI(QWidget *parent)
 	ui.setupUi(this);
 	connect(ui.actionStart, &QAction::triggered, this, &UI::onActionStartTriggered);
 	connect(ui.actionRegister, &QAction::triggered, this, &UI::onActionRegisterTriggered);
+
+	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::updateParticipant, this, &UI::onUpdateParticipant);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteParticipant, this, &UI::onDeleteParticipant);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteStream, this, &UI::onDeleteStream);
 }
 
 UI::~UI()
@@ -64,7 +72,7 @@ void UI::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
 
 }
 
-void UI::onCreateStream(int64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
 	rtc::VideoSinkWants wants;
 	for (auto track : stream->GetVideoTracks()) {
@@ -81,7 +89,7 @@ void UI::onCreateStream(int64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInter
 	}
 }
 
-void UI::onDeleteStream(int64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void UI::onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
 }
 
@@ -92,7 +100,7 @@ void UI::onActionStartTriggered()
 		auto wrs = rtcApp->getWebrtcService();
 		_vr = std::make_shared<vi::VideoRoom>(wrs);
 		_vr->init();
-		_vr->addListener(shared_from_this());
+		_vr->addListener(_videoRoomListenerProxy);
 	}
 	_vr->attach();
 }
