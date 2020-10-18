@@ -17,6 +17,10 @@
 #include "webrtc_service_events.h"
 #include "webrtc_service_interface.h"
 
+namespace rtc {
+	class Thread;
+}
+
 namespace vi {
 	class TaskScheduler;
 	class CapturerTrackSource;
@@ -27,7 +31,7 @@ namespace vi {
 		, public std::enable_shared_from_this<WebRTCService>
 	{
 	public:
-		WebRTCService();
+		WebRTCService(rtc::Thread* callbackThread);
 
 		~WebRTCService() override;
 
@@ -184,6 +188,8 @@ namespace vi {
 		std::unique_ptr<rtc::Thread> _worker;
 		std::unique_ptr<rtc::Thread> _network;
 		rtc::scoped_refptr<CapturerTrackSource> _videoDevice;
+
+		rtc::Thread* _callbackThread;
 	};
 }
 

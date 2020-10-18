@@ -36,7 +36,6 @@ void AppInstance::initApp()
 
 void AppInstance::clearnup()
 {
-	//auto wrs = FetchService(vi::WebRTCServiceInterface);
 	_webrtcService->cleanup();
 	_webrtcService = nullptr;
 }
@@ -65,9 +64,7 @@ void AppInstance::installBizServices()
 
 void AppInstance::installWebRTCService()
 {
-	rtc::Thread* wst = TMgr->thread(vi::ThreadName::SERVICE);
-
-	_webrtcService = vi::WebRTCServiceProxy::Create(wst, std::make_shared<vi::WebRTCService>());
+	_webrtcService = vi::WebRTCServiceProxy::Create(TMgr->thread(vi::ThreadName::SERVICE), std::make_shared<vi::WebRTCService>(TMgr->thread(vi::ThreadName::WORKER)));
 
 	_webrtcService->init();
 }
