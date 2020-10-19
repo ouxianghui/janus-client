@@ -983,7 +983,7 @@ namespace vi {
 		event->reconnect = false;
 		auto lambda = [wself](bool success, const std::string& message) {
 			if (auto self = wself.lock()) {
-				// TODO: not in SERVICE thread
+				self->_connected = true;
 			}
 		};
 		event->callback = std::make_shared<vi::EventCallback>(lambda);
@@ -1162,9 +1162,10 @@ namespace vi {
 					listener->onStatus(ServiceStauts::UP);
 				});
 				if (event && event->callback) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					//self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					const auto& cb = event->callback;
 						(*cb)(true, "");
-					});
+					//});
 				}
 			}
 		};
@@ -1387,6 +1388,7 @@ namespace vi {
 					}
 					else {
 						// should be called in SERVICE thread
+						DLOG("send candidates.");
 						TMgr->thread(ThreadName::SERVICE)->PostTask(RTC_FROM_HERE, [wself, handleId, event]() {
 							if (auto self = wself.lock()) {
 								self->sendSDP(handleId, event);
@@ -2056,9 +2058,10 @@ namespace vi {
 		if (!_connected) {
 			DLOG("Is the server down? (connected = false)");
 			if(event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				//_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				const auto& cb = event->callback;
 					(*cb)(true, "");
-				});
+				//});
 			}
 			return;
 		}
