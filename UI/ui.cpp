@@ -74,7 +74,6 @@ void UI::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
 
 void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-	rtc::VideoSinkWants wants;
 	for (auto track : stream->GetVideoTracks()) {
 		GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
 		renderer->init();

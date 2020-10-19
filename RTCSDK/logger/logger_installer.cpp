@@ -22,7 +22,7 @@ namespace vi
 		if (!_rtcLogSink) {
 			_rtcLogSink = std::make_unique<RTCLogSink>();
 			rtc::LogMessage::SetLogToStderr(false);
-			rtc::LogMessage::AddLogToStream(_rtcLogSink.get(), rtc::LS_VERBOSE);
+			rtc::LogMessage::AddLogToStream(_rtcLogSink.get(), rtc::LS_WARNING);
 		}
 	}
 

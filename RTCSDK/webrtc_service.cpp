@@ -958,7 +958,7 @@ namespace vi {
 		}
 
 		const auto& wreh = _wrehs[handleId];
-		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto wself = weak_from_this();
 		auto lambda = [wself, handleId](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
@@ -978,7 +978,7 @@ namespace vi {
 
 	void WebRTCService::onOpened()
 	{
-		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto wself = weak_from_this();
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
 		event->reconnect = false;
 		auto lambda = [wself](bool success, const std::string& message) {
@@ -1150,7 +1150,7 @@ namespace vi {
 
 	void WebRTCService::createSession(std::shared_ptr<CreateSessionEvent> event)
 	{
-		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto wself = weak_from_this();
 		auto lambda = [wself, event](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
@@ -1179,7 +1179,7 @@ namespace vi {
 
 	void WebRTCService::startHeartbeat()
 	{
-		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto wself = weak_from_this();
 		_heartbeatTaskId = _taskScheduler->schedule([wself]() {
 			if (auto self = wself.lock()) {
 				DLOG("sessionHeartbeat() called");
@@ -1405,12 +1405,13 @@ namespace vi {
 				if (!self) {
 					return;
 				}
-
-				auto& context = wreh->pluginContext()->webrtcContext;
-				context->remoteStream = transceiver->receiver()->streams()[0];
-				self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, context]() {
-					wreh->onCreateRemoteStream(context->remoteStream);
-				});
+				if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO) {
+					auto& context = wreh->pluginContext()->webrtcContext;
+					context->remoteStream = transceiver->receiver()->streams()[0];
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, context]() {
+						wreh->onCreateRemoteStream(context->remoteStream);
+					});
+				}
 			});
 
 			context->pcObserver->setAddTrackCallback(atcb);
@@ -2063,7 +2064,7 @@ namespace vi {
 		}
 
 		// TODO: destroy session from janus 
-		auto wself = std::weak_ptr<WebRTCService>(shared_from_this());
+		auto wself = weak_from_this();
 		auto lambda = [wself](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
