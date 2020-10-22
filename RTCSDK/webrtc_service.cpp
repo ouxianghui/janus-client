@@ -7,7 +7,7 @@
 #include "webrtc_service.h"
 #include "Service/unified_factory.h"
 #include "janus_client.h"
-#include "i_webrtc_event_handler.h"
+#include "plugin_client.h"
 #include "helper_utils.h"
 #include "api/jsep.h"
 #include "webrtc_utils.h"
@@ -128,27 +128,27 @@ namespace vi {
 		return _serviceStatus;
 	}
 
-	void WebRTCService::attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<IWebRTCEventHandler> wreh)
+	void WebRTCService::attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient)
 	{
-		if (!wreh) {
+		if (!pluginClient) {
 			return;
 		}
 
 		auto wself = weak_from_this();
-		auto lambda = [wself, wreh](std::shared_ptr<JanusResponse> model) {
+		auto lambda = [wself, pluginClient](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
 				if (model->janus == "success") {
 					int64_t handleId = model->data.id;
-					wreh->setHandleId(handleId);
-					self->_wrehs[handleId] = wreh;
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh]() {
-						wreh->onAttached(true);
+					pluginClient->setHandleId(handleId);
+					self->_pluginClientMap[handleId] = pluginClient;
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+						pluginClient->onAttached(true);
 					});
 				}
 				else if (model->janus == "error") {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh]() {
-						wreh->onAttached(false);
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+						pluginClient->onAttached(false);
 					});
 				}
 			}
@@ -177,13 +177,13 @@ namespace vi {
 
 	int32_t WebRTCService::getVolume(int64_t handleId, bool isRemote)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			return 0;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		return 0;
 	}
 
@@ -209,13 +209,13 @@ namespace vi {
 
 	bool WebRTCService::isMuted(int64_t handleId, bool isVideo) 
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			return true;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (!context->pc) {
 			DLOG("Invalid PeerConnection");
@@ -266,13 +266,13 @@ namespace vi {
 
 	bool WebRTCService::mute(int64_t handleId, bool isVideo, bool mute)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			return false;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (!context->pc) {
 			DLOG("Invalid PeerConnection");
@@ -313,10 +313,9 @@ namespace vi {
 	void WebRTCService::sendMessage(int64_t handleId, std::shared_ptr<SendMessageEvent> event)
 	{
 		if (status() == ServiceStauts::UP) {
-			if (_wrehs.find(handleId) != _wrehs.end()) {
-				const auto& wreh = _wrehs[handleId];
+			if (const auto& pluginClient = getHandler(handleId)) {
 				auto wself = weak_from_this();
-				auto lambda = [wself, wreh, event](std::shared_ptr<JanusResponse> model) {
+				auto lambda = [wself, pluginClient, event](std::shared_ptr<JanusResponse> model) {
 					DLOG("model->janus = {}", model->janus);
 					if (auto self = wself.lock()) {
 						if (!event || !event->callback) {
@@ -358,7 +357,8 @@ namespace vi {
 			return;
 		}
 
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
 				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -378,8 +378,7 @@ namespace vi {
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (context->dataChannels.find(event->label) != context->dataChannels.end()) {
 			rtc::scoped_refptr<webrtc::DataChannelInterface> dc = context->dataChannels[event->label];
@@ -409,7 +408,8 @@ namespace vi {
 			return;
 		}
 
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
 				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -419,8 +419,7 @@ namespace vi {
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (!context->dtmfSender) {
 			if (context->pc) {
@@ -499,7 +498,8 @@ namespace vi {
 			return;
 		}
 			
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 				if (event->callback) {
 					_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -509,8 +509,7 @@ namespace vi {
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		context->trickle = HelperUtils::isTrickleEnabled(event->trickle);
 		if (!event->media.has_value()) {
 			return;
@@ -794,7 +793,8 @@ namespace vi {
 			return;
 		}
 
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
 				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -804,8 +804,7 @@ namespace vi {
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (event->jsep.has_value()) {
 			if (!context->pc) {
@@ -872,11 +871,13 @@ namespace vi {
 	void WebRTCService::cleanupWebrtc(int64_t handleId, bool hangupRequest)
 	{
 		DLOG("cleaning webrtc ...");
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			return;
 		}
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		if (context) {
 			if (hangupRequest == true) {
 				auto lambda = [wself = weak_from_this()](std::shared_ptr<JanusResponse> model) {
@@ -917,8 +918,8 @@ namespace vi {
 			context->dataChannels.clear();
 			context->dtmfSender = nullptr;
 		}
-		_callbackThread->PostTask(RTC_FROM_HERE, [wreh]() {
-			wreh->onCleanup();
+		_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+			pluginClient->onCleanup();
 		});
 	}
 
@@ -931,7 +932,8 @@ namespace vi {
 	{
 		cleanupWebrtc(handleId);
 
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event && event->callback) {
 				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -957,12 +959,11 @@ namespace vi {
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
 		auto wself = weak_from_this();
 		auto lambda = [wself, handleId](std::shared_ptr<JanusResponse> model) {
 			DLOG("model->janus = {}", model->janus);
 			if (auto self = wself.lock()) {
-				self->_wrehs.erase(handleId);
+				self->_pluginClientMap.erase(handleId);
 			}
 		};
 		std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
@@ -1003,8 +1004,8 @@ namespace vi {
 	void WebRTCService::onMessage(std::shared_ptr<JanusResponse> model)
 	{
 		int64_t sender = model->sender;
-		auto& wreh = getHandler(sender);
-		if (!wreh) {
+		auto& pluginClient = getHandler(sender);
+		if (!pluginClient) {
 			return;
 		}
 
@@ -1022,7 +1023,7 @@ namespace vi {
 			// We got a trickle candidate from Janus
 			bool hasCandidata = model->xhas("candidate");
 
-			auto& context = wreh->pluginContext()->webrtcContext;
+			auto& context = pluginClient->pluginContext()->webrtcContext;
 			if (context->pc && context->remoteSdp) {
 				// Add candidate right now
 				if (!hasCandidata || (hasCandidata && model->xhas("completed") && model->candidate.completed == true)) {
@@ -1070,8 +1071,8 @@ namespace vi {
 			// The PeerConnection with the server is up! Notify this
 			DLOG("Got a webrtcup event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh]() {
-				wreh->onWebrtcState(true, "");
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+				pluginClient->onWebrtcState(true, "");
 			});
 
 			return;
@@ -1080,32 +1081,32 @@ namespace vi {
 			// A plugin asked the core to hangup a PeerConnection on one of our handles
 			DLOG("Got a hangup event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh, reason = model->reason]() {
-				wreh->onWebrtcState(false, reason);
-				wreh->onHangup();
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model->reason]() {
+				pluginClient->onWebrtcState(false, reason);
+				pluginClient->onHangup();
 			});
 		}
 		else if (model->janus == "detached") {
 			// A plugin asked the core to detach one of our handles
 			DLOG("Got a detached event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh]() {
-				wreh->onDetached();
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+				pluginClient->onDetached();
 			});
 		}
 		else if (model->janus == "media") {
 			// Media started/stopped flowing
 			DLOG("Got a media event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh, model]() {
-				wreh->onMediaState(model->type, model->receiving);
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
+				pluginClient->onMediaState(model->type, model->receiving);
 			});
 		}
 		else if (model->janus == "slowlink") {
 			DLOG("Got a slowlink event on session: {}", _sessionId);
 	
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh, model]() {
-				wreh->onSlowLink(model->uplink, model->lost);
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
+				pluginClient->onSlowLink(model->uplink, model->lost);
 			});
 		}
 		else if (model->janus == "event") {
@@ -1130,8 +1131,8 @@ namespace vi {
 				jsep = model->jsep;
 			}
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [wreh, data, jsep]() {
-				wreh->onMessage(data, jsep);
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, data, jsep]() {
+				pluginClient->onMessage(data, jsep);
 			});
 		}
 		else if (model->janus == "timeout") {
@@ -1193,17 +1194,17 @@ namespace vi {
 		}, 5000, true);
 	}
 
-	std::shared_ptr<IWebRTCEventHandler> WebRTCService::getHandler(int64_t handleId)
+	std::shared_ptr<PluginClient> WebRTCService::getHandler(int64_t handleId)
 	{
 		if (handleId == -1) {
 			ELOG("Missing sender...");
 			return nullptr;
 		}
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		if (_pluginClientMap.find(handleId) == _pluginClientMap.end()) {
 			ELOG("This handle is not attached to this session");
 			return nullptr;
 		}
-		return _wrehs[handleId];
+		return _pluginClientMap[handleId];
 	}
 
 	void WebRTCService::stopAllTracks(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {
@@ -1228,7 +1229,8 @@ namespace vi {
 		std::shared_ptr<PrepareWebRTCEvent> event,
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			ELOG("Invalid handle");
 			// Close all tracks if the given stream has been created internally
 			if (!event->stream) {
@@ -1244,8 +1246,7 @@ namespace vi {
 
 		auto wself = weak_from_this();
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 
 		if (stream) {
 			DLOG("audio tracks: {}", stream->GetAudioTracks().size());
@@ -1345,12 +1346,12 @@ namespace vi {
 
 			context->pcObserver = std::make_unique<PCObserver>();
 
-			DLOG("Preparing local SDP and gathering candidates (trickle = {})", wreh->pluginContext()->webrtcContext->trickle ? "true" : "false");
+			DLOG("Preparing local SDP and gathering candidates (trickle = {})", pluginClient->pluginContext()->webrtcContext->trickle ? "true" : "false");
 
-			auto icccb = std::make_shared<IceConnectionChangeCallback>([wreh, wself](webrtc::PeerConnectionInterface::IceConnectionState newState) {
+			auto icccb = std::make_shared<IceConnectionChangeCallback>([pluginClient, wself](webrtc::PeerConnectionInterface::IceConnectionState newState) {
 				if (auto self = wself.lock()) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, newState]() {
-						wreh->onIceState(newState);
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, newState]() {
+						pluginClient->onIceState(newState);
 					});
 				}
 			});
@@ -1361,15 +1362,15 @@ namespace vi {
 			});
 			context->pcObserver->setIceGatheringChangeCallback(igccb);
 
-			auto iccb = std::make_shared<IceCandidateCallback>([wreh, wself, event](const webrtc::IceCandidateInterface* candidate) {
+			auto iccb = std::make_shared<IceCandidateCallback>([pluginClient, wself, event](const webrtc::IceCandidateInterface* candidate) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
 
-				auto handleId = wreh->pluginContext()->handleId;
+				auto handleId = pluginClient->pluginContext()->handleId;
 				if (candidate) {
-					if (wreh->pluginContext()->webrtcContext->trickle) {
+					if (pluginClient->pluginContext()->webrtcContext->trickle) {
 						CandidateData data;
 						candidate->ToString(&data.candidate);
 						data.sdpMid = candidate->sdp_mid();
@@ -1380,8 +1381,8 @@ namespace vi {
 				} 
 				else {
 					DLOG("End of candidates.");
-					wreh->pluginContext()->webrtcContext->iceDone = true;
-					if (wreh->pluginContext()->webrtcContext->trickle) {
+					pluginClient->pluginContext()->webrtcContext->iceDone = true;
+					if (pluginClient->pluginContext()->webrtcContext->trickle) {
 						CandidateData data;
 						data.completed = true;
 						self->_client->sendTrickleCandidate(self->_sessionId, handleId, data, nullptr);
@@ -1401,34 +1402,34 @@ namespace vi {
 
 			context->pcObserver->setIceCandidateCallback(iccb);
 
-			auto atcb = std::make_shared<AddTrackCallback>([wreh, wself, event](rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+			auto atcb = std::make_shared<AddTrackCallback>([pluginClient, wself, event](rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
 				DLOG("Adding Remote Track");
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
 				if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO) {
-					auto& context = wreh->pluginContext()->webrtcContext;
+					auto& context = pluginClient->pluginContext()->webrtcContext;
 					context->remoteStream = transceiver->receiver()->streams()[0];
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, context]() {
-						wreh->onCreateRemoteStream(context->remoteStream);
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+						pluginClient->onCreateRemoteStream(context->remoteStream);
 					});
 				}
 			});
 
 			context->pcObserver->setAddTrackCallback(atcb);
 
-			auto rtcb = std::make_shared<RemoveTrackCallback>([wreh, wself, event](rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+			auto rtcb = std::make_shared<RemoveTrackCallback>([pluginClient, wself, event](rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
 				DLOG("Removing Remote Track");
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
 
-				auto& context = wreh->pluginContext()->webrtcContext;
+				auto& context = pluginClient->pluginContext()->webrtcContext;
 				if (context->remoteStream && !receiver->streams().empty() && (receiver->streams()[0]->id() == context->remoteStream->id())) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, context]() {
-						wreh->onDeleteRemoteStream(context->remoteStream);
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+						pluginClient->onDeleteRemoteStream(context->remoteStream);
 						context->remoteStream = nullptr;
 					});
 				}
@@ -1506,8 +1507,8 @@ namespace vi {
 			}
 
 			if (context->myStream) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [wreh, context]() {
-					wreh->onCreateLocalStream(context->myStream);
+				_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+					pluginClient->onCreateLocalStream(context->myStream);
 				});
 			}
 
@@ -1564,16 +1565,14 @@ namespace vi {
 
 	void WebRTCService::sendSDP(int64_t handleId, std::shared_ptr<PrepareWebRTCEvent> event)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			ELOG("Invalid handle, not sending anything");
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
-
 		DLOG("Sending offer/answer SDP...");
-
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		if (!context->mySdp) {
 			WLOG("Local SDP instance is invalid, not sending anything...");
 			return;
@@ -1594,17 +1593,17 @@ namespace vi {
 
 	void WebRTCService::createDataChannel(int64_t handleId, const std::string& dcLabel, rtc::scoped_refptr<webrtc::DataChannelInterface> incoming)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			ELOG("Invalid handle");
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
-
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		if (!context->pc) {
 			ELOG("Invalid peerconnection");
 		}
+
 		if (incoming) {
 			context->dataChannels[dcLabel] = incoming;
 		}
@@ -1618,7 +1617,7 @@ namespace vi {
 
 		std::shared_ptr<DCObserver> observer = std::make_shared<DCObserver>();
 
-		auto scc = std::make_shared<StateChangeCallback>([wreh, dcLabel, context, wself]() {
+		auto scc = std::make_shared<StateChangeCallback>([pluginClient, dcLabel, context, wself]() {
 			if (context->dataChannels.find(dcLabel) != context->dataChannels.end()) {
 				auto self = wself.lock();
 				if (!self) {
@@ -1626,25 +1625,25 @@ namespace vi {
 				}
 				auto dc = context->dataChannels[dcLabel];
 				if (dc->state() == webrtc::DataChannelInterface::DataState::kOpen) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, dcLabel]() {
-						wreh->onDataOpen(dcLabel);
+					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, dcLabel]() {
+						pluginClient->onDataOpen(dcLabel);
 					});
 				}
 			}
 		});
 		observer->setStateChangeCallback(scc);
 
-		auto mc = std::make_shared<MessageCallback>([wreh, dcLabel, wself](const webrtc::DataBuffer& buffer) {
+		auto mc = std::make_shared<MessageCallback>([pluginClient, dcLabel, wself](const webrtc::DataBuffer& buffer) {
 			auto self = wself.lock();
 			if (!self) {
 				return;
 			}
-			self->_callbackThread->PostTask(RTC_FROM_HERE, [wreh, buffer, dcLabel]() {
+			self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, buffer, dcLabel]() {
 				size_t size = buffer.data.size();
 				char* msg = new char[size + 1];
 				memcpy(msg, buffer.data.data(), size);
 				msg[size] = 0;
-				wreh->onData(std::string(msg, size), dcLabel);
+				pluginClient->onData(std::string(msg, size), dcLabel);
 				delete[] msg;
 			});
 		});
@@ -1764,14 +1763,13 @@ namespace vi {
 
 	void WebRTCService::_createOffer(int64_t handleId, std::shared_ptr<PrepareWebRTCEvent> event)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			ELOG("Invalid handle");
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
-
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		bool simulcast = event->simulcast.value_or(false);
 		if (!simulcast) {
 			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
@@ -1893,14 +1891,13 @@ namespace vi {
 
 	void WebRTCService::_createAnswer(int64_t handleId, std::shared_ptr<PrepareWebRTCEvent> event)
 	{
-		if (_wrehs.find(handleId) == _wrehs.end()) {
+		const auto& pluginClient = getHandler(handleId);
+		if (!pluginClient) {
 			DLOG("Invalid handle");
 			return;
 		}
 
-		const auto& wreh = _wrehs[handleId];
-		const auto& context = wreh->pluginContext()->webrtcContext;
-
+		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		bool simulcast = event->simulcast.value_or(false);
 		if (!simulcast) {
 			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
@@ -2042,7 +2039,7 @@ namespace vi {
 			return;
 		}
 		if (event->cleanupHandles) {
-			for (auto pair : _wrehs) {
+			for (auto pair : _pluginClientMap) {
 				std::shared_ptr<DetachEvent> dh = std::make_shared<DetachEvent>();
 				dh->noRequest = true;
 				int64_t hId = pair.first;
@@ -2053,7 +2050,7 @@ namespace vi {
 				destroyHandle(hId, dh);
 			}
 
-			_wrehs.clear();
+			_pluginClientMap.clear();
 		}
 		if (!_connected) {
 			DLOG("Is the server down? (connected = false)");

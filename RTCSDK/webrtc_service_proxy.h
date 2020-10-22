@@ -17,7 +17,7 @@ namespace vi {
 		WEAK_PROXY_METHOD1(void, addListener, std::shared_ptr<IWebRTCServiceListener>)
 		WEAK_PROXY_METHOD1(void, removeListener, std::shared_ptr<IWebRTCServiceListener>)
 		WEAK_PROXY_METHOD0(ServiceStauts, status)
-		WEAK_PROXY_METHOD3(void, attach, const std::string&, const std::string&, std::shared_ptr<IWebRTCEventHandler>)
+		WEAK_PROXY_METHOD3(void, attach, const std::string&, const std::string&, std::shared_ptr<PluginClient>)
 		WEAK_PROXY_METHOD1(void, destroy, std::shared_ptr<DestroySessionEvent>)
 		WEAK_PROXY_METHOD0(void, reconnect)
 		WEAK_PROXY_METHOD1(int32_t, remoteVolume, int64_t)

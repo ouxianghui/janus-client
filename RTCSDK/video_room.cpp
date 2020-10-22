@@ -81,7 +81,7 @@ namespace vi {
 			request.request = "configure";
 			request.bitrate = 256000;
 
-			if (auto wreh = _pluginContext->webrtcService.lock()) {
+			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 				auto lambda = [](bool success, const std::string& message) {
 					DLOG("message: {}", message.c_str());
@@ -238,7 +238,7 @@ namespace vi {
 				ConfigAudioVideoRequest request;
 				request.audio = audioOn;
 				request.video = true;
-				if (auto wreh = self->pluginContext()->webrtcService.lock()) {
+				if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
 					std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 					auto lambda = [](bool success, const std::string& message) {
 						DLOG("publishOwnStream: {}", message.c_str());
@@ -272,7 +272,7 @@ namespace vi {
 	void VideoRoom::unpublishOwnStream()
 	{
 		UnpublishRequest request;
-		if (auto wreh = pluginContext()->webrtcService.lock()) {
+		if (auto webrtcService = pluginContext()->webrtcService.lock()) {
 			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 			auto lambda = [](bool success, const std::string& message) {
 				DLOG("message: {}", message.c_str());

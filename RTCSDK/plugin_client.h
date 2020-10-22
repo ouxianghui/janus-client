@@ -23,12 +23,11 @@ namespace vi {
 
 		~PluginClient();
 
-		// IWebRTCEventHandler
+		// IPluginClient
 		void setHandleId(int64_t handleId) override;
 
 		const std::shared_ptr<PluginContext>& pluginContext() const override;
 
-		// IPluginClient
 		void attach() override;
 
 		int32_t remoteVolume() override;

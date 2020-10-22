@@ -18,10 +18,6 @@ namespace vi {
 	public:
 		virtual ~IWebRTCEventHandler() {}
 
-		virtual void setHandleId(int64_t handleId) = 0;
-
-		virtual const std::shared_ptr<PluginContext>& pluginContext() const = 0;
-
 		virtual void onAttached(bool success) = 0;
 
 		virtual void onHangup() = 0;

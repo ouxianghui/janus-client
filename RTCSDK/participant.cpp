@@ -42,7 +42,7 @@ namespace vi {
 			// publisher is sending them, set the 'offer_audio', 'offer_video' or
 			// 'offer_data' properties to false (they're true by default), e.g.:
 			// 		subscribe["offer_video"] = false;
-			if (auto wreh = _pluginContext->webrtcService.lock()) {
+			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 				auto lambda = [](bool success, const std::string& message) {
 					std::string text = message;
@@ -107,7 +107,7 @@ namespace vi {
 				if (success) {
 					StartRequest request;
 					request.room = 1234;
-					if (auto wreh = self->pluginContext()->webrtcService.lock()) {
+					if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
 						std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 						auto lambda = [](bool success, const std::string& message) {
 							DLOG("message: {}", message.c_str());

@@ -9,10 +9,15 @@
 #include "webrtc_service_events.h"
 
 namespace vi {
+	class PluginContext;
 	class IPluginClient
 	{
 	public:
 		virtual ~IPluginClient() {}
+
+		virtual void setHandleId(int64_t handleId) = 0;
+
+		virtual const std::shared_ptr<PluginContext>& pluginContext() const = 0;
 
 		virtual void attach() = 0;
 

@@ -24,6 +24,7 @@ namespace rtc {
 namespace vi {
 	class TaskScheduler;
 	class CapturerTrackSource;
+	class PluginClient;
 	class WebRTCService
 		: public WebRTCServiceInterface
 		, public ISFUClientListener
@@ -48,7 +49,7 @@ namespace vi {
 
 		ServiceStauts status() override;
 
-		void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<IWebRTCEventHandler> wreh) override;
+		void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient) override;
 
 		void destroy(std::shared_ptr<DestroySessionEvent> event) override;
 
@@ -119,7 +120,7 @@ namespace vi {
 
 		void startHeartbeat();
 
-		std::shared_ptr<IWebRTCEventHandler> getHandler(int64_t handleId);
+		std::shared_ptr<PluginClient> getHandler(int64_t handleId);
 
 		void prepareStreams(int64_t handleId, std::shared_ptr<PrepareWebRTCEvent> event, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
@@ -170,7 +171,7 @@ namespace vi {
 
 		bool _reconnect = false;
 
-		std::unordered_map<int64_t, std::shared_ptr<IWebRTCEventHandler>> _wrehs;
+		std::unordered_map<int64_t, std::shared_ptr<PluginClient>> _pluginClientMap;
 
 		std::shared_ptr<ISFUClient> _client;
 

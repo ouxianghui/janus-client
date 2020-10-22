@@ -14,7 +14,7 @@
 #include "i_webrtc_service_listener.h"
 
 namespace vi {
-	class IWebRTCEventHandler;
+	class PluginClient;
 	using namespace core;
 	class WebRTCServiceInterface
 	{
@@ -31,7 +31,7 @@ namespace vi {
 
 		virtual ServiceStauts status() = 0;
 
-		virtual void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<IWebRTCEventHandler> wreh) = 0;
+		virtual void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient) = 0;
 
 		virtual void destroy(std::shared_ptr<DestroySessionEvent> event) = 0;
 
