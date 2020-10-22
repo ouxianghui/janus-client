@@ -16,14 +16,14 @@ Janus_client is an open source, learning and research purpose, C/C++ native desi
 * asio/websocketpp/x2struct/spdlog have joined this repository as submodules. 
 * glew and WebRTC library(M85, release, webrtc.7z) have been included directly in this repository. 
 
-## Arch
-<img src="https://github.com/ouxianghui/janus_client/blob/main/janus-client-arch.svg" height="251" /><br>
-
 ## Features
 * video room (in progress)
 * text room
 * video call
 * voice mail
+
+## Arch
+<img src="https://github.com/ouxianghui/janus_client/blob/main/janus-client-arch.svg" height="500" /><br>
 
 ## Compile
 Get the code:
