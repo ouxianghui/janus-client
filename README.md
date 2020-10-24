@@ -1,6 +1,6 @@
-## janus_client
+## janus-client
 
-Janus_client is an open source, learning and research purpose, C/C++ native designed and developed by Jackie Ou. Most components of janus_client are based on rtc_base of WebRTC. In order to debug webrtc code directly, I choose to use Visual Studio to develop on Windows platform. MacOS, IOS and Linux platforms will be supported after the main feautres are completed.
+Janus-client is an open source, learning and research purpose, C/C++ native designed and developed by Jackie Ou. Most components of janus_client are based on rtc_base of WebRTC. In order to debug webrtc code directly, I choose to use Visual Studio to develop on Windows platform. MacOS, IOS and Linux platforms will be supported after the main feautres are completed.
 
 ## Dependencies
 
@@ -28,7 +28,7 @@ Janus_client is an open source, learning and research purpose, C/C++ native desi
 ## Compile
 Get the code:
 
-	git clone --recursive https://github.com/ouxianghui/janus_client.git
+	git clone --recursive https://github.com/ouxianghui/janus-client.git
   
   Open RTCSln.sln with Visual Studio(2017)
   
