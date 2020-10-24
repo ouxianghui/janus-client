@@ -21,6 +21,7 @@
 #include "participant.h"
 #include "logger/logger.h"
 #include "video_room_listener_proxy.h"
+#include <qtoolbar.h>
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -35,6 +36,8 @@ UI::UI(QWidget *parent)
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteParticipant, this, &UI::onDeleteParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteStream, this, &UI::onDeleteStream, Qt::QueuedConnection);
+
+
 }
 
 UI::~UI()

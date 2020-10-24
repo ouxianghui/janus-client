@@ -1,4 +1,54 @@
 <RCC>
-    <qresource prefix="UI">
+    <qresource prefix="/UI">
+        <file>icons/social-media/001-social media marketing.png</file>
+        <file>icons/social-media/002-social media marketing.png</file>
+        <file>icons/social-media/003-speech bubble.png</file>
+        <file>icons/social-media/004-like.png</file>
+        <file>icons/social-media/005-notification.png</file>
+        <file>icons/social-media/006-kid.png</file>
+        <file>icons/social-media/007-adult.png</file>
+        <file>icons/social-media/008-old woman.png</file>
+        <file>icons/social-media/009-video.png</file>
+        <file>icons/social-media/010-youtube.png</file>
+        <file>icons/social-media/011-tiktok.png</file>
+        <file>icons/social-media/012-twitter.png</file>
+        <file>icons/social-media/013-video conference.png</file>
+        <file>icons/social-media/014-message.png</file>
+        <file>icons/social-media/015-keyboard.png</file>
+        <file>icons/social-media/016-contact book.png</file>
+        <file>icons/social-media/017-location.png</file>
+        <file>icons/social-media/018-live.png</file>
+        <file>icons/social-media/019-instagram.png</file>
+        <file>icons/social-media/020-settings.png</file>
+        <file>icons/social-media/021-content.png</file>
+        <file>icons/social-media/022-follow.png</file>
+        <file>icons/social-media/023-unfollow.png</file>
+        <file>icons/social-media/024-private account.png</file>
+        <file>icons/social-media/025-admin.png</file>
+        <file>icons/social-media/026-facebook.png</file>
+        <file>icons/social-media/027-social media.png</file>
+        <file>icons/social-media/028-like.png</file>
+        <file>icons/social-media/029-tap.png</file>
+        <file>icons/social-media/030-video player.png</file>
+        <file>icons/social-media/031-kid.png</file>
+        <file>icons/social-media/032-seo.png</file>
+        <file>icons/social-media/033-eye.png</file>
+        <file>icons/social-media/034-voice message.png</file>
+        <file>icons/social-media/035-worldwide.png</file>
+        <file>icons/social-media/036-new message.png</file>
+        <file>icons/social-media/037-social network.png</file>
+        <file>icons/social-media/038-copyright.png</file>
+        <file>icons/social-media/039-copyright.png</file>
+        <file>icons/social-media/040-social network.png</file>
+        <file>icons/social-media/041-video player.png</file>
+        <file>icons/social-media/042-world grid.png</file>
+        <file>icons/social-media/043-photo camera.png</file>
+        <file>icons/social-media/044-foul.png</file>
+        <file>icons/social-media/045-avatar.png</file>
+        <file>icons/social-media/046-avatar.png</file>
+        <file>icons/social-media/047-mail.png</file>
+        <file>icons/social-media/048-search.png</file>
+        <file>icons/social-media/049-money.png</file>
+        <file>icons/social-media/050-like.png</file>
     </qresource>
 </RCC>
