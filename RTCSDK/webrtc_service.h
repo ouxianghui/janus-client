@@ -12,8 +12,8 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "api/peer_connection_interface.h"
-#include "i_sfu_client.h"
-#include "i_sfu_client_listener.h"
+#include "i_sfu_api_client.h"
+#include "i_sfu_api_client_listener.h"
 #include "webrtc_service_events.h"
 #include "webrtc_service_interface.h"
 
@@ -27,7 +27,7 @@ namespace vi {
 	class PluginClient;
 	class WebRTCService
 		: public WebRTCServiceInterface
-		, public ISFUClientListener
+		, public ISfuApiClientListener
 		, public core::Observable
 		, public std::enable_shared_from_this<WebRTCService>
 	{
@@ -90,7 +90,7 @@ namespace vi {
 		void detach(int64_t handleId, std::shared_ptr<DetachEvent> event) override;
 
 	protected:
-		// ISFUClientListener
+		// ISfuApiClientListener
 
 	    void onOpened() override;
 
@@ -173,7 +173,7 @@ namespace vi {
 
 		std::unordered_map<int64_t, std::shared_ptr<PluginClient>> _pluginClientMap;
 
-		std::shared_ptr<ISFUClient> _client;
+		std::shared_ptr<ISfuApiClient> _client;
 
 		std::shared_ptr<TaskScheduler> _taskScheduler;
 

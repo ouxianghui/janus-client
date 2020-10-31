@@ -12,7 +12,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="helper_utils.cpp" />
-    <ClCompile Include="janus_client.cpp" />
+    <ClCompile Include="janus_api_client.cpp" />
     <ClCompile Include="local_video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\logger_installer.cpp" />
@@ -41,13 +41,13 @@
     <ClInclude Include="i_message_transport.h" />
     <ClInclude Include="i_message_transport_listener.h" />
     <ClInclude Include="i_plugin_client.h" />
-    <ClInclude Include="i_sfu_client.h" />
-    <ClInclude Include="i_sfu_client_listener.h" />
+    <ClInclude Include="i_sfu_api_client.h" />
+    <ClInclude Include="i_sfu_api_client_listener.h" />
     <ClInclude Include="i_text_room_listener.h" />
     <ClInclude Include="i_video_room_listener.h" />
     <ClInclude Include="i_webrtc_event_handler.h" />
     <ClInclude Include="i_webrtc_service_listener.h" />
-    <ClInclude Include="janus_client.h" />
+    <ClInclude Include="janus_api_client.h" />
     <ClInclude Include="local_video_capture.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\logger_installer.h" />

@@ -8,17 +8,17 @@
 
 #include <string>
 #include <functional>
-#include "i_sfu_client_listener.h"
+#include "i_sfu_api_client_listener.h"
 
 namespace vi {
 	class CandidateData;
-	class ISFUClient {
+	class ISfuApiClient {
 	public:
-		virtual ~ISFUClient() {}
+		virtual ~ISfuApiClient() {}
 
-		virtual void addListener(std::shared_ptr<ISFUClientListener> listener) = 0;
+		virtual void addListener(std::shared_ptr<ISfuApiClientListener> listener) = 0;
 
-		virtual void removeListener(std::shared_ptr<ISFUClientListener> listener) = 0;
+		virtual void removeListener(std::shared_ptr<ISfuApiClientListener> listener) = 0;
 
 		virtual void init() = 0;
 

@@ -6,7 +6,7 @@
 
 #include "webrtc_service.h"
 #include "Service/unified_factory.h"
-#include "janus_client.h"
+#include "janus_api_client.h"
 #include "plugin_client.h"
 #include "helper_utils.h"
 #include "api/jsep.h"
@@ -69,7 +69,7 @@ namespace vi {
 	void WebRTCService::init()
 	{
 		std::string url = "ws://192.168.0.108:8188/ws";
-		_client = std::make_shared<vi::JanusClient>(url, rtc::Thread::Current());
+		_client = std::make_shared<vi::JanusApiClient>(url, rtc::Thread::Current());
 		_client->addListener(shared_from_this());
 		_client->init();
 
@@ -975,7 +975,7 @@ namespace vi {
 		destroyHandle(handleId, event);
 	}
 
-	// ISFUClientListener
+	// ISfuApiClientListener
 
 	void WebRTCService::onOpened()
 	{

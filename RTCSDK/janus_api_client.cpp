@@ -4,7 +4,7 @@
  * Created:   2020-10-01
  **/
 
-#include "Janus_client.h"
+#include "janus_api_client.h"
 #include <iostream>
 #include "message_transport.h"
 #include "message_models.h"
@@ -16,45 +16,45 @@
 
 namespace vi {
 
-	JanusClient::JanusClient(const std::string& url, rtc::Thread* callbackThread)
+	JanusApiClient::JanusApiClient(const std::string& url, rtc::Thread* callbackThread)
 		: _url(url)
 		, _thread(callbackThread)
 	{
 		_transport = std::make_shared<MessageTransport>();
 	}
 
-	JanusClient::~JanusClient()
+	JanusApiClient::~JanusApiClient()
 	{
 
 	}
 
-	void JanusClient::setToken(const std::string& token)
+	void JanusApiClient::setToken(const std::string& token)
 	{
 		_token = token;
 	}
 
-	void JanusClient::setApiSecret(const std::string& apisecret)
+	void JanusApiClient::setApiSecret(const std::string& apisecret)
 	{
 		_apisecret = apisecret;
 	}
 
-	void JanusClient::addListener(std::shared_ptr<ISFUClientListener> listener)
+	void JanusApiClient::addListener(std::shared_ptr<ISfuApiClientListener> listener)
 	{
-		addBizObserver<ISFUClientListener>(_listeners, listener);
+		addBizObserver<ISfuApiClientListener>(_listeners, listener);
 	}
 
-	void JanusClient::removeListener(std::shared_ptr<ISFUClientListener> listener)
+	void JanusApiClient::removeListener(std::shared_ptr<ISfuApiClientListener> listener)
 	{
-		removeBizObserver<ISFUClientListener>(_listeners, listener);
+		removeBizObserver<ISfuApiClientListener>(_listeners, listener);
 	}
 
-	void JanusClient::init()
+	void JanusApiClient::init()
 	{
 		_transport->addListener(shared_from_this());
 		_transport->connect(_url);
 	}
 
-	void JanusClient::createSession(std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::createSession(std::shared_ptr<JCCallback> callback) 
 	{
 		JanusRequest request;
 		request.janus = "create";
@@ -69,7 +69,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::destroySession(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::destroySession(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
 	{
 		KeepAliveRequest request;
 		request.janus = "destroy";
@@ -85,7 +85,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::reconnectSession(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::reconnectSession(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
 	{
 		ReconnectRequest request;
 		request.janus = "claim";
@@ -101,7 +101,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::keepAlive(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::keepAlive(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
 	{
 		KeepAliveRequest request;
 		request.janus = "keepalive";
@@ -117,7 +117,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::attach(int64_t sessionId, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<JCCallback> callback)
+	void JanusApiClient::attach(int64_t sessionId, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<JCCallback> callback)
 	{
 		AttachRequest request;
 		request.janus = "attach";
@@ -135,7 +135,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::detach(int64_t sessionId, int64_t handleId, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::detach(int64_t sessionId, int64_t handleId, std::shared_ptr<JCCallback> callback) 
 	{
 		DetachRequest request;
 		request.janus = "detach";
@@ -152,7 +152,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::sendMessage(int64_t sessionId, int64_t handleId, const std::string& message, const std::string& jsep, std::shared_ptr<JCCallback> callback)
+	void JanusApiClient::sendMessage(int64_t sessionId, int64_t handleId, const std::string& message, const std::string& jsep, std::shared_ptr<JCCallback> callback)
 	{
 		if (jsep.empty()) {
 			MessageRequest request;
@@ -212,7 +212,7 @@ namespace vi {
 		}
 	}
 
-	void JanusClient::sendTrickleCandidate(int64_t sessionId, int64_t handleId, const CandidateData& candidate, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::sendTrickleCandidate(int64_t sessionId, int64_t handleId, const CandidateData& candidate, std::shared_ptr<JCCallback> callback) 
 	{
 		TrickleRequest request;
 		request.janus = "trickle";
@@ -230,7 +230,7 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::hangup(int64_t sessionId, int64_t handleId, std::shared_ptr<JCCallback> callback) 
+	void JanusApiClient::hangup(int64_t sessionId, int64_t handleId, std::shared_ptr<JCCallback> callback) 
 	{
 		HangupRequest request;
 		request.janus = "hangup";
@@ -247,9 +247,9 @@ namespace vi {
 		_transport->send(data, handler);
 	}
 
-	void JanusClient::onOpened()
+	void JanusApiClient::onOpened()
 	{
-		notifyObserver4Change<ISFUClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISFUClientListener>& listener) {
+		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISfuApiClientListener>& listener) {
 			if (auto self = wself.lock()) {
 				if (self->_thread) {
 					self->_thread->PostTask(RTC_FROM_HERE, [listener]() {
@@ -263,9 +263,9 @@ namespace vi {
 		});
 	}
 
-	void JanusClient::onClosed()
+	void JanusApiClient::onClosed()
 	{
-		notifyObserver4Change<ISFUClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISFUClientListener>& listener) {
+		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISfuApiClientListener>& listener) {
 			if (auto self = wself.lock()) {
 				if (self->_thread) {
 					self->_thread->PostTask(RTC_FROM_HERE, [listener]() {
@@ -279,9 +279,9 @@ namespace vi {
 		});
 	}
 
-	void JanusClient::onFailed(int errorCode, const std::string& reason)
+	void JanusApiClient::onFailed(int errorCode, const std::string& reason)
 	{
-		notifyObserver4Change<ISFUClientListener>(_listeners, [wself = weak_from_this(), errorCode, reason](const std::shared_ptr<ISFUClientListener>& listener) {
+		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), errorCode, reason](const std::shared_ptr<ISfuApiClientListener>& listener) {
 			if (auto self = wself.lock()) {
 				if (self->_thread) {
 					self->_thread->PostTask(RTC_FROM_HERE, [listener, errorCode, reason]() {
@@ -295,9 +295,9 @@ namespace vi {
 		});
 	}
 
-	void JanusClient::onMessage(std::shared_ptr<JanusResponse> model)
+	void JanusApiClient::onMessage(std::shared_ptr<JanusResponse> model)
 	{
-		notifyObserver4Change<ISFUClientListener>(_listeners, [wself = weak_from_this(), model](const std::shared_ptr<ISFUClientListener>& listener) {
+		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), model](const std::shared_ptr<ISfuApiClientListener>& listener) {
 			if (auto self = wself.lock()) {
 				if (self->_thread) {
 					self->_thread->PostTask(RTC_FROM_HERE, [listener, model]() {
@@ -311,7 +311,7 @@ namespace vi {
 		});
 	}
 
-	std::shared_ptr<JCCallback> JanusClient::wrapAsyncCallback(std::shared_ptr<JCCallback> callback)
+	std::shared_ptr<JCCallback> JanusApiClient::wrapAsyncCallback(std::shared_ptr<JCCallback> callback)
 	{
 		if (!_thread) {
 			return callback;

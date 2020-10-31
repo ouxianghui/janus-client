@@ -8,7 +8,7 @@
 
 #include <memory>
 #include <unordered_map>
-#include "i_sfu_client.h"
+#include "i_sfu_api_client.h"
 #include "Websocket/websocket_endpoint.h"
 #include "i_message_transport_listener.h"
 #include "service/observable.h"
@@ -19,25 +19,25 @@ namespace rtc {
 
 namespace vi {
 	class IMessageTransportor;
-	class JanusClient
-		: public ISFUClient
+	class JanusApiClient
+		: public ISfuApiClient
 		, public IMessageTransportListener
 		, public core::Observable
-		, public std::enable_shared_from_this<JanusClient>
+		, public std::enable_shared_from_this<JanusApiClient>
 	{
 	public:
-		JanusClient(const std::string& url, rtc::Thread* callbackThread = nullptr);
+		JanusApiClient(const std::string& url, rtc::Thread* callbackThread = nullptr);
 
-		~JanusClient() override;
+		~JanusApiClient() override;
 
 		void setToken(const std::string& token);
 
 		void setApiSecret(const std::string& apisecret);
 
-		// ISFUClient
-		void addListener(std::shared_ptr<ISFUClientListener> listener) override;
+		// ISfuApiClient
+		void addListener(std::shared_ptr<ISfuApiClientListener> listener) override;
 
-		void removeListener(std::shared_ptr<ISFUClientListener> listener) override;
+		void removeListener(std::shared_ptr<ISfuApiClientListener> listener) override;
 
 		void init() override;
 
@@ -78,6 +78,6 @@ namespace vi {
 		std::string _token;
 		std::string _apisecret;
 		std::shared_ptr<IMessageTransport> _transport;
-		std::vector<std::weak_ptr<ISFUClientListener>> _listeners;
+		std::vector<std::weak_ptr<ISfuApiClientListener>> _listeners;
 	};
 }

@@ -10,10 +10,10 @@
 #include "message_transport.h"
 
 namespace vi {
-	class ISFUClientListener
+	class ISfuApiClientListener
 	{
 	public:
-		virtual ~ISFUClientListener() {}
+		virtual ~ISfuApiClientListener() {}
 
 		virtual void onOpened() = 0;
 
