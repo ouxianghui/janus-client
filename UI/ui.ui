@@ -30,9 +30,42 @@
      <x>0</x>
      <y>0</y>
      <width>1080</width>
-     <height>22</height>
+     <height>21</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>&amp;Settings</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionJanusGateway"/>
+    <addaction name="actionMyProfile"/>
+   </widget>
+   <widget class="QMenu" name="menuConnect">
+    <property name="title">
+     <string>&amp;Janus</string>
+    </property>
+    <addaction name="actionConnectJanus"/>
+   </widget>
+   <widget class="QMenu" name="menuClients">
+    <property name="title">
+     <string>&amp;Clients</string>
+    </property>
+    <addaction name="actionVideoRoom"/>
+    <addaction name="actionVideoCall"/>
+    <addaction name="actionTextRoom"/>
+    <addaction name="actionVoiceMail"/>
+   </widget>
+   <widget class="QMenu" name="menuAbout">
+    <property name="title">
+     <string>&amp;About</string>
+    </property>
+    <addaction name="actionAboutUs"/>
+   </widget>
+   <addaction name="menuConnect"/>
+   <addaction name="menuClients"/>
+   <addaction name="menuSettings"/>
+   <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
    <property name="baseSize">
@@ -56,10 +89,6 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionVideoRoom"/>
-   <addaction name="actionVideoCall"/>
-   <addaction name="actionTextRoom"/>
-   <addaction name="actionVoiceMail"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionStart">
@@ -77,7 +106,40 @@
     <string>Register</string>
    </property>
   </action>
+  <action name="actionJanusGateway">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/035-worldwide.png</normaloff>:/UI/icons/social-media/035-worldwide.png</iconset>
+   </property>
+   <property name="text">
+    <string>Janus Gateway</string>
+   </property>
+  </action>
+  <action name="actionMyProfile">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/020-settings.png</normaloff>:/UI/icons/social-media/020-settings.png</iconset>
+   </property>
+   <property name="text">
+    <string>My Profile</string>
+   </property>
+  </action>
+  <action name="actionConnectJanus">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/040-social network.png</normaloff>:/UI/icons/social-media/040-social network.png</iconset>
+   </property>
+   <property name="text">
+    <string>Connect Janus</string>
+   </property>
+  </action>
   <action name="actionVideoRoom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="ui.qrc">
      <normaloff>:/UI/icons/social-media/013-video conference.png</normaloff>:/UI/icons/social-media/013-video conference.png</iconset>
@@ -87,6 +149,9 @@
    </property>
   </action>
   <action name="actionVideoCall">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="ui.qrc">
      <normaloff>:/UI/icons/social-media/005-notification.png</normaloff>:/UI/icons/social-media/005-notification.png</iconset>
@@ -96,21 +161,36 @@
    </property>
   </action>
   <action name="actionTextRoom">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="ui.qrc">
-     <normaloff>:/UI/icons/social-media/036-new message.png</normaloff>:/UI/icons/social-media/036-new message.png</iconset>
+     <normaloff>:/UI/icons/social-media/014-message.png</normaloff>:/UI/icons/social-media/014-message.png</iconset>
    </property>
    <property name="text">
     <string>Text Room</string>
    </property>
   </action>
   <action name="actionVoiceMail">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
    <property name="icon">
     <iconset resource="ui.qrc">
      <normaloff>:/UI/icons/social-media/034-voice message.png</normaloff>:/UI/icons/social-media/034-voice message.png</iconset>
    </property>
    <property name="text">
     <string>Voice Mail</string>
+   </property>
+  </action>
+  <action name="actionAboutUs">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/048-search.png</normaloff>:/UI/icons/social-media/048-search.png</iconset>
+   </property>
+   <property name="text">
+    <string>About Us</string>
    </property>
   </action>
  </widget>
