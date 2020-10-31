@@ -17,7 +17,7 @@ Janus-client is an open source, learning and research purpose, C/C++ native desi
 * glew and WebRTC library(M85, release, webrtc.7z) have been included directly in this repository. 
 
 ## Features
-* video room (in progress)
+* video room (available)
 * text room
 * video call
 * voice mail
