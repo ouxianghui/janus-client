@@ -26,7 +26,7 @@ namespace vi {
 		, public std::enable_shared_from_this<JanusApiClient>
 	{
 	public:
-		JanusApiClient(const std::string& url, rtc::Thread* callbackThread = nullptr);
+		JanusApiClient(rtc::Thread* callbackThread = nullptr);
 
 		~JanusApiClient() override;
 
@@ -40,6 +40,8 @@ namespace vi {
 		void removeListener(std::shared_ptr<ISfuApiClientListener> listener) override;
 
 		void init() override;
+
+		void connect(const std::string& url) override;
 
 		void createSession(std::shared_ptr<JCCallback> callback) override;
 

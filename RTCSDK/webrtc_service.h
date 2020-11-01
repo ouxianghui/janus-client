@@ -40,6 +40,8 @@ namespace vi {
 
 		void cleanup() override;
 
+		void connect(const std::string& url) override;
+
 	protected:
 		// IWebRTCService implement
 
@@ -52,8 +54,6 @@ namespace vi {
 		void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient) override;
 
 		void destroy(std::shared_ptr<DestroySessionEvent> event) override;
-
-		void reconnect() override;
 
 		int32_t remoteVolume(int64_t handleId) override;
 
@@ -117,6 +117,8 @@ namespace vi {
 
 	private:
 		void createSession(std::shared_ptr<CreateSessionEvent> event);
+
+		void reconnectSession();
 
 		void startHeartbeat();
 

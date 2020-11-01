@@ -16,9 +16,8 @@
 
 namespace vi {
 
-	JanusApiClient::JanusApiClient(const std::string& url, rtc::Thread* callbackThread)
-		: _url(url)
-		, _thread(callbackThread)
+	JanusApiClient::JanusApiClient(rtc::Thread* callbackThread)
+		: _thread(callbackThread)
 	{
 		_transport = std::make_shared<MessageTransport>();
 	}
@@ -51,7 +50,12 @@ namespace vi {
 	void JanusApiClient::init()
 	{
 		_transport->addListener(shared_from_this());
-		_transport->connect(_url);
+	}
+
+	void JanusApiClient::connect(const std::string& url)
+	{
+		_url = url;
+		_transport->connect(url);
 	}
 
 	void JanusApiClient::createSession(std::shared_ptr<JCCallback> callback) 

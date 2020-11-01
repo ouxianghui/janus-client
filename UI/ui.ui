@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>JanusApiClient</string>
+   <string>JanusClient</string>
   </property>
   <property name="windowIcon">
    <iconset>
@@ -62,9 +62,17 @@
     </property>
     <addaction name="actionAboutUs"/>
    </widget>
+   <widget class="QMenu" name="menu_Tools">
+    <property name="title">
+     <string>&amp;Tools</string>
+    </property>
+    <addaction name="actionStatistics"/>
+    <addaction name="actionConsole"/>
+   </widget>
    <addaction name="menuConnect"/>
    <addaction name="menuClients"/>
    <addaction name="menuSettings"/>
+   <addaction name="menu_Tools"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -112,7 +120,7 @@
      <normaloff>:/UI/icons/social-media/035-worldwide.png</normaloff>:/UI/icons/social-media/035-worldwide.png</iconset>
    </property>
    <property name="text">
-    <string>Janus Gateway</string>
+    <string>&amp;Janus Gateway</string>
    </property>
   </action>
   <action name="actionMyProfile">
@@ -121,7 +129,7 @@
      <normaloff>:/UI/icons/social-media/020-settings.png</normaloff>:/UI/icons/social-media/020-settings.png</iconset>
    </property>
    <property name="text">
-    <string>My Profile</string>
+    <string>&amp;My Profile</string>
    </property>
   </action>
   <action name="actionConnectJanus">
@@ -133,7 +141,7 @@
      <normaloff>:/UI/icons/social-media/040-social network.png</normaloff>:/UI/icons/social-media/040-social network.png</iconset>
    </property>
    <property name="text">
-    <string>Connect Janus</string>
+    <string>&amp;Connect Janus</string>
    </property>
   </action>
   <action name="actionVideoRoom">
@@ -190,7 +198,31 @@
      <normaloff>:/UI/icons/social-media/048-search.png</normaloff>:/UI/icons/social-media/048-search.png</iconset>
    </property>
    <property name="text">
-    <string>About Us</string>
+    <string>&amp;About Us</string>
+   </property>
+  </action>
+  <action name="actionStatistics">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/015-keyboard.png</normaloff>:/UI/icons/social-media/015-keyboard.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Statistics</string>
+   </property>
+  </action>
+  <action name="actionConsole">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/044-foul.png</normaloff>:/UI/icons/social-media/044-foul.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Console</string>
    </property>
   </action>
  </widget>

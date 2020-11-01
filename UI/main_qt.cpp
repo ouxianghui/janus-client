@@ -33,6 +33,7 @@
 #include "thread_manager.h"
 #include "participant.h"
 #include "api/media_stream_interface.h"
+#include "janus_connection_dialog.h"
 
 using namespace core;
 
@@ -88,14 +89,22 @@ int main(int argc, char *argv[])
 
 	rtcApp->initApp();
 
-	auto wrs = rtcApp->getWebrtcService();
-	std::shared_ptr<UI> w = std::make_shared<UI>();
-	wrs->addListener(w);
-	w->show();
+	int ret = 0;
 
-	w->init();
+	auto jcDialog = std::make_shared<JanusConnectionDialog>(nullptr);
+	jcDialog->init();
+	if (QDialog::Accepted == jcDialog->exec()) {
+		jcDialog->cleanup();
 
-	int ret = a.exec();
+		auto wrs = rtcApp->getWebrtcService();
+		std::shared_ptr<UI> w = std::make_shared<UI>();
+		wrs->addListener(w);
+		w->show();
+
+		w->init();
+
+		ret = a.exec();
+	}
 
 	rtcApp->clearnup();
 

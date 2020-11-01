@@ -6,39 +6,28 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>104</height>
+    <width>640</width>
+    <height>200</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>JanusConnectionDialog</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
+  <layout class="QGridLayout" name="gridLayout">
+   <item row="0" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="1,9">
+     <item>
       <widget class="QLabel" name="serverUrlLabel">
        <property name="text">
-        <string>Server Url:</string>
+        <string>Janus:</string>
        </property>
       </widget>
      </item>
-     <item row="0" column="1">
+     <item>
       <widget class="QLineEdit" name="serverUrlLineEdit">
-       <property name="alignment">
-        <set>Qt::AlignCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="displayNameLabel">
        <property name="text">
-        <string>Display Name:</string>
+        <string>ws://192.168.0.109:8188/ws</string>
        </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="displayNameLineEdit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
@@ -46,7 +35,43 @@
      </item>
     </layout>
    </item>
-   <item>
+   <item row="1" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="1,9">
+     <item>
+      <widget class="QLabel" name="tokenLabel">
+       <property name="text">
+        <string>Token:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="tokenLineEdit">
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="2" column="0">
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="1,9">
+     <item>
+      <widget class="QLabel" name="apiSecretLabel">
+       <property name="text">
+        <string>Secret:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="apiSecretLineEdit">
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item row="3" column="0">
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <widget class="QPushButton" name="connectJanusPushButton">

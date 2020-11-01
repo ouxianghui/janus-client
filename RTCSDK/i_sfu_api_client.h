@@ -22,6 +22,8 @@ namespace vi {
 
 		virtual void init() = 0;
 
+		virtual void connect(const std::string& url) = 0;
+
 		virtual void createSession(std::shared_ptr<JCCallback> callback) = 0;
 
 		virtual void destroySession(int64_t sessionId, std::shared_ptr<JCCallback> callback) = 0;

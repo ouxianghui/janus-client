@@ -29,13 +29,13 @@ namespace vi {
 
 		virtual void removeListener(std::shared_ptr<IWebRTCServiceListener> listener) = 0;
 
+		virtual void connect(const std::string& url) = 0;
+
 		virtual ServiceStauts status() = 0;
 
 		virtual void attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient) = 0;
 
 		virtual void destroy(std::shared_ptr<DestroySessionEvent> event) = 0;
-
-		virtual void reconnect() = 0;
 
 		virtual int32_t remoteVolume(int64_t handleId) = 0;
 

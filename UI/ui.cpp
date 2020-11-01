@@ -140,3 +140,53 @@ void UI::closeEvent(QCloseEvent* event)
 	}
 }
 
+
+void UI::on_actionJanusGateway_triggered()
+{
+
+}
+
+void UI::on_actionMyProfile_triggered()
+{
+
+}
+
+void UI::on_actionConnectJanus_triggered()
+{
+
+}
+
+void UI::on_actionVideoRoom_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionVideoCall_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionTextRoom_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionVoiceMail_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionAboutUs_triggered()
+{
+
+}
+
+void UI::on_actionStatistics_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionConsole_triggered(bool checked)
+{
+
+}

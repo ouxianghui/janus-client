@@ -68,8 +68,8 @@ namespace vi {
 
 	void WebRTCService::init()
 	{
-		std::string url = "ws://192.168.0.108:8188/ws";
-		_client = std::make_shared<vi::JanusApiClient>(url, rtc::Thread::Current());
+		//std::string url = "ws://192.168.0.108:8188/ws";
+		_client = std::make_shared<vi::JanusApiClient>(rtc::Thread::Current());
 		_client->addListener(shared_from_this());
 		_client->init();
 
@@ -123,6 +123,16 @@ namespace vi {
 		removeBizObserver<IWebRTCServiceListener>(_listeners, listener);
 	}
 
+	void WebRTCService::connect(const std::string& url)
+	{
+		if (!_client) {
+			DLOG("_client == nullptr");
+			return;
+		}
+		DLOG("janus api client, connecting...");
+		_client->connect(url);
+	}
+
 	ServiceStauts WebRTCService::status()
 	{
 		return _serviceStatus;
@@ -162,7 +172,7 @@ namespace vi {
 		destroySession(event);
 	}
 
-	void WebRTCService::reconnect()
+	void WebRTCService::reconnectSession()
 	{
 		// TODO: ?
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
