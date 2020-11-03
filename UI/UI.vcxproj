@@ -120,6 +120,7 @@
     <ClCompile Include="janus_connection_dialog.cpp" />
     <ClCompile Include="main_qt.cpp" />
     <ClCompile Include="ui.cpp" />
+    <ClCompile Include="video_room_dialog.cpp" />
     <ClCompile Include="video_room_listener_proxy.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +133,10 @@
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
     </QtUic>
     <QtUic Include="ui.ui" />
+    <QtUic Include="video_room_dialog.ui">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+    </QtUic>
   </ItemGroup>
   <ItemGroup>
     <QtRcc Include="ui.qrc" />
@@ -152,6 +157,10 @@
     <ClInclude Include="gl_defines.h" />
     <ClInclude Include="gl_video_shader.h" />
     <ClInclude Include="i420_texture_cache.h" />
+    <QtMoc Include="video_room_dialog.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtNetwork;$(QTDIR)\include\QtWebsockets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+    </QtMoc>
     <QtMoc Include="janus_connection_dialog.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtNetwork;$(QTDIR)\include\QtWebsockets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>

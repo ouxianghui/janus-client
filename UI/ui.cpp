@@ -22,13 +22,12 @@
 #include "logger/logger.h"
 #include "video_room_listener_proxy.h"
 #include <qtoolbar.h>
+#include "video_room_dialog.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-	connect(ui.actionStart, &QAction::triggered, this, &UI::onActionStartTriggered);
-	connect(ui.actionRegister, &QAction::triggered, this, &UI::onActionRegisterTriggered);
 
 	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
@@ -95,24 +94,68 @@ void UI::onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInte
 {
 }
 
-void UI::onActionStartTriggered()
+void UI::closeEvent(QCloseEvent* event)
 {
-	if (!_vr) {
-		//auto wrs = FetchService(vi::WebRTCServiceInterface);
-		auto wrs = rtcApp->getWebrtcService();
-		_vr = std::make_shared<vi::VideoRoom>(wrs);
-		_vr->init();
-		_vr->addListener(_videoRoomListenerProxy);
+	//_vr->hangup(true);
+	if (_galleryView) {
+		_galleryView->removeAll();
 	}
-	_vr->attach();
 }
 
-void UI::onActionNameTriggered()
+void UI::on_actionAttachRoom_triggered(bool checked)
+{
+	if (checked) {
+		if (!_vr) {
+			auto wrs = rtcApp->getWebrtcService();
+			_vr = std::make_shared<vi::VideoRoom>(wrs);
+			_vr->init();
+			_vr->addListener(_videoRoomListenerProxy);
+			_vr->attach();
+		}
+	}
+	else {
+
+	}
+}
+
+void UI::on_actionPublishStream_triggered(bool checked)
+{
+	if (checked) {
+
+	}
+	else {
+
+	}
+}
+
+void UI::on_actionJanusGateway_triggered()
 {
 
 }
 
-void UI::onActionRegisterTriggered()
+void UI::on_actionMyProfile_triggered()
+{
+
+}
+
+void UI::on_actionAboutUs_triggered()
+{
+
+}
+
+void UI::on_actionStatistics_triggered(bool checked)
+{
+
+}
+
+void UI::on_actionConsole_triggered(bool checked)
+{
+
+}
+
+
+
+void UI::on_actionJoinRoom_triggered()
 {
 	vi::RegisterRequest request;
 	request.request = "join";
@@ -132,61 +175,7 @@ void UI::onActionRegisterTriggered()
 	}
 }
 
-void UI::closeEvent(QCloseEvent* event)
-{
-	//_vr->hangup(true);
-	if (_galleryView) {
-		_galleryView->removeAll();
-	}
-}
-
-
-void UI::on_actionJanusGateway_triggered()
-{
-
-}
-
-void UI::on_actionMyProfile_triggered()
-{
-
-}
-
-void UI::on_actionConnectJanus_triggered()
-{
-
-}
-
-void UI::on_actionVideoRoom_triggered(bool checked)
-{
-
-}
-
-void UI::on_actionVideoCall_triggered(bool checked)
-{
-
-}
-
-void UI::on_actionTextRoom_triggered(bool checked)
-{
-
-}
-
-void UI::on_actionVoiceMail_triggered(bool checked)
-{
-
-}
-
-void UI::on_actionAboutUs_triggered()
-{
-
-}
-
-void UI::on_actionStatistics_triggered(bool checked)
-{
-
-}
-
-void UI::on_actionConsole_triggered(bool checked)
+void UI::on_actionCreateRoom_triggered()
 {
 
 }

@@ -45,16 +45,10 @@
     <property name="title">
      <string>&amp;Janus</string>
     </property>
-    <addaction name="actionConnectJanus"/>
-   </widget>
-   <widget class="QMenu" name="menuClients">
-    <property name="title">
-     <string>&amp;Clients</string>
-    </property>
-    <addaction name="actionVideoRoom"/>
-    <addaction name="actionVideoCall"/>
-    <addaction name="actionTextRoom"/>
-    <addaction name="actionVoiceMail"/>
+    <addaction name="actionAttachRoom"/>
+    <addaction name="actionJoinRoom"/>
+    <addaction name="actionCreateRoom"/>
+    <addaction name="actionPublishStream"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -62,7 +56,7 @@
     </property>
     <addaction name="actionAboutUs"/>
    </widget>
-   <widget class="QMenu" name="menu_Tools">
+   <widget class="QMenu" name="menuTools">
     <property name="title">
      <string>&amp;Tools</string>
     </property>
@@ -70,9 +64,8 @@
     <addaction name="actionConsole"/>
    </widget>
    <addaction name="menuConnect"/>
-   <addaction name="menuClients"/>
    <addaction name="menuSettings"/>
-   <addaction name="menu_Tools"/>
+   <addaction name="menuTools"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="mainToolBar">
@@ -99,21 +92,6 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="actionStart">
-   <property name="text">
-    <string>Start</string>
-   </property>
-  </action>
-  <action name="actionName">
-   <property name="text">
-    <string>Name</string>
-   </property>
-  </action>
-  <action name="actionRegister">
-   <property name="text">
-    <string>Register</string>
-   </property>
-  </action>
   <action name="actionJanusGateway">
    <property name="icon">
     <iconset resource="ui.qrc">
@@ -132,19 +110,7 @@
     <string>&amp;My Profile</string>
    </property>
   </action>
-  <action name="actionConnectJanus">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="ui.qrc">
-     <normaloff>:/UI/icons/social-media/040-social network.png</normaloff>:/UI/icons/social-media/040-social network.png</iconset>
-   </property>
-   <property name="text">
-    <string>&amp;Connect Janus</string>
-   </property>
-  </action>
-  <action name="actionVideoRoom">
+  <action name="actionAttachRoom">
    <property name="checkable">
     <bool>true</bool>
    </property>
@@ -153,43 +119,7 @@
      <normaloff>:/UI/icons/social-media/013-video conference.png</normaloff>:/UI/icons/social-media/013-video conference.png</iconset>
    </property>
    <property name="text">
-    <string>Video Room</string>
-   </property>
-  </action>
-  <action name="actionVideoCall">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="ui.qrc">
-     <normaloff>:/UI/icons/social-media/005-notification.png</normaloff>:/UI/icons/social-media/005-notification.png</iconset>
-   </property>
-   <property name="text">
-    <string>Video Call</string>
-   </property>
-  </action>
-  <action name="actionTextRoom">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="ui.qrc">
-     <normaloff>:/UI/icons/social-media/014-message.png</normaloff>:/UI/icons/social-media/014-message.png</iconset>
-   </property>
-   <property name="text">
-    <string>Text Room</string>
-   </property>
-  </action>
-  <action name="actionVoiceMail">
-   <property name="checkable">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset resource="ui.qrc">
-     <normaloff>:/UI/icons/social-media/034-voice message.png</normaloff>:/UI/icons/social-media/034-voice message.png</iconset>
-   </property>
-   <property name="text">
-    <string>Voice Mail</string>
+    <string>&amp;Attach Room</string>
    </property>
   </action>
   <action name="actionAboutUs">
@@ -223,6 +153,33 @@
    </property>
    <property name="text">
     <string>&amp;Console</string>
+   </property>
+  </action>
+  <action name="actionPublishStream">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/043-photo camera.png</normaloff>:/UI/icons/social-media/043-photo camera.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Publish Stream</string>
+   </property>
+  </action>
+  <action name="actionJoinRoom">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/037-social network.png</normaloff>:/UI/icons/social-media/037-social network.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Join Room</string>
+   </property>
+  </action>
+  <action name="actionCreateRoom">
+   <property name="icon">
+    <iconset resource="ui.qrc">
+     <normaloff>:/UI/icons/social-media/042-world grid.png</normaloff>:/UI/icons/social-media/042-world grid.png</iconset>
+   </property>
+   <property name="text">
+    <string>&amp;Create Room</string>
    </property>
   </action>
  </widget>

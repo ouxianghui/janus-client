@@ -48,33 +48,26 @@ private slots:
 	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
 private slots:
-	void onActionStartTriggered();
-
-	void onActionNameTriggered();
-
-	void onActionRegisterTriggered();
 
 	void closeEvent(QCloseEvent* event);
+
+	void on_actionAttachRoom_triggered(bool checked);
+
+    void on_actionPublishStream_triggered(bool checked);
 
     void on_actionJanusGateway_triggered();
 
     void on_actionMyProfile_triggered();
-
-    void on_actionConnectJanus_triggered();
-
-    void on_actionVideoRoom_triggered(bool checked);
-
-    void on_actionVideoCall_triggered(bool checked);
-
-    void on_actionTextRoom_triggered(bool checked);
-
-    void on_actionVoiceMail_triggered(bool checked);
 
     void on_actionAboutUs_triggered();
 
     void on_actionStatistics_triggered(bool checked);
 
     void on_actionConsole_triggered(bool checked);
+
+    void on_actionJoinRoom_triggered();
+
+    void on_actionCreateRoom_triggered();
 
 private:
 	Ui::UIClass ui;

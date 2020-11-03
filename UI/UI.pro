@@ -29,17 +29,20 @@ win32:RC_FILE = UI.rc
 
 FORMS += \
     janus_connection_dialog.ui \
-    ui.ui
+    ui.ui \
+    video_room_dialog.ui
 
 HEADERS += \
     janus_connection_dialog.h \
     ui.h \
+    video_room_dialog.h \
     video_room_listener_proxy.h
 
 SOURCES += \
     janus_connection_dialog.cpp \
     main_qt.cpp \
     ui.cpp \
+    video_room_dialog.cpp \
     video_room_listener_proxy.cpp
 
 RESOURCES += \
