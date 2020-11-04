@@ -111,10 +111,11 @@ void UI::on_actionAttachRoom_triggered(bool checked)
 			_vr->init();
 			_vr->addListener(_videoRoomListenerProxy);
 			_vr->attach();
+            ui.actionAttachRoom->setChecked(true);
 		}
 	}
 	else {
-
+        ui.actionAttachRoom->setChecked(false);
 	}
 }
 
@@ -153,29 +154,27 @@ void UI::on_actionConsole_triggered(bool checked)
 
 }
 
-
-
-void UI::on_actionJoinRoom_triggered()
-{
-	vi::RegisterRequest request;
-	request.request = "join";
-	request.room = 1234;
-	request.ptype = "publisher";
-	request.display = "jackie";// ui.lineEditUserName->text().toStdString();
-
-	if (_vr) {
-		std::shared_ptr<vi::SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-		auto lambda = [](bool success, const std::string& message) {
-			TLOG("message: {}", message.c_str());
-		};
-		std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-		event->message = x2struct::X::tojson(request);
-		event->callback = callback;
-		_vr->sendMessage(event);
-	}
-}
-
 void UI::on_actionCreateRoom_triggered()
 {
 
+}
+
+void UI::on_actionJoinRoom_triggered(bool checked)
+{
+    vi::RegisterRequest request;
+    request.request = "join";
+    request.room = 1234;
+    request.ptype = "publisher";
+    request.display = "jackie";// ui.lineEditUserName->text().toStdString();
+
+    if (_vr) {
+        std::shared_ptr<vi::SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+        auto lambda = [](bool success, const std::string& message) {
+            TLOG("message: {}", message.c_str());
+        };
+        std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
+        event->message = x2struct::X::tojson(request);
+        event->callback = callback;
+        _vr->sendMessage(event);
+    }
 }

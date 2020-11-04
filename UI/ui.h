@@ -65,9 +65,9 @@ private slots:
 
     void on_actionConsole_triggered(bool checked);
 
-    void on_actionJoinRoom_triggered();
-
     void on_actionCreateRoom_triggered();
+
+    void on_actionJoinRoom_triggered(bool checked);
 
 private:
 	Ui::UIClass ui;
