@@ -104,8 +104,8 @@ namespace vi {
 		auto event = std::make_shared<DestroySessionEvent>();
 		event->notifyDestroyed = true;
 		event->cleanupHandles = true;
-		event->callback = std::make_shared<EventCallback>([](bool success, const std::string& reason) {
-			DLOG("destroy, success = {}, reason = {}", success, reason.c_str());
+		event->callback = std::make_shared<EventCallback>([](bool success, const std::string& response) {
+			DLOG("destroy, success = {}, response = {}", success, response.c_str());
 		});
 		this->destroy(event);
 		//_pcf = nullptr;
@@ -145,18 +145,20 @@ namespace vi {
 		}
 
 		auto wself = weak_from_this();
-		auto lambda = [wself, pluginClient](std::shared_ptr<JanusResponse> model) {
-			DLOG("model->janus = {}", model->janus);
+		auto lambda = [wself, pluginClient](const std::string& json) {
+			AttachResponse model;
+			x2struct::X::loadjson(json, model, false, true);
+			DLOG("model->janus = {}", model.janus);
 			if (auto self = wself.lock()) {
-				if (model->janus == "success") {
-					int64_t handleId = model->data.id;
+				if (model.janus == "success") {
+					int64_t handleId = model.data.id;
 					pluginClient->setHandleId(handleId);
 					self->_pluginClientMap[handleId] = pluginClient;
 					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 						pluginClient->onAttached(true);
 					});
 				}
-				else if (model->janus == "error") {
+				else if (model.janus == "error") {
 					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 						pluginClient->onAttached(false);
 					});
@@ -177,9 +179,8 @@ namespace vi {
 		// TODO: ?
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
 		event->reconnect = true;
-		auto lambda = [](bool success, const std::string& message) {
-			std::string text = message;
-
+		auto lambda = [](bool success, const std::string& response) {
+			DLOG("response: {}", response.c_str());
 		};
 		event->callback = std::make_shared<vi::EventCallback>(lambda);
 		createSession(event);
@@ -325,26 +326,39 @@ namespace vi {
 		if (status() == ServiceStauts::UP) {
 			if (const auto& pluginClient = getHandler(handleId)) {
 				auto wself = weak_from_this();
-				auto lambda = [wself, pluginClient, event](std::shared_ptr<JanusResponse> model) {
-					DLOG("model->janus = {}", model->janus);
+				auto lambda = [wself, pluginClient, event](const std::string& json) {
+					DLOG("janus = {}", json);
 					if (auto self = wself.lock()) {
-						if (!event || !event->callback) {
+						if (!event) {
 							return;
 						}
-						if (model->janus == "success" || model->janus == "ack") {
-							if (model->xhas("plugindata")) {
-								//std::string data = model->plugindata.data;
-							}
+						JanusResponse model;
+						x2struct::X::loadjson(json, model, false, true);
 
-							self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
-								(*cb)(true, "success");
-							});
+						if (event->callback) {
+							if (model.janus == "success" || model.janus == "ack") {
+								self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
+									if (cb) {
+										(*cb)(true, json);
+									}
+								});
+							}
+							else if (model.janus != "ack") {
+								self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
+									if (cb) {
+										(*cb)(false, json);
+									}
+								});
+							}
 						}
-						else if (model->janus != "ack") {
-							self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
-								(*cb)(false, "error");
-							});
-						}
+
+						//if (event->callback) {
+						//	self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
+						//		if (cb) {						
+						//			(*cb)(json);
+						//		}
+						//	});
+						//}
 					}
 				};
 				std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
@@ -890,8 +904,8 @@ namespace vi {
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
 		if (context) {
 			if (hangupRequest == true) {
-				auto lambda = [wself = weak_from_this()](std::shared_ptr<JanusResponse> model) {
-					DLOG("model->janus = {}", model->janus);
+				auto lambda = [wself = weak_from_this()](const std::string& json) {
+					DLOG("janus = {}", json);
 					if (auto self = wself.lock()) {
 					}
 				};
@@ -970,8 +984,8 @@ namespace vi {
 		}
 
 		auto wself = weak_from_this();
-		auto lambda = [wself, handleId](std::shared_ptr<JanusResponse> model) {
-			DLOG("model->janus = {}", model->janus);
+		auto lambda = [wself, handleId](const std::string& json) {
+			DLOG("janus = {}", json);
 			if (auto self = wself.lock()) {
 				self->_pluginClientMap.erase(handleId);
 			}
@@ -992,7 +1006,7 @@ namespace vi {
 		auto wself = weak_from_this();
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
 		event->reconnect = false;
-		auto lambda = [wself](bool success, const std::string& message) {
+		auto lambda = [wself](bool success, const std::string& response) {
 			if (auto self = wself.lock()) {
 				self->_connected = true;
 			}
@@ -1011,9 +1025,12 @@ namespace vi {
 		_connected = false;
 	}
 
-	void WebRTCService::onMessage(std::shared_ptr<JanusResponse> model)
+	void WebRTCService::onMessage(const std::string& json)
 	{
-		int64_t sender = model->sender;
+		JanusResponse response;
+		x2struct::X::loadjson(json, response, false, true);
+
+		int64_t sender = response.sender;
 		auto& pluginClient = getHandler(sender);
 		if (!pluginClient) {
 			return;
@@ -1021,35 +1038,37 @@ namespace vi {
 
 		int32_t retries = 0;
 
-		if (model->janus == "keepalive") {
+		if (response.janus == "keepalive") {
 			DLOG("Got a keepalive on session: {}", _sessionId);
 			return;
 		}
-		else if (model->janus == "server_info") {
+		else if (response.janus == "server_info") {
 			// Just info on the Janus instance
-			DLOG("Got info on the Janus instance: {}", model->janus.c_str());
+			DLOG("Got info on the Janus instance: {}", response.janus.c_str());
 		}
-		else if (model->janus == "trickle") {
+		else if (response.janus == "trickle") {
+			TrickleResponse model;
+			x2struct::X::loadjson(json, model, false, true);
 			// We got a trickle candidate from Janus
-			bool hasCandidata = model->xhas("candidate");
+			bool hasCandidata = model.xhas("candidate");
 
 			auto& context = pluginClient->pluginContext()->webrtcContext;
 			if (context->pc && context->remoteSdp) {
 				// Add candidate right now
-				if (!hasCandidata || (hasCandidata && model->xhas("completed") && model->candidate.completed == true)) {
+				if (!hasCandidata || (hasCandidata && model.candidate.xhas("completed") && model.candidate.completed == true)) {
 					// end-of-candidates
 					context->pc->AddIceCandidate(nullptr);
 				}
 				else {
-					if (hasCandidata && model->candidate.xhas("sdpMid") && model->candidate.xhas("sdpMLineIndex")) {
-						const auto& candidate = model->candidate.candidate;
+					if (hasCandidata && model.candidate.xhas("sdpMid") && model.candidate.xhas("sdpMLineIndex")) {
+						const auto& candidate = model.candidate.candidate;
 						DLOG("Got a trickled candidate on session: ", _sessionId);
 						DLOG("Adding remote candidate: {}", candidate.c_str());
 						DLOG("candidate: {}", candidate.c_str());
 						webrtc::SdpParseError spError;
-						std::unique_ptr<webrtc::IceCandidateInterface> ici(webrtc::CreateIceCandidate(model->candidate.sdpMid,
-							model->candidate.sdpMLineIndex,
-							model->candidate.candidate,
+						std::unique_ptr<webrtc::IceCandidateInterface> ici(webrtc::CreateIceCandidate(model.candidate.sdpMid,
+							model.candidate.sdpMLineIndex,
+							model.candidate.candidate,
 							&spError));
 						DLOG("candidate error: {}", spError.description.c_str());
 						// New candidate
@@ -1061,15 +1080,15 @@ namespace vi {
 				// We didn't do setRemoteDescription (trickle got here before the offer?)
 				DLOG("We didn't do setRemoteDescription (trickle got here before the offer?), caching candidate");
 
-				if (hasCandidata &&  model->candidate.xhas("sdpMid") && model->candidate.xhas("sdpMLineIndex")) {
-					const auto& candidate = model->candidate.candidate;
+				if (hasCandidata &&  model.candidate.xhas("sdpMid") && model.candidate.xhas("sdpMLineIndex")) {
+					const auto& candidate = model.candidate.candidate;
 					DLOG("Got a trickled candidate on session: {}", _sessionId);
 					DLOG("Adding remote candidate: {}", candidate.c_str());
 					DLOG("candidate: {}", candidate.c_str());
 					webrtc::SdpParseError spError;
-					std::shared_ptr<webrtc::IceCandidateInterface> ici(webrtc::CreateIceCandidate(model->candidate.sdpMid,
-						model->candidate.sdpMLineIndex,
-						model->candidate.candidate,
+					std::shared_ptr<webrtc::IceCandidateInterface> ici(webrtc::CreateIceCandidate(model.candidate.sdpMid,
+						model.candidate.sdpMLineIndex,
+						model.candidate.candidate,
 						&spError));
 					DLOG("candidate error: {}", spError.description.c_str());
 
@@ -1077,7 +1096,7 @@ namespace vi {
 				}
 			}
 		}
-		else if (model->janus == "webrtcup") {
+		else if (response.janus == "webrtcup") {
 			// The PeerConnection with the server is up! Notify this
 			DLOG("Got a webrtcup event on session: {}", _sessionId);
 
@@ -1087,16 +1106,18 @@ namespace vi {
 
 			return;
 		}
-		else if (model->janus == "hangup") {
+		else if (response.janus == "hangup") {
 			// A plugin asked the core to hangup a PeerConnection on one of our handles
 			DLOG("Got a hangup event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model->reason]() {
+			HangupResponse model;
+			x2struct::X::loadjson(json, model, false, true);
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model.reason]() {
 				pluginClient->onWebrtcState(false, reason);
 				pluginClient->onHangup();
 			});
 		}
-		else if (model->janus == "detached") {
+		else if (response.janus == "detached") {
 			// A plugin asked the core to detach one of our handles
 			DLOG("Got a detached event on session: {}", _sessionId);
 
@@ -1104,30 +1125,36 @@ namespace vi {
 				pluginClient->onDetached();
 			});
 		}
-		else if (model->janus == "media") {
+		else if (response.janus == "media") {
 			// Media started/stopped flowing
 			DLOG("Got a media event on session: {}", _sessionId);
+			MediaResponse model;
+			x2struct::X::loadjson(json, model, false, true);
 
 			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onMediaState(model->type, model->receiving);
+				pluginClient->onMediaState(model.type, model.receiving);
 			});
 		}
-		else if (model->janus == "slowlink") {
+		else if (response.janus == "slowlink") {
 			DLOG("Got a slowlink event on session: {}", _sessionId);
-	
+			SlowlinkResponse model;
+			x2struct::X::loadjson(json, model, false, true);
 			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onSlowLink(model->uplink, model->lost);
+				pluginClient->onSlowLink(model.uplink, model.lost);
 			});
 		}
-		else if (model->janus == "event") {
+		else if (response.janus == "event") {
 			DLOG("Got a plugin event on session: {}", _sessionId);
 
-			if (!model->xhas("plugindata")) {
+			EventResponse model;
+			x2struct::X::loadjson(json, model, false, true);
+
+			if (!model.xhas("plugindata")) {
 				ELOG("Missing plugindata...");
 				return;
 			}
 			
-			const auto& plugindata = model->plugindata;
+			const auto& plugindata = model.plugindata;
 
 			DLOG(" -- Event is coming from {} ({})", sender, plugindata.plugin.c_str());
 
@@ -1136,36 +1163,38 @@ namespace vi {
 			x2struct::X::loadjson(dataString, data, false, true);
 
 			Jsep jsep;
-			if (model->xhas("jsep")) {
+			if (model.xhas("jsep")) {
 				DLOG("Handling SDP as well...");
-				jsep = model->jsep;
+				jsep = model.jsep;
 			}
 
 			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, data, jsep]() {
 				pluginClient->onMessage(data, jsep);
 			});
 		}
-		else if (model->janus == "timeout") {
+		else if (response.janus == "timeout") {
 			ELOG("Timeout on session: {}", _sessionId);
 			// TODO:
 			return;
 		}
-		else if (model->janus == "error") {
+		else if (response.janus == "error") {
 			// something wrong happened
-			DLOG("Something wrong happened: {}", model->janus.c_str());
+			DLOG("Something wrong happened: {}", response.janus.c_str());
 		}
 		else {
-			WLOG("Unknown message/event {} on session: {}'", model->janus.c_str(),  _sessionId);
+			WLOG("Unknown message/event {} on session: {}'", response.janus.c_str(),  _sessionId);
 		}
 	}
 
 	void WebRTCService::createSession(std::shared_ptr<CreateSessionEvent> event)
 	{
 		auto wself = weak_from_this();
-		auto lambda = [wself, event](std::shared_ptr<JanusResponse> model) {
-			DLOG("model->janus = {}", model->janus);
+		auto lambda = [wself, event](const std::string& json) {
+			CreateSessionResponse model;
+			x2struct::X::loadjson(json, model, false, true);
+			DLOG("model.janus = {}", model.janus);
 			if (auto self = wself.lock()) {
-				self->_sessionId = model->session_id > 0 ? model->session_id : model->data.id;
+				self->_sessionId = model.session_id > 0 ? model.session_id : model.data.id;
 				g_sessions[self->_sessionId] = self;
 				self->startHeartbeat();
 				self->_serviceStatus = ServiceStauts::UP;
@@ -1195,8 +1224,8 @@ namespace vi {
 		_heartbeatTaskId = _taskScheduler->schedule([wself]() {
 			if (auto self = wself.lock()) {
 				DLOG("sessionHeartbeat() called");
-				auto lambda = [](std::shared_ptr<JanusResponse> model) {
-					DLOG("model->janus = {}", model->janus);
+				auto lambda = [](const std::string& json) {
+					DLOG("janus = {}", json);
 				};
 				std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
 				self->_client->keepAlive(self->_sessionId, callback);
@@ -2053,8 +2082,8 @@ namespace vi {
 				std::shared_ptr<DetachEvent> dh = std::make_shared<DetachEvent>();
 				dh->noRequest = true;
 				int64_t hId = pair.first;
-				auto lambda = [hId](bool success, const std::string& message) {
-					DLOG("destroyHandle, handleId = {}, success = {}, message = {}", hId, success, message.c_str());
+				auto lambda = [hId](bool success, const std::string& response) {
+					DLOG("destroyHandle, handleId = {}, success = {}, response = {}", hId, success, response.c_str());
 				};
 				dh->callback = std::make_shared<vi::EventCallback>(lambda);
 				destroyHandle(hId, dh);
@@ -2067,7 +2096,7 @@ namespace vi {
 			if(event->callback) {
 				//_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 				const auto& cb = event->callback;
-					(*cb)(true, "");
+				(*cb)(true, "");
 				//});
 			}
 			return;
@@ -2075,8 +2104,8 @@ namespace vi {
 
 		// TODO: destroy session from janus 
 		auto wself = weak_from_this();
-		auto lambda = [wself](std::shared_ptr<JanusResponse> model) {
-			DLOG("model->janus = {}", model->janus);
+		auto lambda = [wself](const std::string& json) {
+			DLOG("janus = {}", json);
 			if (auto self = wself.lock()) {
 				self->_client->removeListener(self);
 			}

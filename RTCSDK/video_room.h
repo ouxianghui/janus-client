@@ -11,6 +11,7 @@
 #include "i_video_room_listener.h"
 
 namespace vi {
+	class IVideoRoomApi;
 	class VideoRoom
 		: public PluginClient
 		, public core::Observable
@@ -27,6 +28,8 @@ namespace vi {
 		void removeListener(std::shared_ptr<IVideoRoomListener> listener);
 
 		std::shared_ptr<PluginClient> getParticipant(int64_t pid);
+
+		std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
 
 	protected:
 		void onAttached(bool success) override;
@@ -70,5 +73,7 @@ namespace vi {
 		std::map<int64_t, std::shared_ptr<PluginClient>> _participantsMap;
 
 		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;
+
+		std::shared_ptr<IVideoRoomApi> _videoRoomApi;
 	};
 }

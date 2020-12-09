@@ -11,6 +11,7 @@
 #include "x2struct.hpp"
 #include "thread_manager.h"
 #include "Service/app_instance.h"
+#include "video_room_api.h"
 
 namespace vi {
 	VideoRoom::VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs)
@@ -30,7 +31,7 @@ namespace vi {
 
 	void VideoRoom::init()
 	{
-
+		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 	}
 
 	void VideoRoom::addListener(std::shared_ptr<IVideoRoomListener> listener)
@@ -51,6 +52,11 @@ namespace vi {
 		else {
 			return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
 		}
+	}
+
+	std::shared_ptr<IVideoRoomApi> VideoRoom::getVideoRoomApi()
+	{
+		return _videoRoomApi;
 	}
 
 	void VideoRoom::onAttached(bool success)
@@ -77,14 +83,14 @@ namespace vi {
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
-			ConfigBitrateRequest request;
+			vr::PublisherConfigureRequest request;
 			request.request = "configure";
 			request.bitrate = 256000;
 
 			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-				auto lambda = [](bool success, const std::string& message) {
-					DLOG("message: {}", message.c_str());
+				auto lambda = [](bool success, const std::string& response) {
+					DLOG("response: {}", response.c_str());
 				};
 				std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 				event->message = x2struct::X::tojson(request);
@@ -140,7 +146,7 @@ namespace vi {
 			}
 		}
 		else if (event == "leaving") {
-			const auto& leaving = data.leaving;
+			//const auto& leaving = data.leaving;
 			// TODO: Figure out the participant and detach it
 		}
 		else if (event == "unpublished") {
@@ -168,8 +174,8 @@ namespace vi {
 			// TODO:
 			//sfutest.handleRemoteJsep({ jsep: jsep });
 			std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
-			auto lambda = [](bool success, const std::string& message) {
-				DLOG("message: {}", message.c_str());
+			auto lambda = [](bool success, const std::string& response) {
+				DLOG("response: {}", response.c_str());
 			};
 			std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 			JsepConfig jst;
@@ -235,13 +241,13 @@ namespace vi {
 				return;
 			}
 			if (success) {
-				ConfigAudioVideoRequest request;
+				vr::PublisherConfigureRequest request;
 				request.audio = audioOn;
 				request.video = true;
 				if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
 					std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-					auto lambda = [](bool success, const std::string& message) {
-						DLOG("publishOwnStream: {}", message.c_str());
+					auto lambda = [](bool success, const std::string& response) {
+						DLOG("publishOwnStream: {}", response.c_str());
 					};
 					std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 					event->message = x2struct::X::tojson(request);
@@ -271,11 +277,11 @@ namespace vi {
 
 	void VideoRoom::unpublishOwnStream()
 	{
-		UnpublishRequest request;
+		vr::UnpublishRequest request;
 		if (auto webrtcService = pluginContext()->webrtcService.lock()) {
 			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-			auto lambda = [](bool success, const std::string& message) {
-				DLOG("message: {}", message.c_str());
+			auto lambda = [](bool success, const std::string& response) {
+				DLOG("response: {}", response.c_str());
 			};
 			std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 			event->message = x2struct::X::tojson(request);

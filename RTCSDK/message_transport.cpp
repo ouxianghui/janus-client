@@ -115,37 +115,34 @@ namespace vi {
 		return true;
 	}
 
-	void MessageTransport::onTextMessage(const std::string& text)
+	void MessageTransport::onTextMessage(const std::string& json)
 	{
-		DLOG("text = {}", text.c_str());
+		DLOG("json = {}", json.c_str());
 
 		// |unpublished| can be int or string, replace string 'ok' to 0
-		std::string data = text;
+		std::string data = json;
 		std::string tag("\"unpublished\": \"ok\"");
 		size_t pos = data.find(tag);
 		if (pos != std::string::npos) {
 			data = data.replace(pos, tag.length(), "\"unpublished\": 0");
 		}
 
-		std::shared_ptr<JanusResponse> model = std::make_shared<JanusResponse>();
-		//JanusResponse  model;
-		x2struct::X::loadjson(data, *model, false, true);
+		JanusResponse respone;
+		x2struct::X::loadjson(data, respone, false, true);
 
-		if (!model->xhas("janus")) {
+		if (!respone.xhas("janus")) {
 			DLOG("!response->xhas(\"janus\")");
 			return;
 		}
-		if (model->janus == "event") {
-			std::string event = model->janus;
-		}
-		if (model->xhas("transaction") && (model->janus == "ack" || model->janus == "success" || model->janus == "error" || model->janus == "server_info")) {
+
+		if (respone.xhas("transaction") && (respone.janus == "ack" || respone.janus == "success" || respone.janus == "error" || respone.janus == "server_info")) {
 			std::lock_guard<std::mutex> locker(_callbackMutex);
-			const std::string& transaction = model->transaction;
+			const std::string& transaction = respone.transaction;
 			if (_callbacksMap.find(transaction) != _callbacksMap.end()) {
 				std::shared_ptr<JCCallback> callback = _callbacksMap[transaction];
 				_callbacksMap.erase(transaction);
 				if (callback) {
-					(*callback)(model);
+					(*callback)(json);
 				}
 			}
 		}
@@ -153,7 +150,7 @@ namespace vi {
 			std::lock_guard<std::mutex> locker(_listenerMutex);
 			for (const auto& listener : _listeners) {
 				if (auto li = listener.lock()) {
-					li->onMessage(model);
+					li->onMessage(json);
 				}
 			}
 		}

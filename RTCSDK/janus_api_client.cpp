@@ -75,7 +75,7 @@ namespace vi {
 
 	void JanusApiClient::destroySession(int64_t sessionId, std::shared_ptr<JCCallback> callback) 
 	{
-		KeepAliveRequest request;
+		DestroyRequest request;
 		request.janus = "destroy";
 		request.transaction = StringUtils::randomString(12);
 		request.token = _token;
@@ -299,17 +299,17 @@ namespace vi {
 		});
 	}
 
-	void JanusApiClient::onMessage(std::shared_ptr<JanusResponse> model)
+	void JanusApiClient::onMessage(const std::string& json)
 	{
-		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), model](const std::shared_ptr<ISfuApiClientListener>& listener) {
+		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), json](const std::shared_ptr<ISfuApiClientListener>& listener) {
 			if (auto self = wself.lock()) {
 				if (self->_thread) {
-					self->_thread->PostTask(RTC_FROM_HERE, [listener, model]() {
-						listener->onMessage(model);
+					self->_thread->PostTask(RTC_FROM_HERE, [listener, json]() {
+						listener->onMessage(json);
 					});
 				}
 				else {
-					listener->onMessage(model);
+					listener->onMessage(json);
 				}
 			}
 		});
@@ -321,11 +321,11 @@ namespace vi {
 			return callback;
 		}
 		else {
-			auto lambda = [wself = weak_from_this(), callback](std::shared_ptr<JanusResponse> model) {
+			auto lambda = [wself = weak_from_this(), callback](const std::string& json) {
 				if (auto self = wself.lock()) {
 					if (self->_thread && callback) {
-						self->_thread->PostTask(RTC_FROM_HERE, [callback, model]() {
-							(*callback)(model);
+						self->_thread->PostTask(RTC_FROM_HERE, [callback, json]() {
+							(*callback)(json);
 						});
 					}
 				}

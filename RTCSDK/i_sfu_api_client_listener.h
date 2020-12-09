@@ -21,6 +21,6 @@ namespace vi {
 
 		virtual void onFailed(int errorCode, const std::string& reason) = 0;
 
-		virtual void onMessage(std::shared_ptr<JanusResponse> model) = 0;
+		virtual void onMessage(const std::string& json) = 0;
 	};
 }

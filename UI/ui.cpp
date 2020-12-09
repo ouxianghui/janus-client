@@ -23,6 +23,7 @@
 #include "video_room_listener_proxy.h"
 #include <qtoolbar.h>
 #include "video_room_dialog.h"
+#include "i_video_room_api.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -111,21 +112,28 @@ void UI::on_actionAttachRoom_triggered(bool checked)
 			_vr->init();
 			_vr->addListener(_videoRoomListenerProxy);
 			_vr->attach();
-            ui.actionAttachRoom->setChecked(true);
 		}
 	}
 	else {
-        ui.actionAttachRoom->setChecked(false);
+
 	}
 }
 
 void UI::on_actionPublishStream_triggered(bool checked)
 {
+	if (!_vr) {
+		return;
+	}
 	if (checked) {
-
+		vr::CreateRoomRequest req;
+		req.room = 1004;
+		_vr->getVideoRoomApi()->create(req, nullptr);
 	}
 	else {
-
+		vr::EditRoomRequest req;
+		req.room = 1004;
+		req.new_description = "test edit";
+		_vr->getVideoRoomApi()->edit(req, nullptr);
 	}
 }
 
@@ -161,7 +169,7 @@ void UI::on_actionCreateRoom_triggered()
 
 void UI::on_actionJoinRoom_triggered(bool checked)
 {
-    vi::RegisterRequest request;
+    vi::vr::PublisherJoinRequest request;
     request.request = "join";
     request.room = 1234;
     request.ptype = "publisher";
@@ -169,8 +177,8 @@ void UI::on_actionJoinRoom_triggered(bool checked)
 
     if (_vr) {
         std::shared_ptr<vi::SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-        auto lambda = [](bool success, const std::string& message) {
-            TLOG("message: {}", message.c_str());
+        auto lambda = [](bool success, const std::string& response) {
+            TLOG("response: {}", response.c_str());
         };
         std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
         event->message = x2struct::X::tojson(request);

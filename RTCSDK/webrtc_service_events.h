@@ -15,7 +15,7 @@
 namespace vi {
 	using SuccessCallback = std::function<void()>;
 	using FailureCallback = std::function<void(const std::string& reason)>;
-	using EventCallback = std::function<void(bool success, const std::string& reason)>;
+	using EventCallback = std::function<void(bool success, const std::string& response)>;
 	class IWebRTCEventHandler;
 
 	class EventBase {

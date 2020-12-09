@@ -69,7 +69,7 @@ namespace vi {
 
 		void onFailed(int errorCode, const std::string& reason) override;
 
-		void onMessage(std::shared_ptr<JanusResponse> model) override;
+		void onMessage(const std::string& json) override;
 
 	private:
 		std::shared_ptr<JCCallback> wrapAsyncCallback(std::shared_ptr<JCCallback> callback);

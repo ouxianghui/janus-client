@@ -12,7 +12,7 @@
 #include "message_models.h"
 
 namespace vi {
-	using JCCallback = std::function<void(std::shared_ptr<JanusResponse> model)>;
+	using JCCallback = std::function<void(const std::string& json)>;
 	
 	class IMessageTransportListener;
 

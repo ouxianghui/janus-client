@@ -32,23 +32,25 @@ namespace vi {
 	void Participant::onAttached(bool success)
 	{
 		if (success) {
-			SubscribeRequest request;
+			vr::SubscriberJoinRequest request;
 			request.request = "join";
 			request.room = 1234;
 			request.ptype = "subscriber";
 			request.feed = _id;
 			request.private_id = _privateId;
+			
 			// In case you don't want to receive audio, video or data, even if the
 			// publisher is sending them, set the 'offer_audio', 'offer_video' or
 			// 'offer_data' properties to false (they're true by default), e.g.:
 			// 		subscribe["offer_video"] = false;
 			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-				auto lambda = [](bool success, const std::string& message) {
-					std::string text = message;
+				auto lambda = [](bool success, const std::string& response) {
+					DLOG("response: {}", response.c_str());
 				};
 				std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 				event->message = x2struct::X::tojson(request);
+				DLOG("event->message: {}", event->message.c_str());
 				event->callback = callback;
 				sendMessage(event);
 			}
@@ -105,12 +107,12 @@ namespace vi {
 					return;
 				}
 				if (success) {
-					StartRequest request;
+					vr::StartRequest request;
 					request.room = 1234;
 					if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
 						std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-						auto lambda = [](bool success, const std::string& message) {
-							DLOG("message: {}", message.c_str());
+						auto lambda = [](bool success, const std::string& response) {
+							DLOG("response: {}", response.c_str());
 						};
 						std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 						event->message = x2struct::X::tojson(request);
