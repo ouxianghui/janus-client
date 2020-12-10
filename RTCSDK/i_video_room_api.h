@@ -10,17 +10,17 @@ namespace vi {
 	public:
 		virtual ~IVideoRoomApi() = default;
 
-		virtual void create(const vr::CreateRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomActionResponse>)> callback) = 0;
+		virtual void create(const vr::CreateRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomCurdResponse>)> callback) = 0;
 
-		virtual void destroy(const vr::DestroyRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomActionResponse>)> callback) = 0;
+		virtual void destroy(const vr::DestroyRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomCurdResponse>)> callback) = 0;
 
-		virtual void edit(const vr::EditRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomActionResponse>)> callback) = 0;
+		virtual void edit(const vr::EditRoomRequest& request, std::function<void(std::shared_ptr<vr::RoomCurdResponse>)> callback) = 0;
 
-		//virtual void exists(const vr::ExistsRequest& request, std::shared_ptr<EventCallback> callback) = 0;
+		virtual void exists(const vr::ExistsRequest& request, std::function<void(std::shared_ptr<vr::RoomCurdResponse>)> callback) = 0;
 
-		//virtual void join(const vr::PublisherJoinRequest& request, std::shared_ptr<EventCallback> callback) = 0;
-
-		//virtual void join(const vr::SubscriberJoinRequest& request, std::shared_ptr<EventCallback> callback) = 0;
+		virtual void join(const vr::PublisherJoinRequest& request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
+		
+		virtual void join(const vr::SubscriberJoinRequest& request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
 
 		//virtual void publish(const vr::PublishRequest& request, std::shared_ptr<EventCallback> callback) = 0;
 

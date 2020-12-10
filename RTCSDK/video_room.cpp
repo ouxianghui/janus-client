@@ -103,25 +103,45 @@ namespace vi {
 
 	void VideoRoom::onSlowLink(bool uplink, bool lost) {}
 
-	void VideoRoom::onMessage(const EventData& data, const Jsep& jsep)
+	void VideoRoom::onMessage(const std::string& data, const std::string& jsepString)
 	{
 		DLOG(" ::: Got a message (publisher).");
-		if (!data.xhas("videoroom")) {
+
+		vr::VideoRoomEvent vrEvent;
+		x2struct::X::loadjson(data, vrEvent, false, true);
+
+		const auto& pluginData = vrEvent.plugindata;
+
+		if (!pluginData.xhas("plugin")) {
 			return;
 		}
-		const auto& event = data.videoroom;
+
+		if (pluginData.plugin != "janus.plugin.videoroom") {
+			return;
+		}
+
+		if (!pluginData.data.xhas("videoroom")) {
+			return;
+		}
+
+		const auto& event = pluginData.data.videoroom;
+
 		if (event == "joined") {
+			vr::PublisherJoinEvent pjEvent;
+			x2struct::X::loadjson(data, pjEvent, false, true);
+
+			const auto& pluginData = pjEvent.plugindata;
 			// Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
-			_id = data.id;
-			_privateId = data.private_id;
-			DLOG("Successfully joined room {} with ID {}", data.room, _id);
+			_id = pluginData.data.id;
+			_privateId = pluginData.data.private_id;
+			DLOG("Successfully joined room {} with ID {}", pluginData.data.room, _id);
 
 			// TODO:
 			publishOwnStream(true);
 
 			// Any new feed to attach to
-			if (data.xhas("publishers")) {
-				const auto& publishers = data.publishers;
+			if (pluginData.data.xhas("publishers")) {
+				const auto& publishers = pluginData.data.publishers;
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {} (audio: {}, video: {}}", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
@@ -135,8 +155,8 @@ namespace vi {
 		}
 		else if (event == "event") {
 			// Any new feed to attach to
-			if (data.xhas("publishers")) {
-				const auto& publishers = data.publishers;
+			if (pluginData.data.xhas("publishers")) {
+				const auto& publishers = pluginData.data.publishers;
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {}, (audio: {}, video: {})", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
@@ -144,60 +164,65 @@ namespace vi {
 					createParticipant(pub.id, pub.display, pub.audio_codec, pub.video_codec);
 				}
 			}
-		}
-		else if (event == "leaving") {
-			//const auto& leaving = data.leaving;
-			// TODO: Figure out the participant and detach it
-		}
-		else if (event == "unpublished") {
-			const auto& unpublished = data.unpublished;
-			DLOG("Publisher left: {}", unpublished);
 
-			// TODO: |unpublished| can be int or string
-			if (unpublished == 0) {
-				// That's us
-				this->hangup(true);
-				return;
+			if (pluginData.data.xhas("leaving")) {
+				const auto& leaving = pluginData.data.leaving;
+				// TODO: Figure out the participant and detach it
 			}
+			else if (pluginData.data.xhas("unpublished")) {
+				const auto& unpublished = pluginData.data.unpublished;
+				DLOG("Publisher left: {}", unpublished);
 
-			// TODO: Figure out the participant and detach it
-			//remoteFeed.detach();
-		}
-		else if (event == "error") {
-			if (data.error_code == 426) {
-				DLOG("No such room");
+				// TODO: |unpublished| can be int or string
+				if (unpublished == 0) {
+					// That's us
+					this->hangup(true);
+					return;
+				}
+
+				// TODO: Figure out the participant and detach it
+				//remoteFeed.detach();
+			}
+			else if (pluginData.data.xhas("error")) {
+				if (pluginData.data.error_code == 426) {
+					DLOG("No such room");
+				}
 			}
 		}
 
-		if (!jsep.type.empty() && !jsep.sdp.empty()) {
-			DLOG("Handling SDP as well...");
-			// TODO:
-			//sfutest.handleRemoteJsep({ jsep: jsep });
-			std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
-			auto lambda = [](bool success, const std::string& response) {
-				DLOG("response: {}", response.c_str());
-			};
-			std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-			JsepConfig jst;
-			jst.type = jsep.type;
-			jst.sdp = jsep.sdp;
-			event->jsep = jst;
-			event->callback = callback;
+		if (!jsepString.empty()) {
+			Jsep jsep;
+			x2struct::X::loadjson(jsepString, jsep, false, true);
+			if (!jsep.type.empty() && !jsep.sdp.empty()) {
+				DLOG("Handling SDP as well...");
+				// TODO:
+				//sfutest.handleRemoteJsep({ jsep: jsep });
+				std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
+				auto lambda = [](bool success, const std::string& response) {
+					DLOG("response: {}", response.c_str());
+				};
+				std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
+				JsepConfig jst;
+				jst.type = jsep.type;
+				jst.sdp = jsep.sdp;
+				event->jsep = jst;
+				event->callback = callback;
 
-			handleRemoteJsep(event);
+				handleRemoteJsep(event);
 
-			if (!_pluginContext) {
-				return;
-			}
+				if (!_pluginContext) {
+					return;
+				}
 
-			const auto& audio = data.audio_codec;
-			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
-				WLOG("Our audio stream has been rejected, viewers won't hear us");
-			}
+				const auto& audio = pluginData.data.audio_codec;
+				if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
+					WLOG("Our audio stream has been rejected, viewers won't hear us");
+				}
 
-			const auto& video = data.video_codec;
-			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
-				WLOG("Our video stream has been rejected, viewers won't see us");
+				const auto& video = pluginData.data.video_codec;
+				if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
+					WLOG("Our video stream has been rejected, viewers won't see us");
+				}
 			}
 		}
 	}

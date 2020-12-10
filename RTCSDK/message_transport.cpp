@@ -121,10 +121,18 @@ namespace vi {
 
 		// |unpublished| can be int or string, replace string 'ok' to 0
 		std::string data = json;
-		std::string tag("\"unpublished\": \"ok\"");
-		size_t pos = data.find(tag);
+
+		// TODO: remove workaround
+		std::string tag1("\"unpublished\": \"ok\"");
+		size_t pos = data.find(tag1);
 		if (pos != std::string::npos) {
-			data = data.replace(pos, tag.length(), "\"unpublished\": 0");
+			data = data.replace(pos, tag1.length(), "\"unpublished\": 0");
+		}
+
+		std::string tag2("\"leaving\": \"ok\"");
+		pos = data.find(tag2);
+		if (pos != std::string::npos) {
+			data = data.replace(pos, tag2.length(), "\"leaving\": 0");
 		}
 
 		JanusResponse respone;

@@ -130,10 +130,7 @@ void UI::on_actionPublishStream_triggered(bool checked)
 		_vr->getVideoRoomApi()->create(req, nullptr);
 	}
 	else {
-		vr::EditRoomRequest req;
-		req.room = 1004;
-		req.new_description = "test edit";
-		_vr->getVideoRoomApi()->edit(req, nullptr);
+
 	}
 }
 
@@ -169,20 +166,12 @@ void UI::on_actionCreateRoom_triggered()
 
 void UI::on_actionJoinRoom_triggered(bool checked)
 {
-    vi::vr::PublisherJoinRequest request;
-    request.request = "join";
-    request.room = 1234;
-    request.ptype = "publisher";
-    request.display = "jackie";// ui.lineEditUserName->text().toStdString();
-
     if (_vr) {
-        std::shared_ptr<vi::SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-        auto lambda = [](bool success, const std::string& response) {
-            TLOG("response: {}", response.c_str());
-        };
-        std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-        event->message = x2struct::X::tojson(request);
-        event->callback = callback;
-        _vr->sendMessage(event);
+		vi::vr::PublisherJoinRequest req;
+		req.request = "join";
+		req.room = 1234;
+		req.ptype = "publisher";
+		req.display = "jackie";
+		_vr->getVideoRoomApi()->join(req, nullptr);
     }
 }

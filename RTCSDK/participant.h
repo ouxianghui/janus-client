@@ -39,7 +39,7 @@ namespace vi {
 
 		void onSlowLink(bool uplink, bool lost) override;
 
-		void onMessage(const EventData& data, const Jsep& jsep) override;
+		void onMessage(const std::string& data, const std::string& jsep) override;
 
 		void onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 

@@ -1146,30 +1146,21 @@ namespace vi {
 		else if (response.janus == "event") {
 			DLOG("Got a plugin event on session: {}", _sessionId);
 
-			EventResponse model;
-			x2struct::X::loadjson(json, model, false, true);
+			JanusEvent event;
+			x2struct::X::loadjson(json, event, false, true);
 
-			if (!model.xhas("plugindata")) {
+			if (!event.xhas("plugindata")) {
 				ELOG("Missing plugindata...");
 				return;
 			}
 			
-			const auto& plugindata = model.plugindata;
+			DLOG(" -- Event is coming from {} ({})", sender, event.plugindata.plugin.c_str());
 
-			DLOG(" -- Event is coming from {} ({})", sender, plugindata.plugin.c_str());
+			//std::string data = x2struct::X::tojson(event.plugindata);
+			std::string jsep = x2struct::X::tojson(event.jsep);
 
-			std::string dataString = x2struct::X::tojson(plugindata.data);
-			EventData data;
-			x2struct::X::loadjson(dataString, data, false, true);
-
-			Jsep jsep;
-			if (model.xhas("jsep")) {
-				DLOG("Handling SDP as well...");
-				jsep = model.jsep;
-			}
-
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, data, jsep]() {
-				pluginClient->onMessage(data, jsep);
+			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, json, jsep]() {
+				pluginClient->onMessage(json, jsep);
 			});
 		}
 		else if (response.janus == "timeout") {

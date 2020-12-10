@@ -30,7 +30,7 @@ namespace vi {
 
 		virtual void onSlowLink(bool uplink, bool lost) = 0;
 
-		virtual void onMessage(const EventData& data, const Jsep& jsep) = 0;
+		virtual void onMessage(const std::string& data, const std::string& jsep) = 0;
 
 		virtual void onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
 

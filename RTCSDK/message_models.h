@@ -29,12 +29,6 @@ namespace vi {
 		XTOSTRUCT(O(janus, transaction, session_id, sender));
 	};
 
-	struct JanusData {
-		int64_t id;
-
-		XTOSTRUCT(O(id));
-	};
-
 	struct Jsep {
 		std::string type;
 		std::string sdp;
@@ -49,103 +43,28 @@ namespace vi {
 		XTOSTRUCT(O(code), O(reason));
 	};
 
-	struct PublisherData {
-		int64_t id;
-		std::string display;
-		std::string audio_codec;
-		std::string video_codec;
-		bool simulcast;
-		bool talking;
 
-		XTOSTRUCT(O(id, display, audio_codec, video_codec, simulcast, talking));
-	};
+	//struct ParticipantData {
+	//	int64_t id;
+	//	std::string display;
+	//	bool publisher;
+	//	bool talking;
 
-	struct RoomData {
-		int64_t room;
-		std::string description;
-		int64_t max_publishers;
-		int64_t bitrate;
-		bool bitrate_cap;
-		int64_t fir_freq;
-		std::string audiocodec;
-		std::string videocodec;
-		bool record;
-		std::string record_dir;
-		bool lock_record;
-		int64_t num_participants;
+	//	XTOSTRUCT(O(id,
+	//		display,
+	//		publisher,
+	//		talking));
+	//};
 
-		XTOSTRUCT(O(room,
-			description,
-			max_publishers,
-			bitrate,
-			bitrate_cap,
-			fir_freq,
-			audiocodec,
-			videocodec,
-			record,
-			record_dir,
-			lock_record,
-			num_participants));
-	};
-
-	struct ParticipantData {
-		int64_t id;
-		std::string display;
-		bool publisher;
-		bool talking;
-
-		XTOSTRUCT(O(id,
-			display,
-			publisher,
-			talking));
-	};
-
-	struct EventData {
+	struct JanusData {
 		std::string videoroom;
-		int64_t room;
-		std::string description;
-		bool permanent;
-		bool exists;
-		int64_t id;
-		int64_t private_id;
-		std::vector<PublisherData> publishers;
-		int64_t unpublished;
-		int64_t error_code;
-		std::string audio_codec;
-		std::string video_codec;
-		std::string display;
-		std::string started;
-		std::string paused;
-		//std::string leaving;
-		std::string left;
-		std::string configured;
-		std::string switched;
 
-		XTOSTRUCT(O(videoroom,
-			room,
-			description,
-			permanent,
-			exists,
-			id,
-			private_id,
-			publishers,
-			unpublished,
-			error_code,
-			audio_codec,
-			video_codec,
-			display,
-			started,
-			paused,
-			//leaving,
-			left,
-			configured,
-			switched
-		));
+		XTOSTRUCT(O(videoroom));
 	};
 
 	struct PluginData {
 		std::string plugin;
-		EventData data;
+		JanusData data;
 
 		XTOSTRUCT(O(plugin, data));
 	};
@@ -189,8 +108,13 @@ namespace vi {
 		XTOSTRUCT(I(JanusRequest), O(session_id, plugin, opaque_id));
 	};
 
+	struct AttachData {
+		int64_t id;
+		XTOSTRUCT(O(id));
+	};
+
 	struct AttachResponse : public JanusResponse {
-		JanusData data;
+		AttachData data;
 		XTOSTRUCT(I(JanusResponse), O(data));
 	};
 
@@ -223,7 +147,7 @@ namespace vi {
 		XTOSTRUCT(I(JanusResponse), O(uplink, lost));
 	};
 
-	struct EventResponse : public JanusResponse {
+	struct JanusEvent : public JanusResponse {
 		PluginData plugindata;
 		Jsep jsep;
 		XTOSTRUCT(I(JanusResponse), O(plugindata, jsep));
@@ -235,8 +159,13 @@ namespace vi {
 		XTOSTRUCT(I(JanusRequest), O(session_id));
 	};
 
+	struct CreateSessionData {
+		int64_t id;
+		XTOSTRUCT(O(id));
+	};
+
 	struct CreateSessionResponse : public JanusResponse {
-		JanusData data;
+		CreateSessionData data;
 		XTOSTRUCT(I(JanusResponse), O(data));
 	};
 
@@ -316,6 +245,50 @@ namespace vi {
 			XTOSTRUCT(O(request, room, ptype, display, token));
 		};
 
+		struct Publisher {
+			int64_t id;
+			std::string display;
+			std::string audio_codec;
+			std::string video_codec;
+			bool simulcast;
+			bool talking;
+
+			XTOSTRUCT(O(id, display, audio_codec, video_codec, simulcast, talking));
+		};
+
+		struct Attendee {
+			int64_t id;
+			std::string display;
+
+			XTOSTRUCT(O(id, display));
+		};
+
+		struct PublisherJoinData {
+			std::string videoroom;
+			int64_t room;
+			std::string description;
+			int64_t id;
+			int64_t private_id;
+			std::vector<Publisher> publishers;
+			std::vector<Attendee> attendees;
+
+			XTOSTRUCT(O(videoroom, room, description, id, private_id, publishers, attendees));
+		};
+
+		struct PublisherJoinPluginData {
+			std::string plugin;
+			PublisherJoinData data;
+
+			XTOSTRUCT(O(plugin, data));
+		};
+
+		struct PublisherJoinEvent : public JanusResponse {
+			PublisherJoinPluginData plugindata;
+
+			XTOSTRUCT(I(JanusResponse), O(plugindata));
+		};
+
+
 		/* In a VideoRoom, subscribers are NOT participants, but simply handles
 		 * that will be used exclusively to receive media from a specific publisher
 		 * in the room.Since they're not participants per se, they're basically
@@ -368,6 +341,83 @@ namespace vi {
 				feed,
 				private_id
 			));
+		};
+
+		struct SubscriberJoinData {
+			std::string videoroom;
+			int64_t room;
+			int64_t feed;
+			std::string display;
+
+			XTOSTRUCT(O(videoroom, room, feed, display));
+		};
+
+		struct SubscriberJoinPluginData {
+			std::string plugin;
+			SubscriberJoinData data;
+
+			XTOSTRUCT(O(plugin, data));
+		};
+
+		struct SubscriberJoinEvent : public JanusResponse {
+			SubscriberJoinPluginData plugindata;
+
+			XTOSTRUCT(I(JanusResponse), O(plugindata));
+		};
+
+		// Video Room event
+		struct JoiningData {
+			int64_t id;
+			std::string display;
+
+			XTOSTRUCT(O(id, display));
+		};
+
+		struct EventData {
+			std::string videoroom;
+			int64_t error_code;
+			std::string error;
+			JoiningData joining;
+			std::string configured;
+			std::vector<Publisher> publishers;
+			int64_t unpublished;
+			int64_t leaving;
+			std::string started;
+			std::string paused;
+			std::string switched;
+			int64_t id;
+			std::string left;
+			std::string audio_codec;
+			std::string video_codec;
+
+			XTOSTRUCT(O(videoroom,
+				error_code,
+				error,
+				joining,
+				configured,
+				publishers,
+				unpublished,
+				leaving,
+				started,
+				paused,
+				switched,
+				id,
+				left,
+				audio_codec,
+				video_codec
+				));
+		};
+
+		struct EventPluginData {
+			std::string plugin;
+			EventData data;
+
+			XTOSTRUCT(O(plugin, data));
+		};
+
+		struct VideoRoomEvent : public JanusResponse {
+			EventPluginData plugindata;
+			XTOSTRUCT(I(JanusResponse), O(plugindata));
 		};
 
 		struct UnpublishRequest {
@@ -469,23 +519,24 @@ namespace vi {
 				O(allowed));
 		};
 
-		struct RoomActionData {
+		struct RoomCurdData {
 			std::string videoroom;
 			int64_t room;
 			bool permanent;
+			bool exists;
 
-			XTOSTRUCT(O(videoroom, room, permanent));
+			XTOSTRUCT(O(videoroom, room, permanent, exists));
 		};
 
-		struct RoomActionPluginData {
+		struct RoomCurdPluginData {
 			std::string plugin;
-			RoomActionData data;
+			RoomCurdData data;
 
 			XTOSTRUCT(O(plugin, data));
 		};
 
-		struct RoomActionResponse : public JanusResponse {
-			RoomActionPluginData plugindata;
+		struct RoomCurdResponse : public JanusResponse {
+			RoomCurdPluginData plugindata;
 
 			XTOSTRUCT(I(JanusResponse), O(plugindata));
 		};
@@ -683,6 +734,41 @@ namespace vi {
 			std::string request = "list";
 
 			XTOSTRUCT(O(request));
+		};
+
+		struct VideoRoomInfo {
+			int64_t room;
+			std::string description;
+			int64_t max_publishers;
+			int64_t bitrate;
+			bool bitrate_cap;
+			int64_t fir_freq;
+			std::string audiocodec;
+			std::string videocodec;
+			bool record;
+			std::string record_dir;
+			bool lock_record;
+			int64_t num_participants;
+
+			XTOSTRUCT(O(room,
+				description,
+				max_publishers,
+				bitrate,
+				bitrate_cap,
+				fir_freq,
+				audiocodec,
+				videocodec,
+				record,
+				record_dir,
+				lock_record,
+				num_participants));
+		};
+
+		struct FetchRoomsListResponse : public JanusResponse {
+			std::string videoroom;
+			std::vector<VideoRoomInfo> list;
+
+			XTOSTRUCT(I(JanusResponse), O(videoroom, list));
 		};
 
 		/*
