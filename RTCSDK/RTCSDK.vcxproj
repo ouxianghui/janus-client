@@ -80,6 +80,7 @@
     <ClInclude Include="thread_manager.h" />
     <ClInclude Include="video_room.h" />
     <ClInclude Include="video_room_api.h" />
+    <ClInclude Include="video_room_models.h" />
     <ClInclude Include="weak_proxy.h" />
     <ClInclude Include="webrtc_service.h" />
     <ClInclude Include="webrtc_service_events.h" />

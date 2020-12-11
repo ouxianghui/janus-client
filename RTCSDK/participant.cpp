@@ -6,6 +6,7 @@
 
 #include "participant.h"
 #include "logger/logger.h"
+#include "video_room_models.h"
 
 namespace vi {
 	Participant::Participant(const std::string& plugin, 
@@ -44,16 +45,6 @@ namespace vi {
 			// 'offer_data' properties to false (they're true by default), e.g.:
 			// 		subscribe["offer_video"] = false;
 			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
-				//std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-				//auto lambda = [](bool success, const std::string& response) {
-				//	DLOG("response: {}", response.c_str());
-				//};
-				//std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-				//event->message = x2struct::X::tojson(request);
-				//DLOG("event->message: {}", event->message.c_str());
-				//event->callback = callback;
-				//sendMessage(event);
-
 				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 				auto lambda = [](bool success, const std::string& response) {
 					DLOG("response: {}", response.c_str());
@@ -84,6 +75,23 @@ namespace vi {
 	void Participant::onWebrtcState(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says this WebRTC PeerConnection (feed #{}) is {} now", _id, (isActive ? "up" : "down"));
+		if (isActive) {
+			// TODO: use IVideoRoomApi
+			vr::SubscriberConfigureRequest request;
+			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+			auto lambda = [](bool success, const std::string& response) {
+				DLOG("response: {}", response.c_str());
+				if (response.empty()) {
+					return;
+				}
+				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
+				x2struct::X::loadjson(response, *rar, false, true);
+			};
+			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+			event->message = x2struct::X::tojson(request);
+			event->callback = cb;
+			sendMessage(event);
+		}
 	}
 
 	void Participant::onSlowLink(bool uplink, bool lost) {}
@@ -139,26 +147,29 @@ namespace vi {
 				//// Answer and attach
 				auto wself = weak_from_this();
 				std::shared_ptr<PrepareWebRTCEvent> event = std::make_shared<PrepareWebRTCEvent>();
-				auto callback = std::make_shared<CreateAnswerOfferCallback>([wself](bool success, const std::string& reason, const JsepConfig& jsep) {
-					DLOG("Got a sdp, type: {}, sdp = {}", jsep.type.c_str(), jsep.sdp.c_str());
+				auto callback = std::make_shared<CreateAnswerOfferCallback>([wself](bool success, const std::string& reason, const JsepConfig& jsepConfig) {
+					DLOG("Got a sdp, type: {}, sdp = {}", jsepConfig.type.c_str(), jsepConfig.sdp.c_str());
 					auto self = wself.lock();
 					if (!self) {
 						return;
 					}
 					if (success) {
-						vr::StartRequest request;
-						request.room = 1234;
 						if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
+							// TODO: use IVideoRoomApi
+							vr::StartPeerConnectionRequest request;
+							request.room = 1234;
+
 							std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 							auto lambda = [](bool success, const std::string& response) {
 								DLOG("response: {}", response.c_str());
 							};
+
 							std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
 							event->message = x2struct::X::tojson(request);
-							Jsep jp;
-							jp.type = jsep.type;
-							jp.sdp = jsep.sdp;
-							event->jsep = x2struct::X::tojson(jp);
+							Jsep jsep;
+							jsep.type = jsepConfig.type;
+							jsep.sdp = jsepConfig.sdp;
+							event->jsep = x2struct::X::tojson(jsep);
 							event->callback = callback;
 							self->sendMessage(event);
 						}

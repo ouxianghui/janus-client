@@ -10,6 +10,7 @@
 #include "Websocket/websocket_endpoint.h"
 #include "i_message_transport_listener.h"
 #include "logger/logger.h"
+#include "message_models.h"
 
 namespace vi {
 	MessageTransport::MessageTransport()
@@ -150,7 +151,7 @@ namespace vi {
 				std::shared_ptr<JCCallback> callback = _callbacksMap[transaction];
 				_callbacksMap.erase(transaction);
 				if (callback) {
-					(*callback)(json);
+					(*callback)(data);
 				}
 			}
 		}
@@ -158,7 +159,7 @@ namespace vi {
 			std::lock_guard<std::mutex> locker(_listenerMutex);
 			for (const auto& listener : _listeners) {
 				if (auto li = listener.lock()) {
-					li->onMessage(json);
+					li->onMessage(data);
 				}
 			}
 		}

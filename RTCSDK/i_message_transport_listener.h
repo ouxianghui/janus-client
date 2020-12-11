@@ -6,7 +6,6 @@
 
 #pragma once
 
-#include "message_models.h"
 #include <memory>
 
 namespace vi {

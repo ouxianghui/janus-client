@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 #include <functional>
-#include "message_models.h"
 
 namespace vi {
 	using JCCallback = std::function<void(const std::string& json)>;

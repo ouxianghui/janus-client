@@ -83,19 +83,13 @@ namespace vi {
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
-			vr::PublisherConfigureRequest request;
-			request.request = "configure";
-			request.bitrate = 256000;
-
 			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
-				std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-				auto lambda = [](bool success, const std::string& response) {
-					DLOG("response: {}", response.c_str());
-				};
-				std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-				event->message = x2struct::X::tojson(request);
-				event->callback = callback;
-				sendMessage(event);
+				vr::PublishRequest request;
+				//request.request = "configure";
+				request.bitrate = 256000;
+				_videoRoomApi->publish(request, [](std::shared_ptr<JanusResponse> response) {
+					DLOG("response: {}", response->janus);
+				});
 			}
 		}
 		unmuteVideo();

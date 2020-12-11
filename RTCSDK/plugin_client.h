@@ -23,6 +23,8 @@ namespace vi {
 
 		~PluginClient();
 
+		uint64_t getId() { return _id; }
+
 		// IPluginClient
 		void setHandleId(int64_t handleId) override;
 

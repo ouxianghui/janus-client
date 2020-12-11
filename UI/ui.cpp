@@ -125,12 +125,11 @@ void UI::on_actionPublishStream_triggered(bool checked)
 		return;
 	}
 	if (checked) {
-		vr::CreateRoomRequest req;
-		req.room = 1004;
-		_vr->getVideoRoomApi()->create(req, nullptr);
+		vr::FetchParticipantsRequest req;
+		req.room = 1234;
+		_vr->getVideoRoomApi()->fetchParticipants(req, nullptr);
 	}
 	else {
-
 	}
 }
 

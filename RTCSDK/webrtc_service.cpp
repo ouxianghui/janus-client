@@ -32,6 +32,7 @@
 #include "logger/logger.h"
 #include "service/app_instance.h"
 #include "thread_manager.h"
+#include "message_models.h"
 
 namespace vi {
 

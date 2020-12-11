@@ -26,6 +26,8 @@ namespace vi {
 
 		~Participant();
 
+		uint64_t getId() { return PluginClient::getId(); }
+
 	protected:
 		void onAttached(bool success) override;
 

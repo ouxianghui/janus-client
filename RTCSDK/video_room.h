@@ -31,6 +31,8 @@ namespace vi {
 
 		std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
 
+		//std::shared_ptr<PluginClient> getParticipant() { return (_participantsMap.begin()->second); }
+
 	protected:
 		void onAttached(bool success) override;
 
