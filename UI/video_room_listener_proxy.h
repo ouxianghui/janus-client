@@ -11,7 +11,6 @@
 #include "participant.h"
 #include "i_video_room_listener.h"
 
-using namespace vi;
 
 class VideoRoomListenerProxy 
 	: public QObject
@@ -26,22 +25,22 @@ public:
 
 private:
 	// IVideoRoomListener
-	void onCreateParticipant(std::shared_ptr<Participant> participant) override;
+	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;
 
-	void onUpdateParticipant(std::shared_ptr<Participant> participant) override;
+	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant) override;
 
-	void onDeleteParticipant(std::shared_ptr<Participant> participant) override;
+	void onDeleteParticipant(std::shared_ptr<vi::Participant> participant) override;
 
 	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 signals:
-	void createParticipant(std::shared_ptr<Participant> participant);
+	void createParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void updateParticipant(std::shared_ptr<Participant> participant);
+	void updateParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void deleteParticipant(std::shared_ptr<Participant> participant);
+	void deleteParticipant(std::shared_ptr<vi::Participant> participant);
 
 	void createStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 

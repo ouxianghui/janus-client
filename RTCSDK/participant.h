@@ -28,6 +28,8 @@ namespace vi {
 
 		uint64_t getId() { return PluginClient::getId(); }
 
+		const std::string& displayName() { return _displayName; }
+
 	protected:
 		void onAttached(bool success) override;
 

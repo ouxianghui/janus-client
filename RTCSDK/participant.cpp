@@ -198,12 +198,6 @@ namespace vi {
 
 	void Participant::onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) 
 	{
-		//// TODO: render
-		//if (auto renderer = _renderer.lock()) {
-		//	rtc::VideoSinkWants wants;
-		//	stream->GetVideoTracks()[0]->AddOrUpdateSink(renderer.get(), wants);
-		//}
-
 		if (auto listeners = _listeners.lock()) {
 			notifyObserver4Change<IVideoRoomListener>(*listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
 				listener->onCreateStream(pid, stream);

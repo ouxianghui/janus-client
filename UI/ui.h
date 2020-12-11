@@ -6,9 +6,9 @@
 #include "i_webrtc_service_listener.h"
 #include "video_room.h"
 #include "gl_video_renderer.h"
-#include "api/create_peerconnection_factory.h"
 #include "gallery_view.h"
 #include <QCloseEvent>
+#include "participants_list_view.h"
 
 namespace vi {
 	class Participant;
@@ -77,4 +77,6 @@ private:
 	GalleryView* _galleryView;
 
 	std::shared_ptr<VideoRoomListenerProxy> _videoRoomListenerProxy;
+
+	std::shared_ptr<ParticipantsListView> _participantsListView;
 };

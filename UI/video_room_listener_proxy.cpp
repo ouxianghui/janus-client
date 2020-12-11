@@ -16,17 +16,17 @@ VideoRoomListenerProxy::~VideoRoomListenerProxy()
 }
 
 // IVideoRoomListener
-void VideoRoomListenerProxy::onCreateParticipant(std::shared_ptr<Participant> participant)
+void VideoRoomListenerProxy::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
 {
 	emit createParticipant(participant);
 }
 
-void VideoRoomListenerProxy::onUpdateParticipant(std::shared_ptr<Participant> participant)
+void VideoRoomListenerProxy::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
 {
 	emit onUpdateParticipant(participant);
 }
 
-void VideoRoomListenerProxy::onDeleteParticipant(std::shared_ptr<Participant> participant)
+void VideoRoomListenerProxy::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
 {
 	emit deleteParticipant(participant);
 }

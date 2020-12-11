@@ -77,7 +77,7 @@ void GLVideoRenderer::paintGL()
 
 void GLVideoRenderer::OnFrame(const webrtc::VideoFrame& frame)
 {
-	//std::lock_guard<std::mutex> lock(_mutex);
+	std::lock_guard<std::mutex> lock(_mutex);
 	_frame = std::make_shared<webrtc::VideoFrame>(frame);
 	static int counter = 0;
 	//DLOG("--> frame: {}, ts: {}", ++counter, _frame->timestamp_us());

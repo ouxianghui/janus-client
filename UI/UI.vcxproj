@@ -119,6 +119,8 @@
     <ClCompile Include="i420_texture_cache.cpp" />
     <ClCompile Include="janus_connection_dialog.cpp" />
     <ClCompile Include="main_qt.cpp" />
+    <ClCompile Include="participants_list_view.cpp" />
+    <ClCompile Include="participant_item_view.cpp" />
     <ClCompile Include="ui.cpp" />
     <ClCompile Include="video_room_dialog.cpp" />
     <ClCompile Include="video_room_listener_proxy.cpp" />
@@ -129,6 +131,14 @@
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
     </QtUic>
     <QtUic Include="janus_connection_dialog.ui">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+    </QtUic>
+    <QtUic Include="participants_list_view.ui">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+    </QtUic>
+    <QtUic Include="participant_item_view.ui">
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
     </QtUic>
@@ -157,6 +167,14 @@
     <ClInclude Include="gl_defines.h" />
     <ClInclude Include="gl_video_shader.h" />
     <ClInclude Include="i420_texture_cache.h" />
+    <QtMoc Include="participant_item_view.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtNetwork;$(QTDIR)\include\QtWebsockets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+    </QtMoc>
+    <QtMoc Include="participants_list_view.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtNetwork;$(QTDIR)\include\QtWebsockets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
+    </QtMoc>
     <QtMoc Include="video_room_dialog.h">
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtNetwork;$(QTDIR)\include\QtWebsockets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>
       <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtOpenGL;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include</IncludePath>

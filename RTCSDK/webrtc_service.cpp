@@ -352,14 +352,6 @@ namespace vi {
 								});
 							}
 						}
-
-						//if (event->callback) {
-						//	self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
-						//		if (cb) {						
-						//			(*cb)(json);
-						//		}
-						//	});
-						//}
 					}
 				};
 				std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);

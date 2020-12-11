@@ -7,28 +7,19 @@
 #include "webrtc_service_events.h"
 #include "x2struct.hpp"
 #include "api/media_stream_interface.h"
-#include "api/create_peerconnection_factory.h"
-#include "api/video_codecs/builtin_video_decoder_factory.h"
-#include "api/video_codecs/builtin_video_encoder_factory.h"
-#include "api/audio_codecs/builtin_audio_decoder_factory.h"
-#include "api/audio_codecs/builtin_audio_encoder_factory.h"
-#include "modules/audio_device/include/audio_device.h"
-#include "modules/audio_processing/include/audio_processing.h"
-#include "modules/video_capture/video_capture_factory.h"
-#include "pc/video_track_source.h"
-#include "local_video_capture.h"
 #include "gl_video_renderer.h"
 #include "participant.h"
 #include "logger/logger.h"
 #include "video_room_listener_proxy.h"
-#include <qtoolbar.h>
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
+#include <QDockWidget>
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
+    this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
@@ -36,8 +27,6 @@ UI::UI(QWidget *parent)
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteParticipant, this, &UI::onDeleteParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteStream, this, &UI::onDeleteStream, Qt::QueuedConnection);
-
-
 }
 
 UI::~UI()
@@ -49,8 +38,23 @@ UI::~UI()
 
 void UI::init()
 {
+	auto wrs = rtcApp->getWebrtcService();
+	_vr = std::make_shared<vi::VideoRoom>(wrs);
+	_vr->init();
+	_vr->addListener(_videoRoomListenerProxy);
+
 	_galleryView = new GalleryView(this);
 	setCentralWidget(_galleryView);
+
+	_participantsListView = std::make_shared<ParticipantsListView>(_vr, this);
+
+	_participantsListView->setFixedWidth(480);
+
+	QDockWidget* dockWidget = new QDockWidget(this);
+	dockWidget->setWidget(_participantsListView.get());
+
+	this->addDockWidget(Qt::RightDockWidgetArea, dockWidget);
+
 }
 
 void UI::onStatus(vi::ServiceStauts status)
@@ -62,7 +66,7 @@ void UI::onStatus(vi::ServiceStauts status)
 
 void UI::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
 {
-
+	_participantsListView->addParticipant(participant);
 }
 
 void UI::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
@@ -72,7 +76,7 @@ void UI::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
 
 void UI::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
 {
-
+	_participantsListView->removeParticipant(participant);
 }
 
 void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
@@ -106,11 +110,7 @@ void UI::closeEvent(QCloseEvent* event)
 void UI::on_actionAttachRoom_triggered(bool checked)
 {
 	if (checked) {
-		if (!_vr) {
-			auto wrs = rtcApp->getWebrtcService();
-			_vr = std::make_shared<vi::VideoRoom>(wrs);
-			_vr->init();
-			_vr->addListener(_videoRoomListenerProxy);
+		if (_vr) {
 			_vr->attach();
 		}
 	}
@@ -125,7 +125,7 @@ void UI::on_actionPublishStream_triggered(bool checked)
 		return;
 	}
 	if (checked) {
-		vr::FetchParticipantsRequest req;
+		vi::vr::FetchParticipantsRequest req;
 		req.room = 1234;
 		_vr->getVideoRoomApi()->fetchParticipants(req, nullptr);
 	}
