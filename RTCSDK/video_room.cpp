@@ -85,12 +85,16 @@ namespace vi {
 		if (isActive) {
 			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 				vr::PublishRequest request;
-				//request.request = "configure";
+				request.request = "configure";
 				request.bitrate = 256000;
 				_videoRoomApi->publish(request, [](std::shared_ptr<JanusResponse> response) {
 					DLOG("response: {}", response->janus);
 				});
 			}
+
+			notifyObserver4Change<IVideoRoomListener>(*_listeners, [isActive, reason](const std::shared_ptr<IVideoRoomListener>& listener) {
+				listener->onMediaState(isActive, reason);
+			});
 		}
 		unmuteVideo();
 	}

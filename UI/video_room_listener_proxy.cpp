@@ -16,6 +16,11 @@ VideoRoomListenerProxy::~VideoRoomListenerProxy()
 }
 
 // IVideoRoomListener
+void VideoRoomListenerProxy::onMediaState(bool isActive, const std::string& reason)
+{
+	emit mediaState(isActive, reason);
+}
+
 void VideoRoomListenerProxy::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
 {
 	emit createParticipant(participant);

@@ -63,7 +63,15 @@
     <addaction name="actionStatistics"/>
     <addaction name="actionConsole"/>
    </widget>
+   <widget class="QMenu" name="menu_Media">
+    <property name="title">
+     <string>&amp;Media</string>
+    </property>
+    <addaction name="actionAudio"/>
+    <addaction name="actionVideo"/>
+   </widget>
    <addaction name="menuConnect"/>
+   <addaction name="menu_Media"/>
    <addaction name="menuSettings"/>
    <addaction name="menuTools"/>
    <addaction name="menuAbout"/>
@@ -90,6 +98,8 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionAudio"/>
+   <addaction name="actionVideo"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
   <action name="actionJanusGateway">
@@ -150,6 +160,28 @@
   <action name="actionCreateRoom">
    <property name="text">
     <string>&amp;Create Room</string>
+   </property>
+  </action>
+  <action name="actionAudio">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Audio</string>
+   </property>
+  </action>
+  <action name="actionVideo">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>&amp;Video</string>
    </property>
   </action>
  </widget>

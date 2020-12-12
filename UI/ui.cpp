@@ -19,14 +19,19 @@ UI::UI(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
+    ui.mainToolBar->setFixedHeight(64);
     this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::mediaState, this, &UI::onMediaState, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteParticipant, this, &UI::onDeleteParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteStream, this, &UI::onDeleteStream, Qt::QueuedConnection);
+
+    ui.actionAudio->setEnabled(false);
+    ui.actionVideo->setEnabled(false);
 }
 
 UI::~UI()
@@ -47,10 +52,10 @@ void UI::init()
 	setCentralWidget(_galleryView);
 
 	_participantsListView = std::make_shared<ParticipantsListView>(_vr, this);
-
 	_participantsListView->setFixedWidth(480);
 
 	QDockWidget* dockWidget = new QDockWidget(this);
+	dockWidget->setWindowTitle("Participants List");
 	dockWidget->setWidget(_participantsListView.get());
 
 	this->addDockWidget(Qt::RightDockWidgetArea, dockWidget);
@@ -60,7 +65,14 @@ void UI::init()
 void UI::onStatus(vi::ServiceStauts status)
 {
 	if (vi::ServiceStauts::UP == status) {
+	}
+}
 
+void UI::onMediaState(bool isActive, const std::string& reason)
+{
+	if (isActive) {
+		ui.actionAudio->setEnabled(true);
+		ui.actionVideo->setEnabled(true);
 	}
 }
 
@@ -173,4 +185,31 @@ void UI::on_actionJoinRoom_triggered(bool checked)
 		req.display = "jackie";
 		_vr->getVideoRoomApi()->join(req, nullptr);
     }
+}
+
+void UI::on_actionAudio_triggered(bool checked)
+{
+	if (!_vr) {
+		return;
+	}
+
+	if (checked) {
+		_vr->unmuteAudio();
+	}
+	else {
+		_vr->muteAudio();
+	}
+}
+
+void UI::on_actionVideo_triggered(bool checked)
+{
+	if (!_vr) {
+		return;
+	}
+
+	if (checked) {
+		_vr->unmuteVideo();
+	} else {
+		_vr->muteVideo();
+	}
 }

@@ -37,6 +37,8 @@ private slots:
 	void onStatus(vi::ServiceStauts status) override;
 
 	// IVideoRoomListener
+	void onMediaState(bool isActive, const std::string& reason);
+
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
 																	   
 	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant);
@@ -68,6 +70,10 @@ private slots:
     void on_actionCreateRoom_triggered();
 
     void on_actionJoinRoom_triggered(bool checked);
+
+    void on_actionAudio_triggered(bool checked);
+
+    void on_actionVideo_triggered(bool checked);
 
 private:
 	Ui::UIClass ui;

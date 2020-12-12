@@ -25,6 +25,8 @@ public:
 
 private:
 	// IVideoRoomListener
+	void onMediaState(bool isActive, const std::string& reason) override;
+
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;
 
 	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant) override;
@@ -36,6 +38,8 @@ private:
 	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 signals:
+	void mediaState(bool isActive, const std::string& reason);
+
 	void createParticipant(std::shared_ptr<vi::Participant> participant);
 
 	void updateParticipant(std::shared_ptr<vi::Participant> participant);
