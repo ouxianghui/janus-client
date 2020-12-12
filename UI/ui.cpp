@@ -73,6 +73,21 @@ void UI::onMediaState(bool isActive, const std::string& reason)
 	if (isActive) {
 		ui.actionAudio->setEnabled(true);
 		ui.actionVideo->setEnabled(true);
+		if (_vr) {
+			if (_vr->isAudioMuted()) {
+				ui.actionAudio->setChecked(false);
+			}
+			else {
+				ui.actionAudio->setChecked(true);
+			}
+
+			if (_vr->isVideoMuted()) {
+				ui.actionVideo->setChecked(false);
+			}
+			else {
+				ui.actionVideo->setChecked(true);
+			}
+		}
 	}
 }
 
