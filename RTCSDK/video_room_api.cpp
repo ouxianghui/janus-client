@@ -1,3 +1,9 @@
+/**
+ * This file is part of janus_client project.
+ * Author:    Jackie Ou
+ * Created:   2020-12-9
+ **/
+
 #include "video_room_api.h"
 #include "webrtc_service_events.h"
 #include "logger/logger.h"

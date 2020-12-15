@@ -33,6 +33,7 @@
 #include "service/app_instance.h"
 #include "thread_manager.h"
 #include "message_models.h"
+#include "sdp_utils.h"
 
 namespace vi {
 
@@ -1853,7 +1854,7 @@ namespace vi {
 		createOfferObserver.reset(new rtc::RefCountedObject<CreateSessionDescObserver>());
 
 		auto wself = weak_from_this();
-		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself](webrtc::SessionDescriptionInterface* desc) {
+		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
@@ -1877,6 +1878,13 @@ namespace vi {
 
 			std::string sdp;
 			desc->ToString(&sdp);
+
+			if (sendVideo && simulcast) {
+				std::vector<std::string> lines = SDPUtils::split(sdp, '\n');
+				SDPUtils::injectSimulcast(2, lines);
+				sdp = SDPUtils::join(lines);
+			}
+
 			JsepConfig jsep{ desc->type(), sdp, false };
 
 			context->mySdp = jsep;
@@ -1982,7 +1990,7 @@ namespace vi {
 		std::unique_ptr<CreateSessionDescObserver> createAnswerObserver;
 		createAnswerObserver.reset(new rtc::RefCountedObject<CreateSessionDescObserver>());
 
-		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself](webrtc::SessionDescriptionInterface* desc) {
+		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
@@ -2006,6 +2014,13 @@ namespace vi {
 
 			std::string sdp;
 			desc->ToString(&sdp);
+
+			if (sendVideo && simulcast) {
+				std::vector<std::string> lines = SDPUtils::split(sdp, '\n');
+				SDPUtils::injectSimulcast(2, lines);
+				sdp = SDPUtils::join(lines);
+			}
+
 			JsepConfig jsep{ desc->type(), sdp, false };
 
 			context->mySdp = jsep;

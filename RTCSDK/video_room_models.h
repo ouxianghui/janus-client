@@ -1,3 +1,9 @@
+/**
+ * This file is part of janus_client project.
+ * Author:    Jackie Ou
+ * Created:   2020-12-11
+ **/
+
 #pragma once
 
 #include "message_models.h"

@@ -293,7 +293,7 @@ namespace vi {
 		media.audioSend = audioOn;
 		media.videoSend = true;
 		event->media = media;
-		event->simulcast = false;
+		event->simulcast = true;
 		event->simulcast2 = false;
 		createOffer(event);
 	}

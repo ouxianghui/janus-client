@@ -1,3 +1,9 @@
+/**
+ * This file is part of janus_client project.
+ * Author:    Jackie Ou
+ * Created:   2020-12-9
+ **/
+
 #pragma once
 
 #include "i_video_room_api.h"

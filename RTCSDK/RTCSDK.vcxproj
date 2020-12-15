@@ -21,6 +21,7 @@
     <ClCompile Include="participant.cpp" />
     <ClCompile Include="plugin_client.cpp" />
     <ClCompile Include="rtc_sdk.cpp" />
+    <ClCompile Include="sdp_utils.cpp" />
     <ClCompile Include="service\app_instance.cpp" />
     <ClCompile Include="service\biz_service_factory.cpp" />
     <ClCompile Include="service\notification_service.cpp" />
@@ -61,6 +62,7 @@
     <ClInclude Include="plugin_context.h" />
     <ClInclude Include="rtcsdk_global.h" />
     <ClInclude Include="rtc_sdk.h" />
+    <ClInclude Include="sdp_utils.h" />
     <ClInclude Include="service\abstract_biz_service.h" />
     <ClInclude Include="service\app_instance.h" />
     <ClInclude Include="service\biz_service_factory.h" />
