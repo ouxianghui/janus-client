@@ -44,14 +44,14 @@ namespace vi {
 		removeBizObserver<IVideoRoomListener>(*_listeners, listener);
 	}
 
-	std::shared_ptr<PluginClient> VideoRoom::getParticipant(int64_t pid)
+	std::shared_ptr<Participant> VideoRoom::getParticipant(int64_t pid)
 	{
-		if (pid == this->_id) {
-			return shared_from_this();
-		}
-		else {
+		//if (pid == this->_id) {
+		//	return shared_from_this();
+		//}
+		//else {
 			return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
-		}
+		//}
 	}
 
 	std::shared_ptr<IVideoRoomApi> VideoRoom::getVideoRoomApi()
@@ -143,8 +143,9 @@ namespace vi {
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {} (audio: {}, video: {}}", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
-					// TODO:
-					createParticipant(pub.id, pub.display, pub.audio_codec, pub.video_codec);
+
+					ParticipantSt info{ pub.id, pub.display, pub.audio_codec, pub.video_codec };
+					createParticipant(info);
 				}
 			}
 		}
@@ -158,14 +159,21 @@ namespace vi {
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {}, (audio: {}, video: {})", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
-					// TODO:
-					createParticipant(pub.id, pub.display, pub.audio_codec, pub.video_codec);
+					ParticipantSt info{ pub.id, pub.display, pub.audio_codec, pub.video_codec };
+					createParticipant(info);
 				}
 			}
 
 			if (pluginData.data.xhas("leaving")) {
 				const auto& leaving = pluginData.data.leaving;
-				// TODO: Figure out the participant and detach it
+
+				// Figure out the participant and detach it
+				for (const auto& pair : _participantsMap) {
+					if (pair.first == leaving) {
+						removeParticipant(leaving);
+						break;
+					}
+				}
 			}
 			else if (pluginData.data.xhas("unpublished")) {
 				const auto& unpublished = pluginData.data.unpublished;
@@ -178,8 +186,13 @@ namespace vi {
 					return;
 				}
 
-				// TODO: Figure out the participant and detach it
-				//remoteFeed.detach();
+				// Figure out the participant and detach it
+				for (const auto& pair : _participantsMap) {
+					if (pair.first == unpublished) {
+						removeParticipant(unpublished);
+						break;
+					}
+				}
 			}
 			else if (pluginData.data.xhas("error")) {
 				if (pluginData.data.error_code == 426) {
@@ -232,16 +245,16 @@ namespace vi {
 		});
 	}
 
-	void VideoRoom::onDeleteLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+	void VideoRoom::onRemoveLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
 		notifyObserver4Change<IVideoRoomListener>(*_listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
-			listener->onDeleteStream(pid, stream);
+			listener->onRemoveStream(pid, stream);
 		});
 	}
 
 	void VideoRoom::onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
 
-	void VideoRoom::onDeleteRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
+	void VideoRoom::onRemoveRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
 
 	void VideoRoom::onData(const std::string& data, const std::string& label) {}
 
@@ -313,20 +326,31 @@ namespace vi {
 		}
 	}
 
-	void VideoRoom::createParticipant(int64_t id, const std::string& displayName, const std::string& audio, const std::string& video)
+	void VideoRoom::createParticipant(const ParticipantSt& info)
 	{
 		//return;
 		auto participant = std::make_shared<Participant>(_pluginContext->plugin, 
-														 _pluginContext->opaqueId, 
-														 id,
-														 _privateId,
-														 displayName,
-														 _pluginContext->webrtcService.lock(),
-														 _listeners);
+			_pluginContext->opaqueId, 
+			info.id,
+			_privateId,
+			info.displayName,
+			_pluginContext->webrtcService.lock(),
+			_listeners);
+
 		participant->attach();
-		_participantsMap[id] = participant;
+		_participantsMap[info.id] = participant;
 		notifyObserver4Change<IVideoRoomListener>(*_listeners, [participant](const std::shared_ptr<IVideoRoomListener>& listener) {
 			listener->onCreateParticipant(participant);
 		});
+	}
+
+	void VideoRoom::removeParticipant(int64_t id)
+	{
+		if (_participantsMap.find(id) != _participantsMap.end()) {
+
+			notifyObserver4Change<IVideoRoomListener>(*_listeners, [participant = _participantsMap[id]](const std::shared_ptr<IVideoRoomListener>& listener) {
+				listener->onRemoveParticipant(participant);
+			});
+		}
 	}
 }

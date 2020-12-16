@@ -18,7 +18,10 @@ public:
 	~ParticipantsListView();
 
 	void addParticipant(std::shared_ptr<vi::Participant> participant);
+
 	void removeParticipant(std::shared_ptr<vi::Participant> participant);
+
+	void removeAll();
 
 private:
 	Ui::ParticipantsListView ui;

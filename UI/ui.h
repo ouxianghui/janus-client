@@ -43,11 +43,11 @@ private slots:
 																	   
 	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant);
 																	   
-	void onDeleteParticipant(std::shared_ptr<vi::Participant> participant);
+	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant);
 
 	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
-	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
 private slots:
 
@@ -79,6 +79,10 @@ private:
 	Ui::UIClass ui;
 
 	std::shared_ptr<vi::VideoRoom> _vr;
+
+    std::shared_ptr<IContentView> _selfContentView;
+
+    QWidget* _selfView;
 
 	GalleryView* _galleryView;
 

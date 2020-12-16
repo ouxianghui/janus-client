@@ -47,11 +47,11 @@ namespace vi {
 
 		void onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
-		void onDeleteLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+		void onRemoveLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 		void onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
-		void onDeleteRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+		void onRemoveRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 		void onData(const std::string& data, const std::string& label) override;
 

@@ -16,6 +16,7 @@ ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoom> vr, QW
 
 ParticipantsListView::~ParticipantsListView()
 {
+	removeAll();
 }
 
 void ParticipantsListView::addParticipant(std::shared_ptr<vi::Participant> participant)
@@ -28,8 +29,8 @@ void ParticipantsListView::addParticipant(std::shared_ptr<vi::Participant> parti
     view->setAutoFillBackground(true);
 	view->setDisplayName(participant->displayName());
     QListWidgetItem* item = new QListWidgetItem(ui.listWidgetParticipants);
-    QVariant var((uint64_t)participant.get());
-    item->setData(Qt::UserRole, var);
+    QVariant var(participant->getId());
+    item->setData(Qt::UserRole+1, var);
     ui.listWidgetParticipants->addItem(item);
     ui.listWidgetParticipants->setItemWidget(item, view);
 
@@ -41,15 +42,42 @@ void ParticipantsListView::removeParticipant(std::shared_ptr<vi::Participant> pa
         return;
     }
     int count = ui.listWidgetParticipants->count();
-    for (int row = 0; row < count; ++row) {
-        QListWidgetItem* item = ui.listWidgetParticipants->item(row);
+    for (int i = 0; i < count; ++i) {
+        QListWidgetItem* item = ui.listWidgetParticipants->item(i);
         if (item) {
-            QVariant var = item->data(Qt::UserRole);
-            if ((uint64_t)var.data() == ((uint64_t)participant.get())) {
-                ui.listWidgetParticipants->removeItemWidget(item);
-                ui.listWidgetParticipants->takeItem(row);
+            QVariant var = item->data(Qt::UserRole+1);
+            if (var.toULongLong() == participant->getId()) {
+                QWidget *widget = ui.listWidgetParticipants->itemWidget(item);
+                if (nullptr != widget)
+                {
+                    ui.listWidgetParticipants->removeItemWidget(item);
+                    widget->deleteLater();
+                }
+
+                item = ui.listWidgetParticipants->takeItem(i);
+                delete item;
+                item = nullptr;
+
+                ui.listWidgetParticipants->update();
                 break;
             }
         }
      }
+}
+
+void ParticipantsListView::removeAll()
+{
+	while (0 != ui.listWidgetParticipants->count()) {
+		QListWidgetItem *item = ui.listWidgetParticipants->item(0);
+		QWidget *widget = ui.listWidgetParticipants->itemWidget(item);
+		if (nullptr != widget)
+		{
+			ui.listWidgetParticipants->removeItemWidget(item);
+			widget->deleteLater();
+		}
+
+		item = ui.listWidgetParticipants->takeItem(0);
+		delete item;
+		item = nullptr;
+	}
 }

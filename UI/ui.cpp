@@ -14,21 +14,25 @@
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
 #include <QDockWidget>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QToolButton>
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
 {
 	ui.setupUi(this);
-    ui.mainToolBar->setFixedHeight(64);
+    //ui.mainToolBar->setFixedHeight(64);
     this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::mediaState, this, &UI::onMediaState, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteParticipant, this, &UI::onDeleteParticipant, Qt::QueuedConnection);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::deleteStream, this, &UI::onDeleteStream, Qt::QueuedConnection);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeStream, this, &UI::onRemoveStream, Qt::QueuedConnection);
 
     ui.actionAudio->setEnabled(false);
     ui.actionVideo->setEnabled(false);
@@ -38,6 +42,10 @@ UI::~UI()
 {
 	if (_galleryView) {
 		_galleryView->removeAll();
+	}
+
+	if (_selfContentView) {
+		_selfContentView->cleanup();
 	}
 }
 
@@ -51,15 +59,38 @@ void UI::init()
 	_galleryView = new GalleryView(this);
 	setCentralWidget(_galleryView);
 
+
+    QWidget* dockContentView = new QWidget(this);
+    QVBoxLayout* dockContentViewLayout = new QVBoxLayout(dockContentView);
+    dockContentView->setLayout(dockContentViewLayout);
+
+    _selfView = new QWidget(this);
+    QGridLayout* selfViewLayout = new QGridLayout(_selfView);
+    _selfView->setLayout(selfViewLayout);
+    dockContentViewLayout->addWidget(_selfView, 100);
+
+    QToolButton* audioButton = new QToolButton(this);
+    audioButton->setDefaultAction(ui.actionAudio);
+
+    QToolButton* videoButton = new QToolButton(this);
+    videoButton->setDefaultAction(ui.actionVideo);
+
+    QWidget* buttonsView = new QWidget(this);
+    QHBoxLayout* buttonsViewLayout = new QHBoxLayout(buttonsView);
+    buttonsView->setLayout(buttonsViewLayout);
+    buttonsViewLayout->addWidget(audioButton, 1);
+    buttonsViewLayout->addWidget(videoButton, 1);
+    dockContentViewLayout->addWidget(buttonsView, 1);
+
 	_participantsListView = std::make_shared<ParticipantsListView>(_vr, this);
 	_participantsListView->setFixedWidth(480);
+    dockContentViewLayout->addWidget(_participantsListView.get(), 400);
 
 	QDockWidget* dockWidget = new QDockWidget(this);
-	dockWidget->setWindowTitle("Participants List");
-	dockWidget->setWidget(_participantsListView.get());
+    dockWidget->setWindowTitle("Participants List");
+    dockWidget->setWidget(dockContentView);
 
 	this->addDockWidget(Qt::RightDockWidgetArea, dockWidget);
-
 }
 
 void UI::onStatus(vi::ServiceStauts status)
@@ -101,29 +132,42 @@ void UI::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
 
 }
 
-void UI::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
+void UI::onRemoveParticipant(std::shared_ptr<vi::Participant> participant)
 {
-	_participantsListView->removeParticipant(participant);
+	if (participant) {
+		_galleryView->removeView(participant->getId());
+		_participantsListView->removeParticipant(participant);
+	}
 }
 
 void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
 	for (auto track : stream->GetVideoTracks()) {
-		GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
-		renderer->init();
-		renderer->show();
+        if (_vr->getId() != pid) {
+            GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
+            renderer->init();
+            renderer->show();
 
-		// TODO:
-		static int64_t id = -1;
-		std::shared_ptr<ContentView> view = std::make_shared<ContentView>(++id, track, renderer);
-		view->init();
+            std::shared_ptr<ContentView> view = std::make_shared<ContentView>(pid, track, renderer);
+            view->init();
 
-		_galleryView->insertView(view);
+            _galleryView->insertView(view);
+        }
+        else {
+            GLVideoRenderer* renderer = new GLVideoRenderer(this);
+            renderer->init();
+            renderer->show();
+
+            _selfContentView = std::make_shared<ContentView>(pid, track, renderer);
+            _selfContentView->init();
+            _selfView->layout()->addWidget(_selfContentView->view());
+        }
 	}
 }
 
-void UI::onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void UI::onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
+	_galleryView->removeView(pid);
 }
 
 void UI::closeEvent(QCloseEvent* event)

@@ -194,7 +194,7 @@ namespace vi {
 
 	void Participant::onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
 
-	void Participant::onDeleteLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
+	void Participant::onRemoveLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
 
 	void Participant::onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) 
 	{
@@ -206,11 +206,11 @@ namespace vi {
 
 	}
 
-	void Participant::onDeleteRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+	void Participant::onRemoveRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 	{
 		if (auto listeners = _listeners.lock()) {
 			notifyObserver4Change<IVideoRoomListener>(*listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
-				listener->onDeleteStream(pid, stream);
+				listener->onRemoveStream(pid, stream);
 			});
 		}
 	}

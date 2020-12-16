@@ -76,6 +76,7 @@
    <addaction name="menuTools"/>
    <addaction name="menuAbout"/>
   </widget>
+  <widget class="QStatusBar" name="statusBar"/>
   <widget class="QToolBar" name="mainToolBar">
    <property name="baseSize">
     <size>
@@ -98,10 +99,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
-   <addaction name="actionAudio"/>
-   <addaction name="actionVideo"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
   <action name="actionJanusGateway">
    <property name="text">
     <string>&amp;Janus Gateway</string>

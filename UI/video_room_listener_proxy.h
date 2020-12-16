@@ -31,11 +31,11 @@ private:
 
 	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant) override;
 
-	void onDeleteParticipant(std::shared_ptr<vi::Participant> participant) override;
+	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant) override;
 
 	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
-	void onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+	void onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
 
 signals:
 	void mediaState(bool isActive, const std::string& reason);
@@ -44,9 +44,9 @@ signals:
 
 	void updateParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void deleteParticipant(std::shared_ptr<vi::Participant> participant);
+	void removeParticipant(std::shared_ptr<vi::Participant> participant);
 
 	void createStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
-	void deleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void removeStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 };

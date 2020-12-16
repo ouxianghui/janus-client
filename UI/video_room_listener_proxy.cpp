@@ -31,9 +31,9 @@ void VideoRoomListenerProxy::onUpdateParticipant(std::shared_ptr<vi::Participant
 	emit onUpdateParticipant(participant);
 }
 
-void VideoRoomListenerProxy::onDeleteParticipant(std::shared_ptr<vi::Participant> participant)
+void VideoRoomListenerProxy::onRemoveParticipant(std::shared_ptr<vi::Participant> participant)
 {
-	emit deleteParticipant(participant);
+	emit removeParticipant(participant);
 }
 
 void VideoRoomListenerProxy::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
@@ -41,7 +41,7 @@ void VideoRoomListenerProxy::onCreateStream(uint64_t pid, rtc::scoped_refptr<web
 	emit createStream(pid, stream);
 }
 
-void VideoRoomListenerProxy::onDeleteStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void VideoRoomListenerProxy::onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
 {
-	emit deleteStream(pid, stream);
+	emit removeStream(pid, stream);
 }

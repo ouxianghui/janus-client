@@ -1453,7 +1453,7 @@ namespace vi {
 				auto& context = pluginClient->pluginContext()->webrtcContext;
 				if (context->remoteStream && !receiver->streams().empty() && (receiver->streams()[0]->id() == context->remoteStream->id())) {
 					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
-						pluginClient->onDeleteRemoteStream(context->remoteStream);
+						pluginClient->onRemoveRemoteStream(context->remoteStream);
 						context->remoteStream = nullptr;
 					});
 				}
