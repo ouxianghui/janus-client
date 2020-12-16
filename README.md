@@ -32,6 +32,10 @@ Get the code:
   
   Open RTCSln.sln with Visual Studio(2017)
   
+## UI
+<img src="https://github.com/ouxianghui/janus_client/blob/main/janus-client-ui.png" height="500" /><br>
+
+
 ## Author
 Jackie Ou 750265900@qq.com
 
