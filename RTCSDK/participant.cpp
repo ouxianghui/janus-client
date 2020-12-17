@@ -222,4 +222,6 @@ namespace vi {
 	void Participant::onCleanup() {}
 
 	void Participant::onDetached() {}
+
+	void Participant::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
 }

@@ -39,8 +39,8 @@ namespace vi {
 
 	static std::unordered_map<int64_t, std::weak_ptr<WebRTCService>> g_sessions;
 
-	WebRTCService::WebRTCService(rtc::Thread* callbackThread)
-		: _callbackThread(callbackThread)
+	WebRTCService::WebRTCService(rtc::Thread* eventHandlerThread)
+		: _eventHandlerThread(eventHandlerThread)
 	{
 		_iceServers.emplace_back("stun:stun.l.google.com:19302");
 	}
@@ -61,8 +61,8 @@ namespace vi {
 			_network->Stop();
 		}
 
-		if (_taskScheduler) {
-			_taskScheduler->cancelAll();
+		if (_heartbeatTaskScheduler) {
+			_heartbeatTaskScheduler->cancelAll();
 		}
 
 		DLOG("~WebRTCService");
@@ -75,7 +75,7 @@ namespace vi {
 		_client->addListener(shared_from_this());
 		_client->init();
 
-		_taskScheduler = std::make_shared<vi::TaskScheduler>();
+		_heartbeatTaskScheduler = std::make_shared<vi::TaskScheduler>();
 
 		if (!_pcf) {
 			_signaling = rtc::Thread::Create();
@@ -156,12 +156,12 @@ namespace vi {
 					int64_t handleId = model.data.id;
 					pluginClient->setHandleId(handleId);
 					self->_pluginClientMap[handleId] = pluginClient;
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 						pluginClient->onAttached(true);
 					});
 				}
 				else if (model.janus == "error") {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 						pluginClient->onAttached(false);
 					});
 				}
@@ -339,14 +339,14 @@ namespace vi {
 
 						if (event->callback) {
 							if (model.janus == "success" || model.janus == "ack") {
-								self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
+								self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
 									if (cb) {
 										(*cb)(true, json);
 									}
 								});
 							}
 							else if (model.janus != "ack") {
-								self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
+								self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback, json]() {
 									if (cb) {
 										(*cb)(false, json);
 									}
@@ -361,7 +361,7 @@ namespace vi {
 		}
 		else {
 			if (event && event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "service down!");
 				});
 			}
@@ -379,7 +379,7 @@ namespace vi {
 		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid handle");
 				});
 			}
@@ -389,7 +389,7 @@ namespace vi {
 		if (event->label.empty() || event->text.empty()) {
 			DLOG("handler->label.empty() || handler->text.empty()");
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "empty label or empty text");
 				});
 			}
@@ -413,7 +413,7 @@ namespace vi {
 			this->createDataChannel(handleId, event->label, nullptr);
 		}
 		if (event->callback) {
-			_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 				(*cb)(false, "success");
 			});
 		}
@@ -430,7 +430,7 @@ namespace vi {
 		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid handle");
 				});
 			}
@@ -451,7 +451,7 @@ namespace vi {
 				if (audioSender) {
 					DLOG("Invalid DTMF configuration (no audio track)");
 					if (event->callback) {
-						_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+						_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 							(*cb)(false, "Invalid DTMF configuration (no audio track)");
 						});
 					}
@@ -477,7 +477,7 @@ namespace vi {
 
 		if (event->tones.empty()) {
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid DTMF parameters");
 				});
 			}
@@ -494,7 +494,7 @@ namespace vi {
 		context->dtmfSender->InsertDtmf(event->tones, duration, gap);
 
 		if (event->callback) {
-			_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 				(*cb)(false, "success");
 			});
 		}
@@ -520,7 +520,7 @@ namespace vi {
 		if (!pluginClient) {
 			DLOG("Invalid handle");
 				if (event->callback) {
-					_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "Invalid handle");
 					});
 				}
@@ -560,7 +560,7 @@ namespace vi {
 					if (context->myStream && context->myStream->GetAudioTracks().size() > 0) {
 						ELOG("Can't add audio stream, there already is one");
 						if (event->callback) {
-							_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+							_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 								(*cb)(false, "Can't add audio stream, there already is one");
 							});
 						}
@@ -623,7 +623,7 @@ namespace vi {
 					if (context->myStream && context->myStream->GetVideoTracks().size() > 0) {
 						ELOG("Can't add video stream, there already is one");
 						if (event->callback) {
-							_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+							_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 								(*cb)(false, "Can't add video stream, there already is one");
 							});
 						}
@@ -815,7 +815,7 @@ namespace vi {
 		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid handle");
 				});
 			}
@@ -828,7 +828,7 @@ namespace vi {
 			if (!context->pc) {
 				DLOG("No PeerConnection: if this is an answer, use createAnswer and not handleRemoteJsep");
 				if (event->callback) {
-					_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "No PeerConnection: if this is an answer, use createAnswer and not handleRemoteJsep");
 					});
 				}
@@ -855,7 +855,7 @@ namespace vi {
 				context->candidates.clear();
 				auto self = wself.lock();
 				if (event->callback && self) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(true, "success");
 					});
 				}
@@ -864,7 +864,7 @@ namespace vi {
 				DLOG("SetRemoteDescription() failure: {}", error.message());
 				auto self = wself.lock();
 				if (event->callback && self) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "failure");
 					});
 				}
@@ -874,7 +874,7 @@ namespace vi {
 		else {
 			DLOG("Invalid JSEP");
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid JSEP");
 				});
 			}
@@ -936,7 +936,7 @@ namespace vi {
 			context->dataChannels.clear();
 			context->dtmfSender = nullptr;
 		}
-		_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+		_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 			pluginClient->onCleanup();
 		});
 	}
@@ -954,7 +954,7 @@ namespace vi {
 		if (!pluginClient) {
 			DLOG("Invalid handle");
 			if (event && event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(true, "");
 				});
 			}
@@ -966,7 +966,7 @@ namespace vi {
 		if (event->noRequest) {
 			// We're only removing the handle locally
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(true, "");
 				});
 			}
@@ -1094,7 +1094,7 @@ namespace vi {
 			// The PeerConnection with the server is up! Notify this
 			DLOG("Got a webrtcup event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 				pluginClient->onWebrtcState(true, "");
 			});
 
@@ -1106,7 +1106,7 @@ namespace vi {
 
 			HangupResponse model;
 			x2struct::X::loadjson(json, model, false, true);
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model.reason]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model.reason]() {
 				pluginClient->onWebrtcState(false, reason);
 				pluginClient->onHangup();
 			});
@@ -1115,7 +1115,7 @@ namespace vi {
 			// A plugin asked the core to detach one of our handles
 			DLOG("Got a detached event on session: {}", _sessionId);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
 				pluginClient->onDetached();
 			});
 		}
@@ -1125,7 +1125,7 @@ namespace vi {
 			MediaResponse model;
 			x2struct::X::loadjson(json, model, false, true);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
 				pluginClient->onMediaState(model.type, model.receiving);
 			});
 		}
@@ -1133,7 +1133,7 @@ namespace vi {
 			DLOG("Got a slowlink event on session: {}", _sessionId);
 			SlowlinkResponse model;
 			x2struct::X::loadjson(json, model, false, true);
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
 				pluginClient->onSlowLink(model.uplink, model.lost);
 			});
 		}
@@ -1153,7 +1153,7 @@ namespace vi {
 			//std::string data = x2struct::X::tojson(event.plugindata);
 			std::string jsep = x2struct::X::tojson(event.jsep);
 
-			_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, json, jsep]() {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, json, jsep]() {
 				pluginClient->onMessage(json, jsep);
 			});
 		}
@@ -1187,7 +1187,7 @@ namespace vi {
 					listener->onStatus(ServiceStauts::UP);
 				});
 				if (event && event->callback) {
-					//self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					//self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					const auto& cb = event->callback;
 						(*cb)(true, "");
 					//});
@@ -1205,8 +1205,7 @@ namespace vi {
 
 	void WebRTCService::startHeartbeat()
 	{
-		auto wself = weak_from_this();
-		_heartbeatTaskId = _taskScheduler->schedule([wself]() {
+		_heartbeatTaskId = _heartbeatTaskScheduler->schedule([wself = weak_from_this()]() {
 			if (auto self = wself.lock()) {
 				DLOG("sessionHeartbeat() called");
 				auto lambda = [](const std::string& json) {
@@ -1261,7 +1260,7 @@ namespace vi {
 				stopAllTracks(event->stream);
 			}
 			if (event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "Invalid handle");
 				});
 			}
@@ -1374,7 +1373,7 @@ namespace vi {
 
 			auto icccb = std::make_shared<IceConnectionChangeCallback>([pluginClient, wself](webrtc::PeerConnectionInterface::IceConnectionState newState) {
 				if (auto self = wself.lock()) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, newState]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, newState]() {
 						pluginClient->onIceState(newState);
 					});
 				}
@@ -1435,7 +1434,7 @@ namespace vi {
 				if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO) {
 					auto& context = pluginClient->pluginContext()->webrtcContext;
 					context->remoteStream = transceiver->receiver()->streams()[0];
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
 						pluginClient->onCreateRemoteStream(context->remoteStream);
 					});
 				}
@@ -1452,7 +1451,7 @@ namespace vi {
 
 				auto& context = pluginClient->pluginContext()->webrtcContext;
 				if (context->remoteStream && !receiver->streams().empty() && (receiver->streams()[0]->id() == context->remoteStream->id())) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
 						pluginClient->onRemoveRemoteStream(context->remoteStream);
 						context->remoteStream = nullptr;
 					});
@@ -1531,7 +1530,7 @@ namespace vi {
 			}
 
 			if (context->myStream) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
 					pluginClient->onCreateLocalStream(context->myStream);
 				});
 			}
@@ -1576,7 +1575,7 @@ namespace vi {
 					DLOG("SetRemoteDescription() failure: {}", error.message());
 					auto self = wself.lock();
 					if (event->callback && self) {
-						self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+						self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 							(*cb)(false, "failure");
 						});
 					}
@@ -1608,7 +1607,7 @@ namespace vi {
 			context->mySdp = { ld->type(), sdp, context->trickle.value_or(false) };
 			context->sdpSent = true;
 			if (event && event->answerOfferCallback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, context]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, context]() {
 					(*cb)(true, "", context->mySdp.value());
 				});
 			}
@@ -1649,7 +1648,7 @@ namespace vi {
 				}
 				auto dc = context->dataChannels[dcLabel];
 				if (dc->state() == webrtc::DataChannelInterface::DataState::kOpen) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, dcLabel]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, dcLabel]() {
 						pluginClient->onDataOpen(dcLabel);
 					});
 				}
@@ -1662,7 +1661,7 @@ namespace vi {
 			if (!self) {
 				return;
 			}
-			self->_callbackThread->PostTask(RTC_FROM_HERE, [pluginClient, buffer, dcLabel]() {
+			self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, buffer, dcLabel]() {
 				size_t size = buffer.data.size();
 				char* msg = new char[size + 1];
 				memcpy(msg, buffer.data.data(), size);
@@ -1870,7 +1869,7 @@ namespace vi {
 				DLOG("SetLocalDescription() failure: {}", error.message());
 				auto self = wself.lock();
 				if (event->callback && self) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "failure");
 					});
 				}
@@ -1898,7 +1897,7 @@ namespace vi {
 
 			auto self = wself.lock();
 			if (event->answerOfferCallback && self) {
-				self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
 					(*cb)(true, "", jsep);
 				});
 			}
@@ -1908,7 +1907,7 @@ namespace vi {
 			DLOG("createOfferObserver() failure: {}", error.message());
 			auto self = wself.lock();
 			if (event->callback && self) {
-				self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(false, "failure");
 				});
 			}
@@ -2006,7 +2005,7 @@ namespace vi {
 				DLOG("SetLocalDescription() failure: {}", error.message());
 				auto self = wself.lock();
 				if (event->callback && self) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "failure");
 					});
 				}
@@ -2034,7 +2033,7 @@ namespace vi {
 
 			auto self = wself.lock();
 			if (event->answerOfferCallback && self) {
-				self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
 					(*cb)(true, "", jsep);
 				});
 			}
@@ -2045,7 +2044,7 @@ namespace vi {
 			if (event->callback) {
 				auto self = wself.lock();
 				if (event->callback && self) {
-					self->_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(false, "failure");
 					});
 				}
@@ -2064,7 +2063,7 @@ namespace vi {
 		if (_sessionId == -1) {
 			DLOG("No session to destroy");
 			if (event && event->callback) {
-				_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 					(*cb)(true, "");
 				});
 			}
@@ -2093,7 +2092,7 @@ namespace vi {
 		if (!_connected) {
 			DLOG("Is the server down? (connected = false)");
 			if(event->callback) {
-				//_callbackThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+				//_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 				const auto& cb = event->callback;
 				(*cb)(true, "");
 				//});

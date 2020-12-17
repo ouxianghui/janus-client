@@ -54,5 +54,9 @@ namespace vi {
 		virtual void hangup(bool sendRequest) = 0;
 
 		virtual void detach(std::shared_ptr<DetachEvent> event) = 0;
+
+		virtual void startStatsReport() = 0;
+
+		virtual void stopStatsReport() = 0;
 	};
 }

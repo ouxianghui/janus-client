@@ -97,6 +97,7 @@ namespace vi {
 			});
 		}
 		unmuteVideo();
+		startStatsReport();
 	}
 
 	void VideoRoom::onSlowLink(bool uplink, bool lost) {}
@@ -266,6 +267,8 @@ namespace vi {
 	}
 
 	void VideoRoom::onDetached() {}
+
+	void VideoRoom::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
 
 	void VideoRoom::publishOwnStream(bool audioOn)
 	{

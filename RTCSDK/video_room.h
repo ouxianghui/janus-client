@@ -75,6 +75,8 @@ namespace vi {
 
 		void onDetached() override;
 
+		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
+
 	protected:
 		void publishOwnStream(bool audioOn);
 

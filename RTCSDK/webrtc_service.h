@@ -32,7 +32,7 @@ namespace vi {
 		, public std::enable_shared_from_this<WebRTCService>
 	{
 	public:
-		WebRTCService(rtc::Thread* callbackThread);
+		WebRTCService(rtc::Thread* eventHandlerThread);
 
 		~WebRTCService() override;
 
@@ -177,7 +177,9 @@ namespace vi {
 
 		std::shared_ptr<ISfuApiClient> _client;
 
-		std::shared_ptr<TaskScheduler> _taskScheduler;
+		std::shared_ptr<TaskScheduler> _heartbeatTaskScheduler;
+
+		uint64_t _heartbeatTaskId = 0;
 
 		ServiceStauts _serviceStatus = ServiceStauts::DOWN;
 
@@ -185,14 +187,12 @@ namespace vi {
 
 		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _pcf;
 
-		uint64_t _heartbeatTaskId = 0;
-
 		std::unique_ptr<rtc::Thread> _signaling;
 		std::unique_ptr<rtc::Thread> _worker;
 		std::unique_ptr<rtc::Thread> _network;
 		rtc::scoped_refptr<CapturerTrackSource> _videoDevice;
 
-		rtc::Thread* _callbackThread;
+		rtc::Thread* _eventHandlerThread;
 	};
 }
 

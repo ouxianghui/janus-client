@@ -38,6 +38,7 @@ namespace vi {
 		std::atomic_bool iceDone = false;
 		std::atomic_bool sdpSent = false;
 		std::vector<std::shared_ptr<webrtc::IceCandidateInterface>> candidates;
+		rtc::scoped_refptr<StatsObserver> statsObserver;
 	};
 
 	struct PluginContext {

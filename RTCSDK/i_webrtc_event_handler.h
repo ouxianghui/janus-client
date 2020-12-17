@@ -10,6 +10,7 @@
 #include <string>
 #include "api/peer_connection_interface.h"
 #include "api/media_stream_interface.h"
+#include "api/stats/rtc_stats_report.h"
 #include "plugin_context.h"
 
 namespace vi {
@@ -47,5 +48,7 @@ namespace vi {
 		virtual void onCleanup() = 0;
 
 		virtual void onDetached() = 0;
+
+		virtual void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) = 0;
 	};
 }

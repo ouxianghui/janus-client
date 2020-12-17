@@ -5,15 +5,21 @@
  **/
 
 #include "plugin_client.h"
+#include "task_scheduler.h"
+#include "thread_manager.h"
+#include "logger/logger.h"
 
 namespace vi {
 	PluginClient::PluginClient(std::shared_ptr<WebRTCServiceInterface> wrs)
 	{
 		_pluginContext = std::make_shared<PluginContext>(wrs);
+
+		_rtcStatsTaskScheduler = std::make_shared<vi::TaskScheduler>();
 	}
 
 	PluginClient::~PluginClient()
 	{
+		stopStatsReport();
 	}
 
 	void PluginClient::setHandleId(int64_t handleId)
@@ -194,6 +200,52 @@ namespace vi {
 			if (wrs->status() == ServiceStauts::UP) {
 				wrs->detach(_pluginContext->handleId, event);
 			}
+		}
+	}
+
+	void PluginClient::startStatsReport()
+	{
+		_rtcStatsTaskId = _rtcStatsTaskScheduler->schedule([wself = weak_from_this()]() {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			const auto& context = self->pluginContext()->webrtcContext;
+			if (!context->statsObserver) {
+				context->statsObserver = StatsObserver::create();
+
+				auto socb = std::make_shared<StatsCallback>([wself](const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {
+					DLOG("RTC Stats Report: {}", report->ToJson());
+					auto self = wself.lock();
+					if (!self) {
+						return;
+					}
+
+					auto wrs = self->pluginContext()->webrtcService.lock();
+					if (!wrs) {
+						return;
+					}
+					if (wrs->status() != ServiceStauts::UP) {
+						return;
+					}
+
+					auto eventHandlerThread = TMgr->thread(vi::ThreadName::WORKER);
+					eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, report]() {
+						if (auto self = wself.lock()) {
+							self->onStatsReport(report);
+						}
+					});
+				});
+				context->statsObserver->setCallback(socb);
+			}
+			context->pc->GetStats(context->statsObserver.get());
+		}, 5000, true);
+	}
+
+	void PluginClient::stopStatsReport()
+	{
+		if (_rtcStatsTaskScheduler) {
+			_rtcStatsTaskScheduler->cancelAll();
 		}
 	}
 }

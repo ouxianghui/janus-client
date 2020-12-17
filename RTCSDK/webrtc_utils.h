@@ -12,6 +12,8 @@
 #include <functional>
 #include <memory>
 #include "api/peer_connection_interface.h"
+#include "api/stats/rtc_stats_collector_callback.h"
+#include "api/stats/rtc_stats_report.h"
 
 namespace vi {
 
@@ -278,6 +280,31 @@ namespace vi {
 
 	private:
 		std::shared_ptr<ToneChangeCallback> _toneChangeCallback;
+	};
+
+	using StatsCallback = std::function<void(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)>;
+	class StatsObserver : public webrtc::RTCStatsCollectorCallback {
+	public:
+		static rtc::scoped_refptr<StatsObserver> create() 
+		{
+			return rtc::scoped_refptr<StatsObserver>(new rtc::RefCountedObject<StatsObserver>());
+		}
+
+		void setCallback(std::shared_ptr<StatsCallback> callback)
+		{
+			_callback = callback;
+		}
+
+	protected:
+		void OnStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override
+		{
+			if (_callback) {
+				(*_callback)(report);
+			}
+		}
+
+	private:
+		std::shared_ptr<StatsCallback> _callback;
 	};
 }						
 

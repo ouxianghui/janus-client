@@ -13,6 +13,8 @@
 
 namespace vi {
 	class WebRTCServiceInterface;
+	class TaskScheduler;
+
 	class PluginClient
 		: public IPluginClient
 		, public IWebRTCEventHandler
@@ -66,10 +68,17 @@ namespace vi {
 
 		void detach(std::shared_ptr<DetachEvent> event) override;
 
+		void startStatsReport() override;
+
+		void stopStatsReport() override;
+
 	protected:
 		uint64_t _id;
 		uint64_t _privateId;
 		std::shared_ptr<PluginContext> _pluginContext;
+
+		std::shared_ptr<TaskScheduler> _rtcStatsTaskScheduler;
+		uint64_t _rtcStatsTaskId = 0;
 	};
 }
 
