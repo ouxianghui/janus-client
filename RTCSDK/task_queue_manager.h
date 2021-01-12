@@ -36,7 +36,7 @@ namespace vi {
 
 		TaskQueueManager(const TaskQueueManager&) = delete;
 
-		TaskQueueManager(TaskQueueManager&) = delete;
+		TaskQueueManager(TaskQueueManager&&) = delete;
 
 		TaskQueueManager& operator=(const TaskQueueManager&) = delete;
 

@@ -241,7 +241,7 @@ void UI::on_actionJoinRoom_triggered(bool checked)
 		req.request = "join";
 		req.room = 1234;
 		req.ptype = "publisher";
-		req.display = "jackie";
+		req.display = "ADSL2";
 		_vr->getVideoRoomApi()->join(req, nullptr);
     }
 }

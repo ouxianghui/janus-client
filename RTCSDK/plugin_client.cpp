@@ -225,6 +225,7 @@ namespace vi {
 					if (!wrs) {
 						return;
 					}
+
 					if (wrs->status() != ServiceStauts::UP) {
 						return;
 					}
@@ -238,7 +239,9 @@ namespace vi {
 				});
 				context->statsObserver->setCallback(socb);
 			}
-			context->pc->GetStats(context->statsObserver.get());
+			if (context->pc) {
+				context->pc->GetStats(context->statsObserver.get());
+			}
 		}, 5000, true);
 	}
 

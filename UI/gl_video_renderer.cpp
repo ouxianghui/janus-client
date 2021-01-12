@@ -22,7 +22,7 @@ GLVideoRenderer::GLVideoRenderer(QWidget *parent)
 
 GLVideoRenderer::~GLVideoRenderer()
 {
-
+	cleanup();
 }
 
 void GLVideoRenderer::init()
@@ -30,14 +30,23 @@ void GLVideoRenderer::init()
 	setAttribute(Qt::WA_StyledBackground, true);
 	setStyleSheet("background-color:rgb(255, 0, 255)");
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	_videoShader = std::make_shared<GLVideoShader>();
 }
 
 void GLVideoRenderer::initializeGL() 
 {
+	connect(context(), &QOpenGLContext::aboutToBeDestroyed, this, &GLVideoRenderer::cleanup);
+	
 	initializeOpenGLFunctions();
+	
 	glewInit();
+	
 	glEnable(GL_DEPTH_TEST);
+	
+	_i420TextureCache = std::make_shared<I420TextureCache>();
+	_i420TextureCache->init();
+
+	_videoShader = std::make_shared<GLVideoShader>();
+
 	// Set up the rendering context, load shaders and other resources, etc.:
 	//QOpenGLFunctions *f = QOpenGLContext::currentContext()->functions();
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f); 
@@ -45,23 +54,21 @@ void GLVideoRenderer::initializeGL()
 
 void GLVideoRenderer::resizeGL(int w, int h)
 {
-	std::lock_guard<std::mutex> lock(_mutex);
+	//std::lock_guard<std::mutex> lock(_mutex);
+	//glViewport(0, 0, w, h);
 	// Update projection matrix and other size related settings:
-	if (_frame) {
-		glViewport(0, 0, _frame->width(), _frame->height());
-	}
-	else {
-		glViewport(0, 0, 640, 480);
-	}
+	//if (_frame) {
+	//	glViewport(0, 0, _frame->width(), _frame->height());
+	//}
+	//else {
+	//	glViewport(0, 0, 640, 480);
+	//}
 }
 
 void GLVideoRenderer::paintGL()
 {
-	if (!_i420TextureCache) {
-		_i420TextureCache = std::make_shared<I420TextureCache>();
-		_i420TextureCache->init();
-	}
 	std::lock_guard<std::mutex> lock(_mutex);
+
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
 	if (_frame) {
@@ -79,7 +86,7 @@ void GLVideoRenderer::OnFrame(const webrtc::VideoFrame& frame)
 {
 	std::lock_guard<std::mutex> lock(_mutex);
 	_frame = std::make_shared<webrtc::VideoFrame>(frame);
-	static int counter = 0;
+	//static int counter = 0;
 	//DLOG("--> frame: {}, ts: {}", ++counter, _frame->timestamp_us());
 
 	update();
@@ -88,4 +95,14 @@ void GLVideoRenderer::OnFrame(const webrtc::VideoFrame& frame)
 void GLVideoRenderer::resizeEvent(QResizeEvent *event)
 {
 	QOpenGLWidget::resizeEvent(event);
+}
+
+void GLVideoRenderer::cleanup()
+{
+	makeCurrent();
+
+	_i420TextureCache = nullptr;
+	_videoShader = nullptr;
+	
+	doneCurrent();
 }

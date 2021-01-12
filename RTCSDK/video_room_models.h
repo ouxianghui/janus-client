@@ -110,11 +110,11 @@ namespace vi {
 		//\endverbatim
 		struct PublisherJoinRequest {
 			std::string request = "join";
+			std::string ptype = "publisher";	
 			int64_t room;
-			std::string ptype = "publisher";
 			std::string display;
-			std::string token;
-			XTOSTRUCT(O(request, room, ptype, display, token));
+			//std::string token;
+			XTOSTRUCT(O(request, ptype, room, display/*, token*/));
 		};
 
 		struct Attendee {

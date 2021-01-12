@@ -43,6 +43,9 @@ protected:
 
 	void resizeEvent(QResizeEvent *event) override;
 
+private slots:
+	void cleanup();
+
 private:
 	std::shared_ptr<GLVideoShader> _videoShader;
 	std::shared_ptr<I420TextureCache> _i420TextureCache;
