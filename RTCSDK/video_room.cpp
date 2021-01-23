@@ -87,6 +87,13 @@ namespace vi {
 				vr::PublishRequest request;
 				request.request = "configure";
 				request.bitrate = 256000;
+
+				/* 
+				 * After debugging, the SFU does receive the display name set when we join, 
+				 * but the subscriber is not displayed. It should be a SFU bug. 
+				 * After setting once here, the subscriber of the later join will have the opportunity to display your display name.
+				 */
+				//request.display = "input your display name here";
 				_videoRoomApi->publish(request, [](std::shared_ptr<JanusResponse> response) {
 					DLOG("response: {}", response->janus);
 				});
