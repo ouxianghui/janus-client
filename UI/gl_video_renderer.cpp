@@ -5,19 +5,23 @@
  **/
 
 #include "gl_video_renderer.h"
+#include <thread>
+#include <array>
+#include <QTimer>
 #include "gl_video_shader.h"
 #include "i420_texture_cache.h"
 #include "logger/logger.h"
-#include <thread>
 #include "absl/types/optional.h"
 #include "api/video/video_rotation.h"
-#include <array>
 #include "common_video/libyuv/include/webrtc_libyuv.h"
+#include "logger/logger.h"
 
 GLVideoRenderer::GLVideoRenderer(QWidget *parent)
 	: QOpenGLWidget(parent)
 {
-
+	_renderingTimer = new QTimer(this);
+	connect(_renderingTimer, SIGNAL(timeout()), this, SLOT(onRendering()));
+	_renderingTimer->start(30);
 }
 
 GLVideoRenderer::~GLVideoRenderer()
@@ -27,9 +31,15 @@ GLVideoRenderer::~GLVideoRenderer()
 
 void GLVideoRenderer::init()
 {
-	setAttribute(Qt::WA_StyledBackground, true);
-	setStyleSheet("background-color:rgb(255, 0, 255)");
+	//setAttribute(Qt::WA_StyledBackground, true);
+	//setStyleSheet("background-color:rgb(255, 0, 255)");
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+	QSurfaceFormat format;
+	format.setDepthBufferSize(24);
+	format.setStencilBufferSize(8);
+	format.setVersion(3, 2);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	this->setFormat(format);
 }
 
 void GLVideoRenderer::initializeGL() 
@@ -54,7 +64,6 @@ void GLVideoRenderer::initializeGL()
 
 void GLVideoRenderer::resizeGL(int w, int h)
 {
-	//std::lock_guard<std::mutex> lock(_mutex);
 	//glViewport(0, 0, w, h);
 	// Update projection matrix and other size related settings:
 	//if (_frame) {
@@ -67,15 +76,20 @@ void GLVideoRenderer::resizeGL(int w, int h)
 
 void GLVideoRenderer::paintGL()
 {
-	std::lock_guard<std::mutex> lock(_mutex);
-
 	glClear(GL_COLOR_BUFFER_BIT);
 	glClearColor(0.5f, 0.5f, 0.5f, 0.0f);
-	if (_frame) {
-		_i420TextureCache->uploadFrameToTextures(*_frame);
-		_videoShader->applyShadingForFrame(_frame->width(),
-			_frame->height(),
-			_frame->rotation(),
+	std::shared_ptr<webrtc::VideoFrame> frame;
+	if (_frameQ.try_dequeue(frame)) {
+		_cacheFrame = frame;
+	}
+	else {
+		DLOG("try dequeue failed.");
+	}
+	if (_cacheFrame) {
+		_i420TextureCache->uploadFrameToTextures(*_cacheFrame);
+		_videoShader->applyShadingForFrame(_cacheFrame->width(),
+			_cacheFrame->height(),
+			_cacheFrame->rotation(),
 			_i420TextureCache->yTexture(),
 			_i420TextureCache->uTexture(),
 			_i420TextureCache->vTexture());
@@ -84,17 +98,22 @@ void GLVideoRenderer::paintGL()
 
 void GLVideoRenderer::OnFrame(const webrtc::VideoFrame& frame)
 {
-	std::lock_guard<std::mutex> lock(_mutex);
-	_frame = std::make_shared<webrtc::VideoFrame>(frame);
+	auto videeoFrame = std::make_shared<webrtc::VideoFrame>(frame);
+
+	if (_frameQ.size_approx() >= 300) {
+		std::shared_ptr<webrtc::VideoFrame> dropFrame;
+		if (_frameQ.try_dequeue(dropFrame)) {
+			DLOG("drop frame .");
+		}
+	}
+	_frameQ.enqueue(videeoFrame);
 	//static int counter = 0;
 	//DLOG("--> frame: {}, ts: {}", ++counter, _frame->timestamp_us());
-
-	update();
 }
 
-void GLVideoRenderer::resizeEvent(QResizeEvent *event)
+void GLVideoRenderer::onRendering()
 {
-	QOpenGLWidget::resizeEvent(event);
+	QWidget::update();
 }
 
 void GLVideoRenderer::cleanup()
