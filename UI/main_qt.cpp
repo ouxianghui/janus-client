@@ -47,26 +47,9 @@ static void registerMetaTypes()
 	qRegisterMetaType<std::shared_ptr<vi::Participant>>("std::shared_ptr<vi::Participant>");
 	//qRegisterMetaType<webrtc::MediaStreamInterface>("webrtc::MediaStreamInterface");
 	qRegisterMetaType<rtc::scoped_refptr<webrtc::MediaStreamInterface>>("rtc::scoped_refptr<webrtc::MediaStreamInterface>");
-
-	//// For Network Model
-	//qRegisterMetaType<std::shared_ptr<NetworkRequest>>("std::shared_ptr<NetworkRequest>");
-	//qRegisterMetaType<std::shared_ptr<INetworkCallback>>("std::shared_ptr<INetworkCallback>");
-	//qRegisterMetaType<std::shared_ptr<NetworkResponse>>("std::shared_ptr<NetworkResponse>");
-
-	//// For Thread Model
-	//qRegisterMetaType<int64_t>("int64_t");
-	//qRegisterMetaType<std::shared_ptr<ITaskScheduler>>("std::shared_ptr<ITaskScheduler>");
-	//qRegisterMetaType<std::shared_ptr<ITask>>("std::shared_ptr<ITask>");
 }
 
 static void initOpenGL() {
-	//QSurfaceFormat format;
-	//format.setDepthBufferSize(24);
-	//format.setStencilBufferSize(8);
-	//format.setVersion(4, 4);
-	//format.setProfile(QSurfaceFormat::CoreProfile);
-	//QSurfaceFormat::setDefaultFormat(format);
-
 	QSurfaceFormat format;
 	format.setDepthBufferSize(24);
 	format.setStencilBufferSize(8);

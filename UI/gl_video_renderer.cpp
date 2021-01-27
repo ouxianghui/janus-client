@@ -19,6 +19,13 @@
 GLVideoRenderer::GLVideoRenderer(QWidget *parent)
 	: QOpenGLWidget(parent)
 {
+	QSurfaceFormat format;
+	format.setDepthBufferSize(24);
+	format.setStencilBufferSize(8);
+	format.setVersion(3, 2);
+	format.setProfile(QSurfaceFormat::CoreProfile);
+	this->setFormat(format);
+
 	_renderingTimer = new QTimer(this);
 	connect(_renderingTimer, SIGNAL(timeout()), this, SLOT(onRendering()));
 	_renderingTimer->start(30);
@@ -34,12 +41,6 @@ void GLVideoRenderer::init()
 	//setAttribute(Qt::WA_StyledBackground, true);
 	//setStyleSheet("background-color:rgb(255, 0, 255)");
 	setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-	QSurfaceFormat format;
-	format.setDepthBufferSize(24);
-	format.setStencilBufferSize(8);
-	format.setVersion(3, 2);
-	format.setProfile(QSurfaceFormat::CoreProfile);
-	this->setFormat(format);
 }
 
 void GLVideoRenderer::initializeGL() 

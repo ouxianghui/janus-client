@@ -15,7 +15,17 @@
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0">
-    <widget class="QListWidget" name="listWidgetParticipants"/>
+    <widget class="QListWidget" name="listWidgetParticipants">
+     <property name="autoFillBackground">
+      <bool>true</bool>
+     </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="spacing">
+      <number>0</number>
+     </property>
+    </widget>
    </item>
   </layout>
  </widget>

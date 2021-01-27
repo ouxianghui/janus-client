@@ -12,6 +12,7 @@ ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoom> vr, QW
 	, _videoRoom(vr)
 {
 	ui.setupUi(this);
+	ui.listWidgetParticipants->setViewMode(QListView::ListMode);  
 }
 
 ParticipantsListView::~ParticipantsListView()
@@ -25,10 +26,10 @@ void ParticipantsListView::addParticipant(std::shared_ptr<vi::Participant> parti
 		return;
 	}
     ParticipantItemView* view = new ParticipantItemView(participant, this);
-    view->setFixedHeight(100);
-    view->setAutoFillBackground(true);
 	view->setDisplayName(participant->displayName());
+
     QListWidgetItem* item = new QListWidgetItem(ui.listWidgetParticipants);
+	item->setSizeHint(QSize(0, 50));
     QVariant var(participant->getId());
     item->setData(Qt::UserRole+1, var);
     ui.listWidgetParticipants->addItem(item);
