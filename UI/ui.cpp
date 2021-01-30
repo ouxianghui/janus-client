@@ -83,7 +83,7 @@ void UI::init()
     dockContentViewLayout->addWidget(buttonsView, 1);
 
 	_participantsListView = std::make_shared<ParticipantsListView>(_vr, this);
-	_participantsListView->setFixedWidth(480);
+	_participantsListView->setFixedWidth(200);
     dockContentViewLayout->addWidget(_participantsListView.get(), 400);
 
 	QDockWidget* dockWidget = new QDockWidget(this);
