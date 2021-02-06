@@ -1,6 +1,6 @@
-[submodule "3rd/x2struct"]
-	path = 3rd/x2struct
-	url = https://github.com/xyz347/x2struct.git
+[submodule "3rd/xpack"]
+	path = 3rd/xpack
+	url = https://github.com/xyz347/xpack.git
 [submodule "3rd/websocketpp"]
 	path = 3rd/websocketpp
 	url = https://github.com/zaphoyd/websocketpp.git
