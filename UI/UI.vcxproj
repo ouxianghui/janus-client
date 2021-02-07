@@ -121,6 +121,7 @@
     <ClCompile Include="main_qt.cpp" />
     <ClCompile Include="participants_list_view.cpp" />
     <ClCompile Include="participant_item_view.cpp" />
+    <ClCompile Include="room_info_dialog.cpp" />
     <ClCompile Include="ui.cpp" />
     <ClCompile Include="video_room_dialog.cpp" />
     <ClCompile Include="video_room_listener_proxy.cpp" />
@@ -142,6 +143,10 @@
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
     </QtUic>
+    <QtUic Include="room_info_dialog.ui">
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+      <OutputFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
+    </QtUic>
     <QtUic Include="ui.ui" />
     <QtUic Include="video_room_dialog.ui">
       <OutputFile Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles\ui_%(Filename).h</OutputFile>
@@ -149,27 +154,58 @@
     </QtUic>
   </ItemGroup>
   <ItemGroup>
-    <QtRcc Include="ui.qrc" />
+    <QtMoc Include="room_info_dialog.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
-    <ResourceCompile Include="UI.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="ui.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <QtMoc Include="gallery_view.h" />
+    <QtMoc Include="gallery_view.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="gl_defines.h" />
     <ClInclude Include="gl_video_shader.h" />
     <ClInclude Include="i420_texture_cache.h" />
-    <QtMoc Include="participant_item_view.h" />
-    <QtMoc Include="participants_list_view.h" />
-    <QtMoc Include="video_room_dialog.h" />
-    <QtMoc Include="janus_connection_dialog.h" />
-    <QtMoc Include="video_room_listener_proxy.h" />
-    <QtMoc Include="gl_video_renderer.h" />
+    <QtMoc Include="video_room_listener_proxy.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="video_room_dialog.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="ui.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="participants_list_view.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="participant_item_view.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="janus_connection_dialog.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+    <QtMoc Include="gl_video_renderer.h">
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;$(QTDIR)\include\QtWebsockets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\websocketpp;.\..\3rd\x2struct;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+      <IncludePath Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.\GeneratedFiles;.\GeneratedFiles\$(ConfigurationName);.;$(QTDIR)\include;$(QTDIR)\include\QtCore;$(QTDIR)\include\QtGui;$(QTDIR)\include\QtANGLE;$(QTDIR)\include\QtWidgets;.\..\RTCSDK;.\..\3rd;.\..\3rd\webrtc\include\webrtc;.\..\3rd\webrtc\include\third_party\libyuv\include;.\..\3rd\glew\include;.\..\3rd\x2struct;.\..\3rd\websocketpp;.\..\3rd\asio\asio\include;.\..\3rd\spdlog\include;.\..\3rd\concurrentqueue</IncludePath>
+    </QtMoc>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="UI.ico" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="UI.pro" />
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="UI.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Condition="Exists('$(QtMsBuild)\qt.targets')">

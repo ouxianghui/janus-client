@@ -1,4 +1,9 @@
 #include "ui.h"
+#include <QDockWidget>
+#include <QVBoxLayout>
+#include <QHBoxLayout>
+#include <QGridLayout>
+#include <QToolButton>
 #include "Service/app_instance.h"
 #include "webrtc_service_interface.h"
 #include "video_room.h"
@@ -13,11 +18,7 @@
 #include "video_room_listener_proxy.h"
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
-#include <QDockWidget>
-#include <QVBoxLayout>
-#include <QHBoxLayout>
-#include <QGridLayout>
-#include <QToolButton>
+#include "room_info_dialog.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -197,7 +198,7 @@ void UI::on_actionPublishStream_triggered(bool checked)
 	}
 	if (checked) {
 		vi::vr::FetchParticipantsRequest req;
-		req.room = 1234;
+		req.room = _vr->getRoomId();
 		_vr->getVideoRoomApi()->fetchParticipants(req, nullptr);
 	}
 	else {
@@ -237,12 +238,16 @@ void UI::on_actionCreateRoom_triggered()
 void UI::on_actionJoinRoom_triggered(bool checked)
 {
     if (_vr) {
-		vi::vr::PublisherJoinRequest req;
-		req.request = "join";
-		req.room = 1234;
-		req.ptype = "publisher";
-		req.display = "ADSL2";
-		_vr->getVideoRoomApi()->join(req, nullptr);
+        RoomInfoDialog dlg;
+        if (dlg.exec() == QDialog::Accepted) {
+            vi::vr::PublisherJoinRequest req;
+            req.request = "join";
+            req.room = dlg.getRoomId();
+            req.ptype = "publisher";
+            req.display = "ADSL2";
+			_vr->setRoomId(req.room);
+            _vr->getVideoRoomApi()->join(req, nullptr);
+        }
     }
 }
 

@@ -11,32 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="helper_utils.cpp" />
-    <ClCompile Include="janus_api_client.cpp" />
-    <ClCompile Include="local_video_capture.cpp" />
-    <ClCompile Include="logger\logger.cpp" />
-    <ClCompile Include="logger\logger_installer.cpp" />
-    <ClCompile Include="logger\rtc_log_sink.cpp" />
-    <ClCompile Include="message_transport.cpp" />
-    <ClCompile Include="participant.cpp" />
-    <ClCompile Include="plugin_client.cpp" />
-    <ClCompile Include="rtc_sdk.cpp" />
-    <ClCompile Include="sdp_utils.cpp" />
-    <ClCompile Include="service\app_instance.cpp" />
-    <ClCompile Include="service\biz_service_factory.cpp" />
-    <ClCompile Include="service\notification_service.cpp" />
-    <ClCompile Include="service\unified_factory.cpp" />
-    <ClCompile Include="string_utils.cpp" />
-    <ClCompile Include="task_queue_manager.cpp" />
-    <ClCompile Include="text_room.cpp" />
-    <ClCompile Include="thread_manager.cpp" />
-    <ClCompile Include="video_room.cpp" />
-    <ClCompile Include="video_room_api.cpp" />
-    <ClCompile Include="weak_proxy.cpp" />
-    <ClCompile Include="webrtc_service.cpp" />
-    <ClCompile Include="webrtc_utils.cpp" />
-    <ClCompile Include="websocket\connection_metadata.cpp" />
-    <ClCompile Include="websocket\websocket_endpoint.cpp" />
+    <None Include=".gitignore" />
+    <None Include="RTCSDK.pro" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="helper_utils.h" />
@@ -80,6 +56,7 @@
     <ClInclude Include="task_scheduler.h" />
     <ClInclude Include="text_room.h" />
     <ClInclude Include="thread_manager.h" />
+    <ClInclude Include="utils\singleton.h" />
     <ClInclude Include="video_room.h" />
     <ClInclude Include="video_room_api.h" />
     <ClInclude Include="video_room_models.h" />
@@ -92,6 +69,34 @@
     <ClInclude Include="websocket\connection_metadata.h" />
     <ClInclude Include="websocket\i_connection_listener.h" />
     <ClInclude Include="websocket\websocket_endpoint.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="helper_utils.cpp" />
+    <ClCompile Include="janus_api_client.cpp" />
+    <ClCompile Include="local_video_capture.cpp" />
+    <ClCompile Include="logger\logger.cpp" />
+    <ClCompile Include="logger\logger_installer.cpp" />
+    <ClCompile Include="logger\rtc_log_sink.cpp" />
+    <ClCompile Include="message_transport.cpp" />
+    <ClCompile Include="participant.cpp" />
+    <ClCompile Include="plugin_client.cpp" />
+    <ClCompile Include="rtc_sdk.cpp" />
+    <ClCompile Include="sdp_utils.cpp" />
+    <ClCompile Include="service\app_instance.cpp" />
+    <ClCompile Include="service\biz_service_factory.cpp" />
+    <ClCompile Include="service\notification_service.cpp" />
+    <ClCompile Include="service\unified_factory.cpp" />
+    <ClCompile Include="string_utils.cpp" />
+    <ClCompile Include="task_queue_manager.cpp" />
+    <ClCompile Include="text_room.cpp" />
+    <ClCompile Include="thread_manager.cpp" />
+    <ClCompile Include="video_room.cpp" />
+    <ClCompile Include="video_room_api.cpp" />
+    <ClCompile Include="weak_proxy.cpp" />
+    <ClCompile Include="webrtc_service.cpp" />
+    <ClCompile Include="webrtc_utils.cpp" />
+    <ClCompile Include="websocket\connection_metadata.cpp" />
+    <ClCompile Include="websocket\websocket_endpoint.cpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{B12702AD-ABFB-343A-A199-8E24837244A3}</ProjectGuid>

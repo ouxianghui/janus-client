@@ -13,10 +13,12 @@ namespace vi {
 		const std::string& opaqueId,
 		int64_t id,
 		int64_t privateId,
+		int64_t roomId,
 		const std::string& displayName,
 		std::shared_ptr<WebRTCServiceInterface> wrs,
 		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> listeners)
 		: PluginClient(wrs)
+		, _roomId(roomId)
 		, _displayName(displayName)
 		, _listeners(listeners)
 	{
@@ -35,7 +37,7 @@ namespace vi {
 		if (success) {
 			vr::SubscriberJoinRequest request;
 			request.request = "join";
-			request.room = 1234;
+			request.room = _roomId;
 			request.ptype = "subscriber";
 			request.feed = _id;
 			request.private_id = _privateId;
@@ -147,7 +149,7 @@ namespace vi {
 				//// Answer and attach
 				auto wself = weak_from_this();
 				std::shared_ptr<PrepareWebRTCEvent> event = std::make_shared<PrepareWebRTCEvent>();
-				auto callback = std::make_shared<CreateAnswerOfferCallback>([wself](bool success, const std::string& reason, const JsepConfig& jsepConfig) {
+				auto callback = std::make_shared<CreateAnswerOfferCallback>([wself, roomId = this->_roomId](bool success, const std::string& reason, const JsepConfig& jsepConfig) {
 					DLOG("Got a sdp, type: {}, sdp = {}", jsepConfig.type.c_str(), jsepConfig.sdp.c_str());
 					auto self = wself.lock();
 					if (!self) {
@@ -157,7 +159,7 @@ namespace vi {
 						if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
 							// TODO: use IVideoRoomApi
 							vr::StartPeerConnectionRequest request;
-							request.room = 1234;
+							request.room = roomId;
 
 							std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
 							auto lambda = [](bool success, const std::string& response) {

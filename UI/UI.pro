@@ -32,6 +32,7 @@ FORMS += \
     janus_connection_dialog.ui \
     participant_item_view.ui \
     participants_list_view.ui \
+    room_info_dialog.ui \
     ui.ui \
     video_room_dialog.ui
 
@@ -44,6 +45,7 @@ HEADERS += \
     janus_connection_dialog.h \
     participant_item_view.h \
     participants_list_view.h \
+    room_info_dialog.h \
     ui.h \
     video_room_dialog.h \
     video_room_listener_proxy.h
@@ -57,6 +59,7 @@ SOURCES += \
     main_qt.cpp \
     participant_item_view.cpp \
     participants_list_view.cpp \
+    room_info_dialog.cpp \
     ui.cpp \
     video_room_dialog.cpp \
     video_room_listener_proxy.cpp

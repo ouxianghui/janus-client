@@ -20,6 +20,7 @@ namespace vi {
 			const std::string& opaqueId, 
 			int64_t id,
 			int64_t privateId,
+			int64_t roomId,
 			const std::string& displayName, 
 			std::shared_ptr<WebRTCServiceInterface> wrs,
 			std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> listeners);
@@ -64,6 +65,7 @@ namespace vi {
 		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
 
 	private:
+		int64_t _roomId;
 		bool _videoOn;
 		bool _audioOn;
 		std::string _displayName;

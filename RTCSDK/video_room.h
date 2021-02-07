@@ -44,6 +44,10 @@ namespace vi {
 
 		uint64_t getId() { return PluginClient::getId(); }
 
+		void setRoomId(int64_t roomId);
+
+		int64_t getRoomId() const;
+
 	protected:
 		void onAttached(bool success) override;
 
@@ -87,6 +91,8 @@ namespace vi {
 		void removeParticipant(int64_t id);
 
 	private:
+		int64_t _roomId;
+		
 		std::map<int64_t, std::shared_ptr<Participant>> _participantsMap;
 
 		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;

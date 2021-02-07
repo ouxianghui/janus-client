@@ -54,6 +54,16 @@ namespace vi {
 		//}
 	}
 
+	void VideoRoom::setRoomId(int64_t roomId)
+	{
+		_roomId = roomId;
+	}
+
+	int64_t VideoRoom::getRoomId() const
+	{
+		return _roomId;
+	}
+
 	std::shared_ptr<IVideoRoomApi> VideoRoom::getVideoRoomApi()
 	{
 		return _videoRoomApi;
@@ -343,6 +353,7 @@ namespace vi {
 			_pluginContext->opaqueId, 
 			info.id,
 			_privateId,
+			_roomId,
 			info.displayName,
 			_pluginContext->webrtcService.lock(),
 			_listeners);
