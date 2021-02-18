@@ -11,7 +11,7 @@
 #include "api/scoped_refptr.h"
 
 namespace webrtc {
-	class MediaStreamInterface;
+	class VideoTrackInterface;
 }
 
 namespace vi {
@@ -28,8 +28,8 @@ namespace vi {
 
 		virtual void onRemoveParticipant(std::shared_ptr<Participant> participant) = 0;
 
-		virtual void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
+		virtual void onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) = 0;
 
-		virtual void onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
+		virtual void onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) = 0;
 	};
 }

@@ -10,16 +10,37 @@
 
 namespace vi {
 	namespace vr {
-
 		struct Publisher {
 			int64_t id;
 			std::string display;
-			std::string audio_codec;
-			std::string video_codec;
-			bool simulcast;
 			bool talking;
 
-			XTOSTRUCT(O(id, display, audio_codec, video_codec, simulcast, talking));
+			/*{
+			 *	"type" : "<type of published stream #1 (audio|video|data)" > ,
+			 *	"mindex" : "<unique mindex of published stream #1>",
+			 *	"mid" : "<unique mid of of published stream #1>",
+			 *	"disabled" : <if true, it means this stream is currently inactive / disabled(and so codec, description, etc.will be missing)>,
+			 *	"codec" : "<codec used for published stream #1>",
+			 *	"description" : "<text description of published stream #1, if any>",
+			 *	"simulcast" : "<true if published stream #1 uses simulcast (VP8 and H.264 only)>",
+			 *	"svc" : "<true if published stream #1 uses SVC (VP9 only)>",
+			 *	"talking" : <true | false, whether the publisher stream has audio activity or not (only if audio levels are used)>,
+			}*/
+			struct Stream {
+				std::string type;
+				int64_t mindex;
+				std::string mid;
+				bool disabled = false;
+				std::string codec;
+				std::string description;
+				bool simulcast = false;
+				bool svc = false;
+				bool talking = false;
+
+				XTOSTRUCT(O(type, mindex, mid, disabled, codec, description, simulcast, svc, talking));
+			};
+			std::vector<Stream> streams;
+			XTOSTRUCT(O(id, display, talking, streams));
 		};
 
 		// Video Room event
@@ -174,18 +195,14 @@ namespace vi {
 		//	"room" : <unique ID of the room to subscribe in>,
 		//	"feed" : < unique ID of the publisher to subscribe to; mandatory > ,
 		//	"private_id" : < unique ID of the publisher that originated this request; optional, unless mandated by the room configuration > ,
-		//	"close_pc" : < true | false, depending on whether or not the PeerConnection should be automatically closed when the publisher leaves; true by default > ,
-		//	"audio" : < true | false, depending on whether or not audio should be relayed; true by default > ,
-		//	"video" : < true | false, depending on whether or not video should be relayed; true by default > ,
-		//	"data" : < true | false, depending on whether or not data should be relayed; true by default > ,
-		//	"offer_audio" : < true | false; whether or not audio should be negotiated; true by default if the publisher has audio > ,
-		//	"offer_video" : < true | false; whether or not video should be negotiated; true by default if the publisher has video > ,
-		//	"offer_data" : < true | false; whether or not datachannels should be negotiated; true by default if the publisher has datachannels > ,
-		//	"substream" : < substream to receive(0 - 2), in case simulcasting is enabled; optional > ,
-		//	"temporal" : < temporal layers to receive(0 - 2), in case simulcasting is enabled; optional > ,
-		//	"fallback" : <How much time(in us, default 250000) without receiving packets will make us drop to the substream below>,
-		//	"spatial_layer" : < spatial layer to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
-		//	"temporal_layer" : < temporal layers to receive(0 - 2), in case VP9 - SVC is enabled; optional >
+		//  "streams" : [
+		//  {
+		//  	"feed_id" : <unique ID of publisher owning the stream to subscribe to>,
+		//  		"mid" : "<unique mid of the publisher stream to subscribe to; optional>"
+		//  		// Optionally, simulcast or SVC targets (defaults if missing)
+		//  },
+		//  	// Other streams to subscribe to
+		//  ]
 		//}
 		//\endverbatim
 
@@ -196,11 +213,19 @@ namespace vi {
 			int64_t feed;
 			int64_t private_id;
 
+			struct Stream {
+				int64_t feed;
+				std::string mid;
+				XTOSTRUCT(O(feed, mid));
+			};
+			std::vector<Stream> streams;
+
 			XTOSTRUCT(O(request,
 				room,
 				ptype,
 				feed,
-				private_id
+				private_id,
+				streams
 			));
 		};
 
@@ -226,9 +251,187 @@ namespace vi {
 			XTOSTRUCT(I(JanusResponse), O(plugindata));
 		};
 
+		/*
+		 * As you can see, it's just a matter of specifying the list of streams to
+		 * subscribe to : in particular, you have to provide an array of objects,
+		 * where each objects represents a specific stream(or group of streams)
+		 * you're interested in. For each object, the \c feed_id indicating the
+		 * publisher owning the stream(s) is mandatory, while the related \c mid
+		 * is optional : this gives you some flexibility when subscribing, as
+		 * only providing a \c feed_id will indicate you're interested in ALL
+		 * the stream from that publisher, while providing a \c mid as well will
+		 * indicate you're interested in a stream in particular. Since you can
+		 * provide an array of streams, just specifying the \c feed_id or explicitly
+		 * listing all the \c feed_id + \c mid combinations is equivalent : of
+		 * course, different objects in the array can indicate different publishers,
+		 * allowing you to combine streams from different sources in the same subscription.
+		 * Notice that if a publisher stream is marked as \c disabled and you try
+		 * to subscribe to it, it will be skipped silently.
+		 *
+		 * Depending on whether the subscription will refer to a
+		 * single publisher(legacy approach) or to streams coming from different
+		 * publishers(multistream), the list of streams may differ.The ability
+		 * to single out the streams to subscribe to is particularly useful in
+		 * case you don't want to, or can't, subscribe to all available media :
+		 * e.g., you know a publisher is sending both audio and video, but video
+		 * is in a codec you don't support or you don't have bandwidth for both;
+		 * or maybe there are 10 participants in the room, but you only want video
+		 * from the 3 most active speakers; and so on.The content of the \c streams
+		 * array will shape what the SDP offer the plugin will send will look like,
+		 * so that eventually a subscription for the specified streams will take place.
+		 * Notice that, while for backwards compatibility you can still use the
+		 * old \c feed, \c audio, \c video, \c data, \c offer_audio, \c offer_video and
+		 * \c offer_data named properties, they're now deprecated and so you're
+		 * highly encouraged to use this new drill - down \c streams list instead.
+		 *
+		 * As anticipated, if successful this request will generate a new JSEP SDP
+		 * offer, which will accompany an \c attached event:
+		 * {
+		 * 	"videoroom" : "attached",
+		 * 	"room" : <room ID>,
+		 * 	"streams" : [
+		 * 		{
+		 * 			"mindex" : <unique m - index of this stream>,
+		 * 			"mid" : "<unique mid of this stream>",
+		 * 			"type" : "<type of this stream's media (audio|video|data)>",
+		 * 			"feed_id" : <unique ID of the publisher originating this stream>,
+		 * 			"feed_mid" : "<unique mid of this publisher's stream>",
+		 * 			"feed_display" : "<display name of this publisher, if any>",
+		 * 			"send" : < true | false; whether we configured the stream to relay media > ,
+		 * 			"ready" : < true | false; whether this stream is ready to start sending media(will be false at the beginning) >
+		 * 		},
+		 * 			// Other streams in the subscription, if any
+		 * 		]
+		 * }
+		*/
+		struct AttachedData {
+			std::string videoroom;
+			int64_t room;
+
+			struct Stream {
+				bool active = false;
+				int64_t mindex;
+				std::string mid;
+				std::string type;
+				int64_t feed_id;
+				std::string feed_mid;
+				std::string feed_display;
+				bool send = false;
+				bool ready = false;
+
+				XTOSTRUCT(O(active, mindex, mid, type, feed_id, feed_mid, feed_display, send, ready));
+			};
+			std::vector<Stream> streams;
+
+			XTOSTRUCT(O(videoroom, room, streams));
+		};
+
+		struct AttachedPluginData {
+			std::string plugin;
+			AttachedData data;
+
+			XTOSTRUCT(O(plugin, data));
+		};
+
+		struct AttachedEvent : public JanusResponse {
+			AttachedPluginData plugindata;
+
+			XTOSTRUCT(I(JanusResponse), O(plugindata));
+		};
+
+		/*
+		 * This means the exact same considerations we made on \c streams before
+		 * apply here as well : whatever they represent, will indicate the willingness
+		 * to subscribe to the related stream.Notice that if you were already
+		 * subscribed to one of the new streams indicated here, you'll subscribe
+		 * to it again in a different m - line, so it's up to you to ensure you
+		 * avoid duplicates(unless that's what you wanted, e.g., for testing
+		 * purposes).In case the update was successful, you'll get an \c updated
+		 * event, containing the updated layout of all subscriptions(pre - existing
+		 * and new ones), and a new JSEP offer to renegotiate the session :
+		*/
+		/*
+		 * {
+		 * "videoroom" : "updated",
+		 * "room" : <room ID>,
+		 * "streams": [
+		 * 	{
+		 * 		"mindex" : <unique m-index of this stream>,
+		 * 		"mid" : "<unique mid of this stream>",
+		 * 		"type" : "<type of this stream's media (audio|video|data)>",
+		 * 		"feed_id" : <unique ID of the publisher originating this stream>,
+		 * 		"feed_mid" : "<unique mid of this publisher's stream>",
+		 * 		"feed_display" : "<display name of this publisher, if any>",
+		 * 		"send" : <true|false; whether we configured the stream to relay media>,
+		 * 		"ready" : <true|false; whether this stream is ready to start sending media (will be false at the beginning)>
+		 * 	},
+		 * 	// Other streams in the subscription, if any; old and new
+		 * ]
+		}*/
+		struct UpdatedData {
+			std::string videoroom;
+			int64_t room;
+
+			struct Stream {
+				int64_t mindex;
+				std::string mid;
+				std::string type;
+				int64_t feed_id;
+				int64_t feed_mid;
+				std::string feed_display;
+				bool send = false;
+				bool ready = false;
+
+				XTOSTRUCT(O(mindex, mid, type, feed_id, feed_mid, feed_display, send, ready));
+			};
+			std::vector<Stream> streams;
+
+			XTOSTRUCT(O(videoroom, room, streams));
+		};
+
+		struct UpdatedPluginData {
+			std::string plugin;
+			UpdatedData data;
+
+			XTOSTRUCT(O(plugin, data));
+		};
+
+		struct UpdatedEvent : public JanusResponse {
+			UpdatedPluginData plugindata;
+
+			XTOSTRUCT(I(JanusResponse), O(plugindata));
+		};
+
 		struct UnpublishRequest {
 			std::string request = "unpublish";
 			XTOSTRUCT(O(request));
+		};
+
+		struct SubscribeRequest {
+			std::string request = "subscribe";
+
+			struct Stream {
+				int64_t feed;
+				std::string mid;
+				XTOSTRUCT(O(feed, mid));
+			};
+			std::vector<Stream> streams;
+
+			XTOSTRUCT(O(request, streams));
+		};
+
+		struct UnsubscribeRequest {
+			std::string request = "unsubscribe";
+
+			struct Stream {
+				int64_t feed_id;
+				std::string mid;
+				std::string sub_mid;
+				XTOSTRUCT(O(feed_id, mid, sub_mid));
+			};
+			std::vector<Stream> streams;
+
+			XTOSTRUCT(O(request, streams));
 		};
 
 		struct StartPeerConnectionRequest {
@@ -585,6 +788,40 @@ namespace vi {
 			XTOSTRUCT(I(JanusResponse), O(plugindata));
 		};
 
+		/*   
+		 * As an administrator, you can also forcibly mute / unmute any of the media
+		 * streams sent by participants(i.e., audio, video and data streams),
+		 * using the \c moderate requests.Notice that if the participant is self
+		 * muted on a stream, and you unmute that stream with \c moderate, they
+		 * will NOT be unmuted : you'll simply remove any moderation block
+		 * that may have been enforced on the participant for that medium
+		 * themselves.The \c moderate request has to be formatted as follows :
+		 *
+		 * {
+		 * 	"request" : "moderate",
+		 * 	"secret" : "<room secret, mandatory if configured>",
+		 * 	"room" : <unique numeric ID of the room>,
+		 * 	"id" : <unique numeric ID of the participant to moderate>,
+		 * 	"mid" : <mid of the m - line to refer to for this moderate request>,
+		 * 	"mute" : <true | false, depending on whether the media addressed by the above mid should be muted by the moderator>
+		 * }
+		*/
+		struct ModerateRequest {
+			std::string request = "moderate";
+			std::string secret;
+			int64_t room;
+			int64_t id;
+			std::string mid;
+			bool mute = false;
+
+			XTOSTRUCT(O(request,
+				secret,
+				room,
+				id,
+				mid, 
+				mute));
+		};
+
 		/*
 		* To get a list of the available rooms(excluded those configured or
 		*created as private rooms) you can make use of the \c list request,
@@ -712,9 +949,6 @@ namespace vi {
 		 //\verbatim
 		 //{
 		 //	"request" : "publish",
-		 //	"audio" : < true | false, depending on whether or not audio should be relayed; true by default > ,
-		 //	"video" : < true | false, depending on whether or not video should be relayed; true by default > ,
-		 //	"data" : < true | false, depending on whether or not data should be relayed; true by default > ,
 		 //	"audiocodec" : "<audio codec to prefer among the negotiated ones; optional>",
 		 //	"videocodec" : "<video codec to prefer among the negotiated ones; optional>",
 		 //	"bitrate" : < bitrate cap to return via REMB; optional, overrides the global room value if present > ,
@@ -722,14 +956,19 @@ namespace vi {
 		 //	"filename" : "<if recording, the base path/file to use for the recording files; optional>",
 		 //	"display" : "<new display name to use in the room; optional>",
 		 //	"audio_level_average" : "<if provided, overrided the room audio_level_average for this user; optional>",
-		 //	"audio_active_packets" : "<if provided, overrided the room audio_active_packets for this user; optional>"
+		 //	"audio_active_packets" : "<if provided, overrided the room audio_active_packets for this user; optional>",
+		 //	"display" : "<new display name to use in the room; optional>",
+		 //		"descriptions" : [	// Optional
+		 //	{
+		 //		"mid" : "<unique mid of a stream being published>",
+		 //			"description" : "<text description of the stream (e.g., My front webcam)>"
+		 //	},
+		 //		// Other descriptions, if any
+		 //		]}
 		 //}
 		 //\endverbatim
 		struct PublishRequest {
 			std::string request = "publish";
-			bool video;
-			bool audio;
-			bool data;
 			std::string audiocodec;
 			std::string videocodec;
 			int64_t bitrate;
@@ -739,10 +978,13 @@ namespace vi {
 			int64_t audio_level_average;
 			int64_t audio_active_packets;
 
+			struct Description {
+				std::string mid;
+				std::string description;
+				XTOSTRUCT(O(mid, description));
+			};
+			std::vector<Description> descriptions;
 			XTOSTRUCT(O(request,
-				video,
-				audio,
-				data,
 				audiocodec,
 				videocodec,
 				bitrate,
@@ -750,7 +992,8 @@ namespace vi {
 				filename,
 				display,
 				audio_level_average,
-				audio_active_packets
+				audio_active_packets,
+				descriptions
 			));
 		};
 
@@ -764,24 +1007,23 @@ namespace vi {
 		//\verbatim
 		//{
 		//	"request" : "configure",
-		//	"audio" : < true | false, depending on whether audio should be relayed or not; optional > ,
-		//	"video" : < true | false, depending on whether video should be relayed or not; optional > ,
-		//	"data" : < true | false, depending on whether datachannel messages should be relayed or not; optional > ,
-		//	"substream" : < substream to receive(0 - 2), in case simulcasting is enabled; optional > ,
+		//  "mid" : < mid of the m - line to refer to for this configure request; optional > ,
+		//  "send" : < true | false, depending on whether the mindex media should be relayed or not; optional > ,
+		//  "substream" : < substream to receive(0 - 2), in case simulcasting is enabled; optional > ,
 		//	"temporal" : < temporal layers to receive(0 - 2), in case simulcasting is enabled; optional > ,
 		//	"fallback" : <How much time(in us, default 250000) without receiving packets will make us drop to the substream below>,
 		//	"spatial_layer" : < spatial layer to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
 		//	"temporal_layer" : < temporal layers to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
 		//	"audio_level_average" : "<if provided, overrides the room audio_level_average for this user; optional>",
-		//	"audio_active_packets" : "<if provided, overrides the room audio_active_packets for this user; optional>"
+		//	"audio_active_packets" : "<if provided, overrides the room audio_active_packets for this user; optional>",
+		//	"restart" : <trigger an ICE restart; optional>
 		//}
 		//\endverbatim
 
 		struct SubscriberConfigureRequest {
 			std::string request = "configure";
-			bool video = true;
-			bool audio = true;
-			bool data = true;
+			std::string mid;
+			bool send = false;
 			//int64_t substream;
 			//int64_t temporal;
 			//int64_t fallback;
@@ -789,11 +1031,11 @@ namespace vi {
 			//int64_t temporal_layer;
 			//int64_t audio_level_average;
 			//int64_t audio_active_packets;
-
+			bool restart = false;
 			XTOSTRUCT(O(request,
-				video,
-				audio,
-				data
+				mid,
+				send,
+				restart
 				//substream,
 				//temporal,
 				//fallback,
@@ -818,9 +1060,6 @@ namespace vi {
 		//\verbatim
 		//{
 		//	"request" : "configure",
-		//	"audio" : < true | false, depending on whether or not audio should be relayed; true by default > ,
-		//	"video" : < true | false, depending on whether or not video should be relayed; true by default > ,
-		//	"data" : < true | false, depending on whether or not data should be relayed; true by default > ,
 		//	"bitrate" : < bitrate cap to return via REMB; optional, overrides the global room value if present(unless bitrate_cap is set) > ,
 		//	"keyframe" : <true | false, whether we should send this publisher a keyframe request>,
 		//	"record" : < true | false, whether this publisher should be recorded or not; optional > ,
@@ -828,13 +1067,20 @@ namespace vi {
 		//	"display" : "<new display name to use in the room; optional>",
 		//	"audio_active_packets" : "<new audio_active_packets to overwrite in the room one; optional>",
 		//	"audio_level_average" : "<new audio_level_average to overwrite the room one; optional>",
+		//	"mid" : < mid of the m - line to refer to for this configure request; optional > ,
+		//		"send" : < true | false, depending on whether the media addressed by the above mid should be relayed or not; optional > ,
+		//		"descriptions" : [
+		//			// Updated descriptions for the published streams; see "publish" for syntax; optional
+		//		]
 		//}
 		//\endverbatim
 		struct PublisherConfigureRequest {
 			std::string request = "configure";
-			bool video;
-			bool audio;
-			bool data;
+			bool audio = false;
+			bool video = false;
+			bool data = false;
+			std::string mid;
+			bool send = false;
 			int64_t bitrate;
 			bool keyframe;
 			bool record;
@@ -843,17 +1089,27 @@ namespace vi {
 			int64_t audio_level_average;
 			int64_t audio_active_packets;
 
+			struct Description {
+				std::string mid;
+				std::string description;
+				XTOSTRUCT(O(mid, description));
+			};
+			std::vector<Description> descriptions;
+
 			XTOSTRUCT(O(request,
-				video,
 				audio,
+				video,
 				data,
+				mid,
+				send,
 				bitrate,
 				keyframe,
 				record,
 				filename,
 				display,
 				audio_level_average,
-				audio_active_packets
+				audio_active_packets, 
+				descriptions
 			));
 		};
 
@@ -861,24 +1117,29 @@ namespace vi {
 		//{
 		//	"request" : "switch",
 		//	"feed" : < unique ID of the new publisher to switch to; mandatory > ,
-		//	"audio" : < true | false, depending on whether audio should be relayed or not; optional > ,
-		//	"video" : < true | false, depending on whether video should be relayed or not; optional > ,
-		//	"data" : < true | false, depending on whether datachannel messages should be relayed or not; optional >
+		//	"streams" : [
+		//	{
+		//		"feed" : <unique ID of the publisher the new source is from>,
+		//			"mid" : "<unique mid of the source we want to switch to>",
+		//			"sub_mid" : "<unique mid of the stream we want to pipe the new source to>"
+		//	},
+		//	{
+		//		// Other updates, if any
+		//	}
+		//	]
 		//}
 		//\endverbatim
 		struct SwitchPublisherRequest {
 			std::string request = "switch";
-			int64_t feed;
-			bool video;
-			bool audio;
-			bool data;
-
-			XTOSTRUCT(O(request,
-				feed,
-				video,
-				audio,
-				data
-			));
+			
+			struct Stream {
+				int64_t feed_id;
+				std::string mid;
+				std::string sub_mid;
+				XTOSTRUCT(O(feed_id, mid, sub_mid));
+			};
+			std::vector<Stream> streams;
+			XTOSTRUCT(O(request, streams));
 		};
 	}
 }

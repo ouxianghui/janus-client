@@ -1,53 +1,38 @@
-/**
- * This file is part of janus_client project.
- * Author:    Jackie Ou
- * Created:   2020-10-01
- **/
-
 #pragma once
 
+#include <functional>
 #include "plugin_client.h"
 #include "service/observable.h"
-#include "i_video_room_listener.h"
-
-
-namespace webrtc {
-	class MediaStreamInterface;
-}
+#include "video_room_models.h"
 
 namespace vi {
+	class IVideoRoomListener;
 	class IVideoRoomApi;
-	class Participant;
-	class VideoRoomPublisher;
-	class VideoRoomSubscriber;
 
-	struct ParticipantSt {
-		int64_t id;
-		std::string displayName;
-	};
+	using DelayedTask = std::function<void()>;
 
-	class VideoRoom : public PluginClient, public core::Observable
+	class VideoRoomSubscriber : public PluginClient, public core::Observable
 	{
 	public:
-		VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs);
+		VideoRoomSubscriber(std::shared_ptr<WebRTCServiceInterface> wrs, const std::string& pluginName, const std::string& opaqueId);
 
-		~VideoRoom();
-
-		void init();
+		~VideoRoomSubscriber();
 
 		void addListener(std::shared_ptr<IVideoRoomListener> listener);
 
 		void removeListener(std::shared_ptr<IVideoRoomListener> listener);
 
-		std::shared_ptr<Participant> getParticipant(int64_t pid);
-
-		std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
-
-		uint64_t getId() { return PluginClient::getId(); }
+		void setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi);
 
 		void setRoomId(int64_t roomId);
 
 		int64_t getRoomId() const;
+
+		void setPrivateId(int64_t id);
+
+		void subscribeTo(const std::vector<vr::Publisher>& publishers);
+
+		void unsubscribeFrom(int64_t id);
 
 	protected:
 		void onAttached(bool success) override;
@@ -78,27 +63,26 @@ namespace vi {
 
 		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
 
-	protected:
-		void publishOwnStream(bool audioOn);
 
-		void unpublishOwnStream();
+	private:
+		void join(const std::vector<vr::Publisher>& publishers);
 
-		void createParticipant(const ParticipantSt& info);
-
-		void removeParticipant(int64_t id);
+		void subscribe(const std::vector<vr::Publisher>& publishers);
 
 	private:
 		int64_t _roomId;
-		
-		std::map<int64_t, std::shared_ptr<Participant>> _participantsMap;
 
-		std::shared_ptr<IVideoRoomApi> _videoRoomApi;
-
-		std::shared_ptr<VideoRoomSubscriber> _subscriber;
+		std::weak_ptr<IVideoRoomApi> _videoRoomApi;
 
 		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;
 
-		// key: trackId
-		std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _localStreams;
+		// key: mid
+		std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _remoteStreams;
+
+		std::atomic_bool _attached;
+
+		std::vector<vr::Publisher> _publishers;
+
+		DelayedTask _joinTask;
 	};
 }

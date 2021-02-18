@@ -55,23 +55,23 @@ namespace vi {
 
 		void destroy(std::shared_ptr<DestroySessionEvent> event) override;
 
-		int32_t remoteVolume(int64_t handleId) override;
+		int32_t remoteVolume(int64_t handleId, const std::string& mid) override;
 
-		int32_t localVolume(int64_t handleId) override;
+		int32_t localVolume(int64_t handleId, const std::string& mid) override;
 
-		bool isAudioMuted(int64_t handleId) override;
+		bool isAudioMuted(int64_t handleId, const std::string& mid) override;
 
-		bool isVideoMuted(int64_t handleId) override;
+		bool isVideoMuted(int64_t handleId, const std::string& mid) override;
 
-		bool muteAudio(int64_t handleId) override;
+		bool muteAudio(int64_t handleId, const std::string& mid) override;
 
-		bool muteVideo(int64_t handleId) override;
+		bool muteVideo(int64_t handleId, const std::string& mid) override;
 
-		bool unmuteAudio(int64_t handleId) override;
+		bool unmuteAudio(int64_t handleId, const std::string& mid) override;
 
-		bool unmuteVideo(int64_t handleId) override;
+		bool unmuteVideo(int64_t handleId, const std::string& mid) override;
 
-		std::string getBitrate(int64_t handleId) override;
+		std::string getBitrate(int64_t handleId, const std::string& mid) override;
 
 		void sendMessage(int64_t handleId, std::shared_ptr<SendMessageEvent> event) override;
 
@@ -101,11 +101,11 @@ namespace vi {
 		void onMessage(const std::string& json) override;
 
 	private:
-		int32_t getVolume(int64_t handleId, bool isRemote);
+		int32_t getVolume(int64_t handleId, bool isRemote, const std::string& mid);
 
-		bool isMuted(int64_t handleId, bool isVideo);
+		bool isMuted(int64_t handleId, bool isVideo, const std::string& mid);
 
-		bool mute(int64_t handleId, bool isVideo, bool mute);
+		bool mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid);
 
 		void prepareWebrtc(int64_t handleId, bool isOffer, std::shared_ptr<PrepareWebRTCEvent> event);
 
@@ -193,6 +193,9 @@ namespace vi {
 		rtc::scoped_refptr<CapturerTrackSource> _videoDevice;
 
 		rtc::Thread* _eventHandlerThread;
+
+		// key: trackId, value: mid
+		std::unordered_map<std::string, std::string> _trackIdsMap;
 	};
 }
 

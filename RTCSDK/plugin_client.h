@@ -34,23 +34,23 @@ namespace vi {
 
 		void attach() override;
 
-		int32_t remoteVolume() override;
+		int32_t remoteVolume(const std::string& mid) override;
 
-		int32_t localVolume() override;
+		int32_t localVolume(const std::string& mid) override;
 
-		bool isAudioMuted() override;
+		bool isAudioMuted(const std::string& mid) override;
 
-		bool isVideoMuted() override;
+		bool isVideoMuted(const std::string& mid) override;
 
-		bool muteAudio() override;
+		bool muteAudio(const std::string& mid) override;
 
-		bool muteVideo() override;
+		bool muteVideo(const std::string& mid) override;
 
-		bool unmuteAudio() override;
+		bool unmuteAudio(const std::string& mid) override;
 
-		bool unmuteVideo() override;
+		bool unmuteVideo(const std::string& mid) override;
 
-		std::string getBitrate() override;
+		std::string getBitrate(const std::string& mid) override;
 
 		void sendMessage(std::shared_ptr<SendMessageEvent> event) override;
 

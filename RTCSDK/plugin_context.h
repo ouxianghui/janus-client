@@ -23,7 +23,6 @@ namespace vi {
 	struct WebrtcContext {
 		std::atomic_bool started = false;
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> myStream;
-		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
 		std::atomic_bool streamExternal = false;
 		absl::optional<JsepConfig> mySdp;
 		absl::optional<JsepConfig> remoteSdp;

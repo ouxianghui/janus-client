@@ -21,23 +21,23 @@ namespace vi {
 
 		virtual void attach() = 0;
 
-		virtual int32_t remoteVolume() = 0;
+		virtual int32_t remoteVolume(const std::string& mid) = 0;
 
-		virtual int32_t localVolume() = 0;
+		virtual int32_t localVolume(const std::string& mid) = 0;
 
-		virtual bool isAudioMuted() = 0;
+		virtual bool isAudioMuted(const std::string& mid) = 0;
 
-		virtual bool isVideoMuted() = 0;
+		virtual bool isVideoMuted(const std::string& mid) = 0;
 
-		virtual bool muteAudio() = 0;
+		virtual bool muteAudio(const std::string& mid) = 0;
 
-		virtual bool muteVideo() = 0;
+		virtual bool muteVideo(const std::string& mid) = 0;
 
-		virtual bool unmuteAudio() = 0;
+		virtual bool unmuteAudio(const std::string& mid) = 0;
 
-		virtual bool unmuteVideo() = 0;
+		virtual bool unmuteVideo(const std::string& mid) = 0;
 
-		virtual std::string getBitrate() = 0;
+		virtual std::string getBitrate(const std::string& mid) = 0;
 
 		virtual void sendMessage(std::shared_ptr<SendMessageEvent> event) = 0;
 

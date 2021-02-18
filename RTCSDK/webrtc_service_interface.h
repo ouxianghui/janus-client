@@ -37,23 +37,23 @@ namespace vi {
 
 		virtual void destroy(std::shared_ptr<DestroySessionEvent> event) = 0;
 
-		virtual int32_t remoteVolume(int64_t handleId) = 0;
+		virtual int32_t remoteVolume(int64_t handleId, const std::string& mid) = 0;
 
-		virtual int32_t localVolume(int64_t handleId) = 0;
+		virtual int32_t localVolume(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool isAudioMuted(int64_t handleId) = 0;
+		virtual bool isAudioMuted(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool isVideoMuted(int64_t handleId) = 0;
+		virtual bool isVideoMuted(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool muteAudio(int64_t handleId) = 0;
+		virtual bool muteAudio(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool muteVideo(int64_t handleId) = 0;
+		virtual bool muteVideo(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool unmuteAudio(int64_t handleId) = 0;
+		virtual bool unmuteAudio(int64_t handleId, const std::string& mid) = 0;
 
-		virtual bool unmuteVideo(int64_t handleId) = 0;
+		virtual bool unmuteVideo(int64_t handleId, const std::string& mid) = 0;
 
-		virtual std::string getBitrate(int64_t handleId) = 0;
+		virtual std::string getBitrate(int64_t handleId, const std::string& mid) = 0;
 
 		virtual void sendMessage(int64_t handleId, std::shared_ptr<SendMessageEvent> event) = 0;
 

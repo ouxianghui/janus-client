@@ -17,6 +17,7 @@ namespace vi {
 		MAIN = 0,
 		WORKER = 1,
 		SERVICE = 2,
+		MEDIA_STREAM = 3
 	};
 
 	class ThreadManager : public core::Singleton<ThreadManager>

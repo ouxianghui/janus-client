@@ -35,6 +35,9 @@ namespace vi {
 		_threadsMap[ThreadName::SERVICE] = rtc::Thread::Create();
 		_threadsMap[ThreadName::SERVICE]->SetName("vi::SERVICE", nullptr);
 
+		_threadsMap[ThreadName::MEDIA_STREAM] = rtc::Thread::Create();
+		_threadsMap[ThreadName::MEDIA_STREAM]->SetName("vi::MEDIA_STREAM", nullptr);
+
 		for (const auto& thread : _threadsMap) {
 			thread.second->Start();
 		}

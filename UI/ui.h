@@ -45,9 +45,9 @@ private slots:
 																	   
 	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
 
-	void onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
 
 private slots:
 

@@ -25,21 +25,17 @@ namespace vi {
 
 		virtual void onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) = 0;
 
-		virtual void onMediaState(const std::string& media, bool on) = 0;
+		virtual void onMediaState(const std::string& media, bool on, const std::string& mid) = 0;
 
 		virtual void onWebrtcState(bool isActive, const std::string& reason) = 0;
 
-		virtual void onSlowLink(bool uplink, bool lost) = 0;
+		virtual void onSlowLink(bool uplink, bool lost, const std::string& mid) = 0;
 
 		virtual void onMessage(const std::string& data, const std::string& jsep) = 0;
 
-		virtual void onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
+		virtual void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) = 0;
 
-		virtual void onRemoveLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
-
-		virtual void onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
-
-		virtual void onRemoveRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) = 0;
+		virtual void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) = 0;
 
 		virtual void onData(const std::string& data, const std::string& label) = 0;
 

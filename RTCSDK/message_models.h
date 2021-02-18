@@ -105,13 +105,15 @@ namespace vi {
 	struct MediaResponse : public JanusResponse {
 		std::string type;
 		bool receiving;
-		XTOSTRUCT(I(JanusResponse), O(type, receiving));
+		std::string mid;
+		XTOSTRUCT(I(JanusResponse), O(type, receiving, mid));
 	};
 
 	struct SlowlinkResponse : public JanusResponse {
 		bool uplink;
 		bool lost;
-		XTOSTRUCT(I(JanusResponse), O(uplink, lost));
+		std::string mid;
+		XTOSTRUCT(I(JanusResponse), O(uplink, lost, mid));
 	};
 
 	struct JanusEvent : public JanusResponse {

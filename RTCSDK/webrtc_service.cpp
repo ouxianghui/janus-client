@@ -21,6 +21,8 @@
 #include "api/video_codecs/builtin_video_encoder_factory.h"
 #include "api/audio_codecs/builtin_audio_decoder_factory.h"
 #include "api/audio_codecs/builtin_audio_encoder_factory.h"
+#include "api/media_types.h"
+#include "api/rtp_transceiver_interface.h"
 #include "modules/audio_device/include/audio_device.h"
 #include "modules/audio_processing/include/audio_processing.h"
 #include "modules/video_capture/video_capture_factory.h"
@@ -188,39 +190,39 @@ namespace vi {
 		createSession(event);
 	}
 
-	int32_t WebRTCService::getVolume(int64_t handleId, bool isRemote)
+	int32_t WebRTCService::getVolume(int64_t handleId, bool isRemote, const std::string& mid)
 	{
 		const auto& pluginClient = getHandler(handleId);
 		if (!pluginClient) {
 			DLOG("Invalid handle");
-			return 0;
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+
 		return 0;
 	}
 
-	int32_t WebRTCService::remoteVolume(int64_t handleId)
+	int32_t WebRTCService::remoteVolume(int64_t handleId, const std::string& mid)
 	{
-		return getVolume(handleId, true);
+		return getVolume(handleId, true, mid);
 	}
 
-	int32_t WebRTCService::localVolume(int64_t handleId)
+	int32_t WebRTCService::localVolume(int64_t handleId, const std::string& mid)
 	{
-		return getVolume(handleId, false);
+		return getVolume(handleId, false, mid);
 	}
 
-	bool WebRTCService::isAudioMuted(int64_t handleId) 
+	bool WebRTCService::isAudioMuted(int64_t handleId, const std::string& mid)
 	{
-		return isMuted(handleId, true);
+		return isMuted(handleId, true, mid);
 	}
 
-	bool WebRTCService::isVideoMuted(int64_t handleId)
+	bool WebRTCService::isVideoMuted(int64_t handleId, const std::string& mid)
 	{
-		return isMuted(handleId, false);
+		return isMuted(handleId, false, mid);
 	}
 
-	bool WebRTCService::isMuted(int64_t handleId, bool isVideo) 
+	bool WebRTCService::isMuted(int64_t handleId, bool isVideo, const std::string& mid)
 	{
 		const auto& pluginClient = getHandler(handleId);
 		if (!pluginClient) {
@@ -244,7 +246,26 @@ namespace vi {
 				DLOG("No video track");
 				return true;
 			}
-			return !context->myStream->GetVideoTracks()[0]->enabled();
+			if (!mid.empty() && _unifiedPlan) {
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+					[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+					return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
+				});
+				if (it == transceivers.end()) {
+					DLOG("No video transceiver with mid: {}", mid);
+					return true;
+				}
+				if (!(*it)->sender() || !(*it)->sender()->track()) {
+					DLOG("No video sender with mid: {}", mid);
+					return true;
+				}
+
+				return (*it)->sender()->track()->enabled();
+			}
+			else {
+				return !context->myStream->GetVideoTracks()[0]->enabled();
+			}
 		}
 		else {
 			// Check audio track
@@ -252,32 +273,51 @@ namespace vi {
 				DLOG("No audio track");
 				return true;
 			}
-			return !context->myStream->GetAudioTracks()[0]->enabled();
+			if (!mid.empty() && _unifiedPlan) {
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+					[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+					return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
+				});
+				if (it == transceivers.end()) {
+					DLOG("No audio transceiver with mid: {}", mid);
+					return true;
+				}
+				if (!(*it)->sender() || !(*it)->sender()->track()) {
+					DLOG("No audio sender with mid: {}", mid);
+					return true;
+				}
+
+				return (*it)->sender()->track()->enabled();
+			}
+			else {
+				return !context->myStream->GetAudioTracks()[0]->enabled();
+			}
 		}
 		return true;
 	}
 
-	bool WebRTCService::muteAudio(int64_t handleId)
+	bool WebRTCService::muteAudio(int64_t handleId, const std::string& mid)
 	{
-		return mute(handleId, false, true);
+		return mute(handleId, false, true, mid);
 	}
 
-	bool WebRTCService::muteVideo(int64_t handleId)
+	bool WebRTCService::muteVideo(int64_t handleId, const std::string& mid)
 	{
-		return mute(handleId, true, true);
+		return mute(handleId, true, true, mid);
 	}
 
-	bool WebRTCService::unmuteAudio(int64_t handleId)
+	bool WebRTCService::unmuteAudio(int64_t handleId, const std::string& mid)
 	{
-		return mute(handleId, false, false);
+		return mute(handleId, false, false, mid);
 	}
 
-	bool WebRTCService::unmuteVideo(int64_t handleId) 
+	bool WebRTCService::unmuteVideo(int64_t handleId, const std::string& mid)
 	{
-		return mute(handleId, true, false);
+		return mute(handleId, true, false, mid);
 	}
 
-	bool WebRTCService::mute(int64_t handleId, bool isVideo, bool mute)
+	bool WebRTCService::mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid)
 	{
 		const auto& pluginClient = getHandler(handleId);
 		if (!pluginClient) {
@@ -295,15 +335,34 @@ namespace vi {
 			DLOG("Invalid local MediaStream");
 			return false;
 		}
+
+		bool enabled = mute ? false : true;
+
 		if (isVideo) {
 			// Mute/unmute video track
 			if (context->myStream->GetVideoTracks().size() == 0) {
 				DLOG("No video track");
 				return false;
 			}
-			bool enabled = mute ? false : true;
-			context->myStream->GetVideoTracks()[0]->set_enabled(enabled);
-			return true;
+			if (!mid.empty() && _unifiedPlan) {
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+					[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+					return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
+				});
+				if (it == transceivers.end()) {
+					DLOG("No video transceiver with mid: {}", mid);
+					return true;
+				}
+				if (!(*it)->sender() || !(*it)->sender()->track()) {
+					DLOG("No video sender with mid: {}", mid);
+					return true;
+				}
+				return (*it)->sender()->track()->set_enabled(enabled);
+			}
+			else {
+				return context->myStream->GetVideoTracks()[0]->set_enabled(enabled);
+			}
 		}
 		else {
 			// Mute/unmute audio track
@@ -311,14 +370,30 @@ namespace vi {
 				DLOG("No audio track");
 				return false;
 			}
-			bool enabled = mute ? false : true;
-			context->myStream->GetAudioTracks()[0]->set_enabled(enabled);
-			return true;
+			if (!mid.empty() && _unifiedPlan) {
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+				std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+					[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+					return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
+				});
+				if (it == transceivers.end()) {
+					DLOG("No audio transceiver with mid: {}", mid);
+					return true;
+				}
+				if (!(*it)->sender() || !(*it)->sender()->track()) {
+					DLOG("No audio sender with mid: {}", mid);
+					return true;
+				}
+				return (*it)->sender()->track()->set_enabled(enabled);
+			}
+			else {
+				return context->myStream->GetAudioTracks()[0]->set_enabled(enabled);
+			}
 		}
 		return false;
 	}
 
-	std::string WebRTCService::getBitrate(int64_t handleId)
+	std::string WebRTCService::getBitrate(int64_t handleId, const std::string& mid)
 	{
 		return "";
 	}
@@ -698,6 +773,7 @@ namespace vi {
 					DLOG("Removing audio track, id = {}", at->id());
 					context->myStream->RemoveTrack(at);
 					try {
+						pluginClient->onLocalTrack(at, false);
 						at->set_enabled(false);
 					}
 					catch (...) {
@@ -711,7 +787,7 @@ namespace vi {
 					}
 					if (ra) {
 						for (const auto& sender : context->pc->GetSenders()) {
-							if (sender && sender->track() && sender->track()->kind() == "audio") {
+							if (sender && sender->track() && sender->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) {
 								DLOG("Removing audio sender, id = {}, ssrc = {}", sender->id(), sender->ssrc());
 								context->pc->RemoveTrack(sender);
 							}
@@ -725,6 +801,7 @@ namespace vi {
 					DLOG("Removing video track, id = {}", vt->id());
 					context->myStream->RemoveTrack(vt);
 					try {
+						pluginClient->onLocalTrack(vt, false);
 						vt->set_enabled(false);
 					}
 					catch (...) {
@@ -738,7 +815,7 @@ namespace vi {
 					}
 					if (ra) {
 						for (const auto& sender : context->pc->GetSenders()) {
-							if (sender && sender->track() && sender->track()->kind() == "video") {
+							if (sender && sender->track() && sender->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 								DLOG("Removing video sender, id = {}, ssrc = {}", sender->id(), sender->ssrc());
 								context->pc->RemoveTrack(sender);
 							}
@@ -906,7 +983,6 @@ namespace vi {
 				std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
 				_client->hangup(_sessionId, handleId, callback);
 			}
-			context->remoteStream = nullptr;
 			try {
 				// Try a MediaStreamTrack.stop() for each track
 				if (!context->streamExternal && context->myStream) {
@@ -1126,7 +1202,7 @@ namespace vi {
 			x2struct::X::loadjson(json, model, false, true);
 
 			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onMediaState(model.type, model.receiving);
+				pluginClient->onMediaState(model.type, model.receiving, model.mid);
 			});
 		}
 		else if (response.janus == "slowlink") {
@@ -1134,7 +1210,7 @@ namespace vi {
 			SlowlinkResponse model;
 			x2struct::X::loadjson(json, model, false, true);
 			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onSlowLink(model.uplink, model.lost);
+				pluginClient->onSlowLink(model.uplink, model.lost, model.mid);
 			});
 		}
 		else if (response.janus == "event") {
@@ -1294,8 +1370,8 @@ namespace vi {
 					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> audioTransceiver = nullptr;
 					auto transceivers = context->pc->GetTransceivers();
 					for (const auto& t : transceivers) {
-						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == "audio") ||
-							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == "audio")) {
+						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) ||
+							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind)) {
 							audioTransceiver = t;
 							break;
 						}
@@ -1325,8 +1401,8 @@ namespace vi {
 					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> videoTransceiver = nullptr;
 					auto transceivers = context->pc->GetTransceivers();
 						for (const auto& t : transceivers) {
-						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == "video") ||
-							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == "video")) {
+						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) ||
+							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind)) {
 							videoTransceiver = t;
 							break;
 						}
@@ -1431,13 +1507,25 @@ namespace vi {
 				if (!self) {
 					return;
 				}
-				if (transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO) {
-					auto& context = pluginClient->pluginContext()->webrtcContext;
-					context->remoteStream = transceiver->receiver()->streams()[0];
-					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
-						pluginClient->onCreateRemoteStream(context->remoteStream);
-					});
-				}
+				auto& context = pluginClient->pluginContext()->webrtcContext;
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, transceiver, wself]() {
+					auto self = wself.lock();
+					if (!self) {
+						return;
+					}
+					if (!transceiver) {
+						return;
+					}
+					if (!transceiver->receiver()) {
+						return;
+					}
+					auto track = transceiver->receiver()->track();
+					if (!track) {
+						return;
+					}
+					self->_trackIdsMap[track->id()] = transceiver->mid().value_or("");
+					pluginClient->onRemoteTrack(track, transceiver->mid().value_or(""), true);
+				});
 			});
 
 			context->pcObserver->setAddTrackCallback(atcb);
@@ -1448,141 +1536,155 @@ namespace vi {
 				if (!self) {
 					return;
 				}
-
+				std::string idd = receiver->id();
 				auto& context = pluginClient->pluginContext()->webrtcContext;
-				if (context->remoteStream && !receiver->streams().empty() && (receiver->streams()[0]->id() == context->remoteStream->id())) {
-					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
-						pluginClient->onRemoveRemoteStream(context->remoteStream);
-						context->remoteStream = nullptr;
-					});
-				}
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context, receiver, wself]() {
+					auto self = wself.lock();
+					if (!self) {
+						return;
+					}
+					if (!receiver) {
+						return;
+					}
+					auto track = receiver->track();
+					if (!track) {
+						return;
+					}
+					if (self->_trackIdsMap.find(track->id()) != self->_trackIdsMap.end()) {
+						pluginClient->onRemoteTrack(track, self->_trackIdsMap[track->id()], false);
+						auto it = self->_trackIdsMap.find(track->id());
+						self->_trackIdsMap.erase(it);
+					}
+				});
 			});
 
 			context->pcObserver->setRemoveTrackCallback(rtcb);
 
 			context->pc = _pcf->CreatePeerConnection(pcConfig, nullptr, nullptr, context->pcObserver.get());
-
-			if (addTracks && stream) {
-				DLOG("Adding local stream");
-				bool simulcast2 = event->simulcast2.value_or(false);
-				for (auto track : stream->GetAudioTracks()) {
-					std::string id = stream->id();
+		}
+		if (addTracks && stream) {
+			DLOG("Adding local stream");
+			bool simulcast2 = event->simulcast2.value_or(false);
+			for (auto track : stream->GetAudioTracks()) {
+				std::string id = stream->id();
+				webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>> result = context->pc->AddTrack(track, { stream->id() });
+				if (!result.ok()) {
+					DLOG("Add track error message: {}", result.error().message());
+				}
+			}
+			for (auto track : stream->GetVideoTracks()) {
+				if (!simulcast2) {
+					//context->pc->AddTrack(track, { stream->id() });
 					webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>> result = context->pc->AddTrack(track, { stream->id() });
 					if (!result.ok()) {
 						DLOG("Add track error message: {}", result.error().message());
 					}
 				}
-				for (auto track : stream->GetVideoTracks()) {
-					if (!simulcast2) {
-						//context->pc->AddTrack(track, { stream->id() });
-						webrtc::RTCErrorOr<rtc::scoped_refptr<webrtc::RtpSenderInterface>> result = context->pc->AddTrack(track, { stream->id() });
-						if (!result.ok()) {
-							DLOG("Add track error message: {}", result.error().message());
+				else {
+					DLOG("Enabling rid-based simulcasting, track-id: {}", track->id());
+					webrtc::RtpTransceiverInit init;
+					init.direction = webrtc::RtpTransceiverDirection::kSendRecv;
+					init.stream_ids = { stream->id() };
+
+					webrtc::RtpEncodingParameters ph;
+					ph.rid = "h";
+					ph.active = true;
+					ph.max_bitrate_bps = 900000;
+
+					webrtc::RtpEncodingParameters pm;
+					pm.rid = "m";
+					pm.active = true;
+					pm.max_bitrate_bps = 300000;
+					pm.scale_resolution_down_by = 2;
+
+					webrtc::RtpEncodingParameters pl;
+					pl.rid = "m";
+					pl.active = true;
+					pl.max_bitrate_bps = 100000;
+					pl.scale_resolution_down_by = 4;
+
+					init.send_encodings.emplace_back(ph);
+					init.send_encodings.emplace_back(pm);
+					init.send_encodings.emplace_back(pl);
+
+					context->pc->AddTransceiver(track, init);
+				}
+			}
+		}
+
+		if (HelperUtils::isDataEnabled(event->media.value()) &&
+			context->dataChannels.find("JanusDataChannel") == context->dataChannels.end()) {
+			DLOG("Creating default data channel");
+			auto dccb = std::make_shared<DataChannelCallback>([wself = weak_from_this(), handleId](rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel) {
+				DLOG("Data channel created by Janus.");
+				if (auto self = wself.lock()) {
+					// should be called in SERVICE thread
+					TMgr->thread(ThreadName::SERVICE)->PostTask(RTC_FROM_HERE, [wself, handleId, dataChannel]() {
+						if (auto self = wself.lock()) {
+							self->createDataChannel(handleId, dataChannel->label(), dataChannel);
 						}
-					}
-					else {
-						DLOG("Enabling rid-based simulcasting, track-id: {}", track->id());
-						webrtc::RtpTransceiverInit init;
-						init.direction = webrtc::RtpTransceiverDirection::kSendRecv;
-						init.stream_ids = { stream->id() };
-
-						webrtc::RtpEncodingParameters ph;
-						ph.rid = "h";
-						ph.active = true;
-						ph.max_bitrate_bps = 900000;
-
-						webrtc::RtpEncodingParameters pm;
-						pm.rid = "m";
-						pm.active = true;
-						pm.max_bitrate_bps = 300000;
-						pm.scale_resolution_down_by = 2;
-
-						webrtc::RtpEncodingParameters pl;
-						pl.rid = "m";
-						pl.active = true;
-						pl.max_bitrate_bps = 100000;
-						pl.scale_resolution_down_by = 4;
-
-						init.send_encodings.emplace_back(ph);
-						init.send_encodings.emplace_back(pm);
-						init.send_encodings.emplace_back(pl);
-
-						context->pc->AddTransceiver(track, init);
-					}
+					});
 				}
-			}
+			});
+			context->pcObserver->setDataChannelCallback(dccb);
+		}
 
-			if (HelperUtils::isDataEnabled(event->media.value()) && 
-				context->dataChannels.find("JanusDataChannel") == context->dataChannels.end()) {
-				DLOG("Creating default data channel");
-				auto dccb = std::make_shared<DataChannelCallback>([wself = weak_from_this(), handleId](rtc::scoped_refptr<webrtc::DataChannelInterface> dataChannel) {
-					DLOG("Data channel created by Janus.");
-					if (auto self = wself.lock()) {
-						// should be called in SERVICE thread
-						TMgr->thread(ThreadName::SERVICE)->PostTask(RTC_FROM_HERE, [wself, handleId, dataChannel]() {
-							if (auto self = wself.lock()) {
-								self->createDataChannel(handleId, dataChannel->label(), dataChannel);
-							}
-						});
-					}
-				});
-				context->pcObserver->setDataChannelCallback(dccb);
-			}
-
-			if (context->myStream) {
-				_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
-					pluginClient->onCreateLocalStream(context->myStream);
-				});
-			}
-
-			if (event->jsep == absl::nullopt) {
-				// TODO:
-				_createOffer(handleId, event);
-			}
-			else {
-				absl::optional<webrtc::SdpType> type = webrtc::SdpTypeFromString(event->jsep->type);
-				if (!type) {
-					DLOG("Invalid JSEP type");
-					return;
+		if (context->myStream) {
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
+				if (context->myStream->GetVideoTracks().size() > 0) {
+					auto track = context->myStream->GetVideoTracks()[0];
+					pluginClient->onLocalTrack(track, true);
 				}
-				webrtc::SdpParseError spError;
-				std::unique_ptr<webrtc::SessionDescriptionInterface> desc = webrtc::CreateSessionDescription(type.value(),
-					event->jsep->sdp, &spError);
-				DLOG("spError: description: {}, line: {}", spError.description.c_str(), spError.line.c_str());
+			});
+		}
 
-				auto wself = weak_from_this();
-
-				SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
-
-				ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([wself, context, handleId, event]() {
-					context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
-
-					for (const auto& candidate : context->candidates) {
-						context->pc->AddIceCandidate(candidate.get());
-					}
-					context->candidates.clear();
-					if (auto self = wself.lock()) {
-						// should be called in SERVICE thread
-						TMgr->thread(ThreadName::SERVICE)->PostTask(RTC_FROM_HERE, [wself, handleId, event]() {
-							if (auto self = wself.lock()) {
-								self->_createAnswer(handleId, event);
-							}
-						});
-					}
-				}));
-
-				ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event, wself](webrtc::RTCError error) {
-					DLOG("SetRemoteDescription() failure: {}", error.message());
-					auto self = wself.lock();
-					if (event->callback && self) {
-						self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
-							(*cb)(false, "failure");
-						});
-					}
-				}));
-
-				context->pc->SetRemoteDescription(ssdo, desc.release());
+		if (event->jsep == absl::nullopt) {
+			// TODO:
+			_createOffer(handleId, event);
+		}
+		else {
+			absl::optional<webrtc::SdpType> type = webrtc::SdpTypeFromString(event->jsep->type);
+			if (!type) {
+				DLOG("Invalid JSEP type");
+				return;
 			}
+			webrtc::SdpParseError spError;
+			std::unique_ptr<webrtc::SessionDescriptionInterface> desc = webrtc::CreateSessionDescription(type.value(),
+				event->jsep->sdp, &spError);
+			DLOG("spError: description: {}, line: {}", spError.description.c_str(), spError.line.c_str());
+
+			auto wself = weak_from_this();
+
+			SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
+
+			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([wself, context, handleId, event]() {
+				context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
+
+				for (const auto& candidate : context->candidates) {
+					context->pc->AddIceCandidate(candidate.get());
+				}
+				context->candidates.clear();
+				if (auto self = wself.lock()) {
+					// should be called in SERVICE thread
+					TMgr->thread(ThreadName::SERVICE)->PostTask(RTC_FROM_HERE, [wself, handleId, event]() {
+						if (auto self = wself.lock()) {
+							self->_createAnswer(handleId, event);
+						}
+					});
+				}
+			}));
+
+			ssdo->setFailureCallback(std::make_shared<SetSessionDescFailureCallback>([event, wself](webrtc::RTCError error) {
+				DLOG("SetRemoteDescription() failure: {}", error.message());
+				auto self = wself.lock();
+				if (event->callback && self) {
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
+						(*cb)(false, "failure");
+					});
+				}
+			}));
+
+			context->pc->SetRemoteDescription(ssdo, desc.release());
 		}
 	}
 
@@ -1687,14 +1789,14 @@ namespace vi {
 		rtc::scoped_refptr<webrtc::RtpTransceiverInterface> videoTransceiver = nullptr;
 		std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = pc->GetTransceivers();
 		for (auto t : transceivers) {
-			if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == "audio") ||
-				(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == "audio")) {
+			if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) ||
+				(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind)) {
 				if (!audioTransceiver)
 					audioTransceiver = t;
 				continue;
 			}
-			if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == "video") ||
-				(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == "video")) {
+			if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) ||
+				(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind)) {
 				if (!videoTransceiver)
 					videoTransceiver = t;
 				continue;
@@ -1819,7 +1921,7 @@ namespace vi {
 			std::vector<rtc::scoped_refptr<webrtc::RtpSenderInterface>> senders = context->pc->GetSenders();
 			rtc::scoped_refptr<webrtc::RtpSenderInterface> sender;
 			for (auto& s : senders) {
-				if (s->track()->kind() == "video") {
+				if (s->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 					sender = s;
 				}
 			}

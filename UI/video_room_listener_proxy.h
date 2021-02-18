@@ -33,9 +33,9 @@ private:
 
 	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant) override;
 
-	void onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+	void onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) override;
 
-	void onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) override;
+	void onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) override;
 
 signals:
 	void mediaState(bool isActive, const std::string& reason);
@@ -46,7 +46,7 @@ signals:
 
 	void removeParticipant(std::shared_ptr<vi::Participant> participant);
 
-	void createStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void createVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
 
-	void removeStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+	void removeVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
 };

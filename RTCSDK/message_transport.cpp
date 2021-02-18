@@ -120,6 +120,10 @@ namespace vi {
 	{
 		DLOG("json = {}", json.c_str());
 
+		if (json.find("updated") != std::string::npos) {
+			DLOG("json = {}", json.c_str());
+		}
+
 		// |unpublished| can be int or string, replace string 'ok' to 0
 		std::string data = json;
 

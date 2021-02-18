@@ -32,8 +32,8 @@ UI::UI(QWidget *parent)
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createStream, this, &UI::onCreateStream, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeStream, this, &UI::onRemoveStream, Qt::QueuedConnection);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
+	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
 
     ui.actionAudio->setEnabled(false);
     ui.actionVideo->setEnabled(false);
@@ -106,14 +106,14 @@ void UI::onMediaState(bool isActive, const std::string& reason)
 		ui.actionAudio->setEnabled(true);
 		ui.actionVideo->setEnabled(true);
 		if (_vr) {
-			if (_vr->isAudioMuted()) {
+			if (_vr->isAudioMuted("")) {
 				ui.actionAudio->setChecked(false);
 			}
 			else {
 				ui.actionAudio->setChecked(true);
 			}
 
-			if (_vr->isVideoMuted()) {
+			if (_vr->isVideoMuted("")) {
 				ui.actionVideo->setChecked(false);
 			}
 			else {
@@ -141,9 +141,12 @@ void UI::onRemoveParticipant(std::shared_ptr<vi::Participant> participant)
 	}
 }
 
-void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void UI::onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track)
 {
-	for (auto track : stream->GetVideoTracks()) {
+	if (!track) {
+		return;
+	}
+	if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
         if (_vr->getId() != pid) {
             GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
             renderer->init();
@@ -166,7 +169,7 @@ void UI::onCreateStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInte
 	}
 }
 
-void UI::onRemoveStream(uint64_t pid, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+void UI::onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track)
 {
 	_galleryView->removeView(pid);
 }
@@ -258,10 +261,10 @@ void UI::on_actionAudio_triggered(bool checked)
 	}
 
 	if (checked) {
-		_vr->unmuteAudio();
+		_vr->unmuteAudio("");
 	}
 	else {
-		_vr->muteAudio();
+		_vr->muteAudio("");
 	}
 }
 
@@ -272,8 +275,8 @@ void UI::on_actionVideo_triggered(bool checked)
 	}
 
 	if (checked) {
-		_vr->unmuteVideo();
+		_vr->unmuteVideo("");
 	} else {
-		_vr->muteVideo();
+		_vr->muteVideo("");
 	}
 }

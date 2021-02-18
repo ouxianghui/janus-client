@@ -45,8 +45,7 @@ static void registerMetaTypes()
 
 	qRegisterMetaType<uint64_t>("uint64_t");
 	qRegisterMetaType<std::shared_ptr<vi::Participant>>("std::shared_ptr<vi::Participant>");
-	//qRegisterMetaType<webrtc::MediaStreamInterface>("webrtc::MediaStreamInterface");
-	qRegisterMetaType<rtc::scoped_refptr<webrtc::MediaStreamInterface>>("rtc::scoped_refptr<webrtc::MediaStreamInterface>");
+	qRegisterMetaType<rtc::scoped_refptr<webrtc::MediaStreamInterface>>("rtc::scoped_refptr<webrtc::VideoTrackInterface>");
 }
 
 static void initOpenGL() {

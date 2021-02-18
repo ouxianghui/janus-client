@@ -41,91 +41,91 @@ namespace vi {
 		}
 	}
 
-	int32_t PluginClient::remoteVolume()
+	int32_t PluginClient::remoteVolume(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->remoteVolume(_pluginContext->handleId);
+				return wrs->remoteVolume(_pluginContext->handleId, mid);
 			}
 		}
 		return 0;
 	}
 
-	int32_t PluginClient::localVolume()
+	int32_t PluginClient::localVolume(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->localVolume(_pluginContext->handleId);
+				return wrs->localVolume(_pluginContext->handleId, mid);
 			}
 		}
 		return 0;
 	}
 
-	bool PluginClient::isAudioMuted()
+	bool PluginClient::isAudioMuted(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->isAudioMuted(_pluginContext->handleId);
+				return wrs->isAudioMuted(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	bool PluginClient::isVideoMuted()
+	bool PluginClient::isVideoMuted(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->isVideoMuted(_pluginContext->handleId);
+				return wrs->isVideoMuted(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	bool PluginClient::muteAudio()
+	bool PluginClient::muteAudio(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->muteAudio(_pluginContext->handleId);
+				return wrs->muteAudio(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	bool PluginClient::muteVideo()
+	bool PluginClient::muteVideo(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->muteVideo(_pluginContext->handleId);
+				return wrs->muteVideo(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	bool PluginClient::unmuteAudio()
+	bool PluginClient::unmuteAudio(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->unmuteAudio(_pluginContext->handleId);
+				return wrs->unmuteAudio(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	bool PluginClient::unmuteVideo()
+	bool PluginClient::unmuteVideo(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->unmuteVideo(_pluginContext->handleId);
+				return wrs->unmuteVideo(_pluginContext->handleId, mid);
 			}
 		}
 		return false;
 	}
 
-	std::string PluginClient::getBitrate()
+	std::string PluginClient::getBitrate(const std::string& mid)
 	{
 		if (auto wrs = _pluginContext->webrtcService.lock()) {
 			if (wrs->status() == ServiceStauts::UP) {
-				return wrs->getBitrate(_pluginContext->handleId);
+				return wrs->getBitrate(_pluginContext->handleId, mid);
 			}
 		}
 		return false;

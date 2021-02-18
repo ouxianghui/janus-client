@@ -12,6 +12,10 @@
 #include "thread_manager.h"
 #include "Service/app_instance.h"
 #include "video_room_api.h"
+#include "video_room_subscriber.h"
+#include "pc/media_stream.h"
+#include "api/media_stream_proxy.h"
+#include "api/media_stream_track_proxy.h"
 
 namespace vi {
 	VideoRoom::VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs)
@@ -19,6 +23,7 @@ namespace vi {
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
+
 		_listeners = std::make_shared<std::vector<std::weak_ptr<IVideoRoomListener>>>();
 	}
 
@@ -32,31 +37,32 @@ namespace vi {
 	void VideoRoom::init()
 	{
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
+
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->webrtcService.lock(), _pluginContext->plugin, _pluginContext->opaqueId);
+		_subscriber->setRoomApi(_videoRoomApi);
 	}
 
 	void VideoRoom::addListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
 		addBizObserver<IVideoRoomListener>(*_listeners, listener);
+		_subscriber->addListener(listener);
 	}
 
 	void VideoRoom::removeListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
 		removeBizObserver<IVideoRoomListener>(*_listeners, listener);
+		_subscriber->removeListener(listener);
 	}
 
 	std::shared_ptr<Participant> VideoRoom::getParticipant(int64_t pid)
 	{
-		//if (pid == this->_id) {
-		//	return shared_from_this();
-		//}
-		//else {
-			return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
-		//}
+		return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
 	}
 
 	void VideoRoom::setRoomId(int64_t roomId)
 	{
 		_roomId = roomId;
+		_subscriber->setRoomId(_roomId);
 	}
 
 	int64_t VideoRoom::getRoomId() const
@@ -84,12 +90,12 @@ namespace vi {
 
 	void VideoRoom::onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) {}
 
-	void VideoRoom::onMediaState(const std::string& media, bool on) 
+	void VideoRoom::onMediaState(const std::string& media, bool on, const std::string& mid)
 	{
 		DLOG("Janus {} receiving our {}", (on ? "started" : "stopped"), media.c_str());
 	}
 
-	void VideoRoom::onWebrtcState(bool isActive, const std::string& reason) 
+	void VideoRoom::onWebrtcState(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
@@ -98,12 +104,12 @@ namespace vi {
 				request.request = "configure";
 				request.bitrate = 256000;
 
-				/* 
-				 * After debugging, the SFU does receive the display name set when we join, 
-				 * but the subscriber is not displayed. It should be a SFU bug. 
+				/*
+				 * After debugging, the SFU does receive the display name set when we join,
+				 * but the subscriber is not displayed. It should be a SFU bug.
 				 * After setting once here, the subscriber of the later join will have the opportunity to display your display name.
 				 */
-				//request.display = "input your display name here";
+				 //request.display = "input your display name here";
 				_videoRoomApi->publish(request, [](std::shared_ptr<JanusResponse> response) {
 					DLOG("response: {}", response->janus);
 				});
@@ -113,11 +119,11 @@ namespace vi {
 				listener->onMediaState(isActive, reason);
 			});
 		}
-		unmuteVideo();
+		unmuteVideo("");
 		startStatsReport();
 	}
 
-	void VideoRoom::onSlowLink(bool uplink, bool lost) {}
+	void VideoRoom::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
 
 	void VideoRoom::onMessage(const std::string& data, const std::string& jsepString)
 	{
@@ -150,6 +156,7 @@ namespace vi {
 			// Publisher/manager created, negotiate WebRTC and attach to existing feeds, if any
 			_id = pluginData.data.id;
 			_privateId = pluginData.data.private_id;
+			_subscriber->setPrivateId(_privateId);
 			DLOG("Successfully joined room {} with ID {}", pluginData.data.room, _id);
 
 			// TODO:
@@ -160,11 +167,12 @@ namespace vi {
 				const auto& publishers = pluginData.data.publishers;
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
-					DLOG("  >> [{}] {} (audio: {}, video: {}}", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
+					DLOG("  >> [{}] {}", pub.id, pub.display.c_str());
 
-					ParticipantSt info{ pub.id, pub.display, pub.audio_codec, pub.video_codec };
+					ParticipantSt info{ pub.id, pub.display };
 					createParticipant(info);
 				}
+				_subscriber->subscribeTo(publishers);
 			}
 		}
 		else if (event == "destroyed") {
@@ -176,10 +184,11 @@ namespace vi {
 				const auto& publishers = pluginData.data.publishers;
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
-					DLOG("  >> [{}] {}, (audio: {}, video: {})", pub.id, pub.display.c_str(), pub.audio_codec.c_str(), pub.video_codec.c_str());
-					ParticipantSt info{ pub.id, pub.display, pub.audio_codec, pub.video_codec };
+					DLOG("  >> [{}] {})", pub.id, pub.display.c_str());
+					ParticipantSt info{ pub.id, pub.display };
 					createParticipant(info);
 				}
+				_subscriber->subscribeTo(publishers);
 			}
 
 			if (pluginData.data.xhas("leaving")) {
@@ -219,66 +228,95 @@ namespace vi {
 			}
 		}
 
-		if (!jsepString.empty()) {
-			Jsep jsep;
-			x2struct::X::loadjson(jsepString, jsep, false, true);
-			if (!jsep.type.empty() && !jsep.sdp.empty()) {
-				DLOG("Handling SDP as well...");
-				// TODO:
-				//sfutest.handleRemoteJsep({ jsep: jsep });
-				std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
-				auto lambda = [](bool success, const std::string& response) {
-					DLOG("response: {}", response.c_str());
-				};
-				std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-				JsepConfig jst;
-				jst.type = jsep.type;
-				jst.sdp = jsep.sdp;
-				event->jsep = jst;
-				event->callback = callback;
+		Jsep jsep;
+		x2struct::X::loadjson(jsepString, jsep, false, true);
+		if (!jsep.type.empty() && !jsep.sdp.empty()) {
+			DLOG("Handling SDP as well...");
+			// TODO:
+			//sfutest.handleRemoteJsep({ jsep: jsep });
+			std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
+			auto lambda = [](bool success, const std::string& response) {
+				DLOG("response: {}", response.c_str());
+			};
+			std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
+			JsepConfig jst;
+			jst.type = jsep.type;
+			jst.sdp = jsep.sdp;
+			event->jsep = jst;
+			event->callback = callback;
 
-				handleRemoteJsep(event);
+			handleRemoteJsep(event);
 
-				if (!_pluginContext) {
-					return;
-				}
+			if (!_pluginContext) {
+				return;
+			}
 
-				const auto& audio = pluginData.data.audio_codec;
-				if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
-					WLOG("Our audio stream has been rejected, viewers won't hear us");
-				}
+			const auto& audio = pluginData.data.audio_codec;
+			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
+				WLOG("Our audio stream has been rejected, viewers won't hear us");
+			}
 
-				const auto& video = pluginData.data.video_codec;
-				if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
-					WLOG("Our video stream has been rejected, viewers won't see us");
-				}
+			const auto& video = pluginData.data.video_codec;
+			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
+				WLOG("Our video stream has been rejected, viewers won't see us");
 			}
 		}
 	}
 
-	void VideoRoom::onCreateLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
+	void VideoRoom::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on)
 	{
-		notifyObserver4Change<IVideoRoomListener>(*_listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
-			listener->onCreateStream(pid, stream);
-		});
+		if (on) {
+			notifyObserver4Change<IVideoRoomListener>(*_listeners, [wself = weak_from_this(), pid = _id, track](const std::shared_ptr<IVideoRoomListener>& listener) {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (!track) {
+					return;
+				}
+
+				auto vr = std::dynamic_pointer_cast<VideoRoom>(self);
+
+				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+					vr->_localStreams[track->id()] = webrtc::MediaStreamProxy::Create(TMgr->thread(ThreadName::MEDIA_STREAM), webrtc::MediaStream::Create(track->id()));
+					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
+					vr->_localStreams[track->id()]->AddTrack(vt);
+					auto t = vr->_localStreams[track->id()]->GetVideoTracks()[0];
+					listener->onCreateVideoTrack(pid, t);
+				}
+			});
+		}
+		else {
+			notifyObserver4Change<IVideoRoomListener>(*_listeners, [wself = weak_from_this(), pid = _id, track](const std::shared_ptr<IVideoRoomListener>& listener) {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (!track) {
+					return;
+				}
+
+				auto vr = std::dynamic_pointer_cast<VideoRoom>(self);
+				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
+					if (vr->_localStreams.find(track->id()) != vr->_localStreams.end()) {
+						auto vt = vr->_localStreams[track->id()]->GetVideoTracks()[0];
+						listener->onRemoveVideoTrack(pid, vt);
+						vr->_localStreams[track->id()]->RemoveTrack(vt.get());
+						auto it = vr->_localStreams.find(track->id());
+						vr->_localStreams.erase(it);
+					}
+				}
+			});
+		}
 	}
 
-	void VideoRoom::onRemoveLocalStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream)
-	{
-		notifyObserver4Change<IVideoRoomListener>(*_listeners, [pid = _id, stream](const std::shared_ptr<IVideoRoomListener>& listener) {
-			listener->onRemoveStream(pid, stream);
-		});
-	}
-
-	void VideoRoom::onCreateRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
-
-	void VideoRoom::onRemoveRemoteStream(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream) {}
+	void VideoRoom::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) {}
 
 	void VideoRoom::onData(const std::string& data, const std::string& label) {}
 
 	void VideoRoom::onDataOpen(const std::string& label) {}
 
-	void VideoRoom::onCleanup() 
+	void VideoRoom::onCleanup()
 	{
 		_pluginContext->webrtcContext->myStream = nullptr;
 	}
@@ -348,17 +386,8 @@ namespace vi {
 
 	void VideoRoom::createParticipant(const ParticipantSt& info)
 	{
-		//return;
-		auto participant = std::make_shared<Participant>(_pluginContext->plugin, 
-			_pluginContext->opaqueId, 
-			info.id,
-			_privateId,
-			_roomId,
-			info.displayName,
-			_pluginContext->webrtcService.lock(),
-			_listeners);
+		auto participant = std::make_shared<Participant>(info.id, info.displayName);
 
-		participant->attach();
 		_participantsMap[info.id] = participant;
 		notifyObserver4Change<IVideoRoomListener>(*_listeners, [participant](const std::shared_ptr<IVideoRoomListener>& listener) {
 			listener->onCreateParticipant(participant);
