@@ -201,6 +201,7 @@ namespace vi {
 						break;
 					}
 				}
+				//_subscriber->unsubscribeFrom(leaving);
 			}
 			else if (pluginData.data.xhas("unpublished")) {
 				const auto& unpublished = pluginData.data.unpublished;
@@ -220,6 +221,7 @@ namespace vi {
 						break;
 					}
 				}
+				//_subscriber->unsubscribeFrom(unpublished);
 			}
 			else if (pluginData.data.xhas("error")) {
 				if (pluginData.data.error_code == 426) {

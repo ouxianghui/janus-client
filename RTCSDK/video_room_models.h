@@ -424,10 +424,10 @@ namespace vi {
 			std::string request = "unsubscribe";
 
 			struct Stream {
-				int64_t feed_id;
+				int64_t feed;
 				std::string mid;
 				std::string sub_mid;
-				XTOSTRUCT(O(feed_id, mid, sub_mid));
+				XTOSTRUCT(O(feed, mid, sub_mid));
 			};
 			std::vector<Stream> streams;
 

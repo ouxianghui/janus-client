@@ -63,7 +63,6 @@ namespace vi {
 
 		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
 
-
 	private:
 		void join(const std::vector<vr::Publisher>& publishers);
 

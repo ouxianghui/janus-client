@@ -145,7 +145,29 @@ namespace vi {
 
 	void VideoRoomSubscriber::unsubscribeFrom(int64_t id)
 	{
+		vr::UnsubscribeRequest request;
 
+		request.request = "subscribe";
+
+		vr::UnsubscribeRequest::Stream stream;
+		stream.feed = id;
+		request.streams.emplace_back(stream);
+
+		if (auto webrtcService = _pluginContext->webrtcService.lock()) {
+			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+			auto lambda = [](bool success, const std::string& response) {
+				DLOG("response: {}", response.c_str());
+				if (response.empty()) {
+					return;
+				}
+				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
+				x2struct::X::loadjson(response, *rar, false, true);
+			};
+			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+			event->message = x2struct::X::tojson(request);
+			event->callback = cb;
+			sendMessage(event);
+		}
 	}
 
 	void VideoRoomSubscriber::onAttached(bool success)
@@ -168,27 +190,13 @@ namespace vi {
 
 	void VideoRoomSubscriber::onWebrtcState(bool isActive, const std::string& reason)
 	{
-		DLOG("Janus says this WebRTC PeerConnection (feed #{}) is {} now", _id, (isActive ? "up" : "down"));
-		if (isActive) {
-			// TODO: use IVideoRoomApi
-			vr::SubscriberConfigureRequest request;
-			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-			auto lambda = [](bool success, const std::string& response) {
-				DLOG("response: {}", response.c_str());
-				if (response.empty()) {
-					return;
-				}
-				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
-				x2struct::X::loadjson(response, *rar, false, true);
-			};
-			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = x2struct::X::tojson(request);
-			event->callback = cb;
-			sendMessage(event);
-		}
+		DLOG("Janus says this WebRTC PeerConnection (remote feed) is {} now", (isActive ? "up" : "down"));
 	}
 
-	void VideoRoomSubscriber::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
+	void VideoRoomSubscriber::onSlowLink(bool uplink, bool lost, const std::string& mid) 
+	{
+		DLOG("Janus reports problems {} packets on mid {} ({} lost packets)", (uplink ? "sending" : "receiving"), mid, lost);
+	}
 
 	void VideoRoomSubscriber::onMessage(const std::string& data, const std::string& jsepString)
 	{
