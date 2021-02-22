@@ -102,9 +102,11 @@ void GLVideoRenderer::OnFrame(const webrtc::VideoFrame& frame)
 	auto videeoFrame = std::make_shared<webrtc::VideoFrame>(frame);
 
 	if (_frameQ.size_approx() >= 300) {
-		std::shared_ptr<webrtc::VideoFrame> dropFrame;
-		if (_frameQ.try_dequeue(dropFrame)) {
-			DLOG("drop frame .");
+		for (int i = 0; i < 100; ++i) {
+			std::shared_ptr<webrtc::VideoFrame> dropFrame;
+			if (_frameQ.try_dequeue(dropFrame)) {
+				DLOG("drop frame .");
+			}
 		}
 	}
 	_frameQ.enqueue(videeoFrame);
