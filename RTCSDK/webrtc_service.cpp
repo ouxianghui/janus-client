@@ -77,11 +77,7 @@ namespace vi {
 		_client->addListener(shared_from_this());
 		_client->init();
 
-		_heartbeatTaskScheduler = std::shared_ptr<TaskScheduler>(new TaskScheduler(), [thread = rtc::Thread::Current()](TaskScheduler* ptr){
-			thread->PostTask(RTC_FROM_HERE, [ptr]() {
-				delete ptr;
-			});
-		}); 
+		_heartbeatTaskScheduler = TaskScheduler::create();
 
 		if (!_pcf) {
 			_signaling = rtc::Thread::Create();

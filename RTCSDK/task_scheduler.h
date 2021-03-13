@@ -88,9 +88,7 @@ namespace vi {
 
 	class TaskScheduler : public std::enable_shared_from_this<TaskScheduler> {
 	public:
-		TaskScheduler() {
-			init();
-		}
+		static std::shared_ptr<TaskScheduler> create();
 
 		~TaskScheduler() {
 			cancelAll();
@@ -124,6 +122,10 @@ namespace vi {
 		}
 
 	private:
+		TaskScheduler() {
+			init();
+		}
+
 		void init() {
 			std::string schedulerId = "post-" + std::to_string((uint64_t)this);
 			_taskQueue = _factory->CreateTaskQueue(schedulerId, webrtc::TaskQueueFactory::Priority::NORMAL);
