@@ -18,6 +18,7 @@
 #include "rtc_base/helpers.h"
 
 namespace vi {
+	class TaskScheduler;
 	template<class Closure>
 	class OneShotTask: public webrtc::QueuedTask {
 	public:
@@ -92,7 +93,7 @@ namespace vi {
 		}
 
 		~TaskScheduler() {
-
+			cancelAll();
 		}
 
 		template <class Closure>
@@ -124,8 +125,8 @@ namespace vi {
 
 	private:
 		void init() {
-			_factory = webrtc::CreateDefaultTaskQueueFactory();
-			_taskQueue = _factory->CreateTaskQueue("post", webrtc::TaskQueueFactory::Priority::NORMAL);
+			std::string schedulerId = "post-" + std::to_string((uint64_t)this);
+			_taskQueue = _factory->CreateTaskQueue(schedulerId, webrtc::TaskQueueFactory::Priority::NORMAL);
 		}
 
 		template <class Closure>
@@ -167,7 +168,8 @@ namespace vi {
 	private:
 		std::mutex _mutex;
 		std::unordered_set<uint64_t> _taskIdSet;
-		std::unique_ptr<webrtc::TaskQueueFactory> _factory;
+		static std::unique_ptr<webrtc::TaskQueueFactory> _factory;
 		std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter> _taskQueue;
 	};
+
 }

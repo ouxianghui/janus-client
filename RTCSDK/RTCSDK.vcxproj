@@ -89,6 +89,7 @@
     <ClCompile Include="service\unified_factory.cpp" />
     <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="task_queue_manager.cpp" />
+    <ClCompile Include="task_scheduler.cpp" />
     <ClCompile Include="text_room.cpp" />
     <ClCompile Include="thread_manager.cpp" />
     <ClCompile Include="video_room.cpp" />

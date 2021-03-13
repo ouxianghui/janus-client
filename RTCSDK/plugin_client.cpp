@@ -14,7 +14,11 @@ namespace vi {
 	{
 		_pluginContext = std::make_shared<PluginContext>(wrs);
 
-		_rtcStatsTaskScheduler = std::make_shared<vi::TaskScheduler>();
+		_rtcStatsTaskScheduler = std::shared_ptr<TaskScheduler>(new TaskScheduler(), [thread = rtc::Thread::Current()](TaskScheduler* ptr){
+			thread->PostTask(RTC_FROM_HERE, [ptr]() {
+				delete ptr;
+			});
+		});
 	}
 
 	PluginClient::~PluginClient()
