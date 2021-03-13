@@ -231,7 +231,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return true;
+		}
 		if (!context->pc) {
 			DLOG("Invalid PeerConnection");
 			return true;
@@ -326,7 +328,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return false;
+		}
 		if (!context->pc) {
 			DLOG("Invalid PeerConnection");
 			return false;
@@ -472,7 +476,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return;
+		}
 		if (context->dataChannels.find(event->label) != context->dataChannels.end()) {
 			rtc::scoped_refptr<webrtc::DataChannelInterface> dc = context->dataChannels[event->label];
 			if (dc->state() == webrtc::DataChannelInterface::DataState::kOpen) {
@@ -513,7 +519,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return;
+		}
 		if (!context->dtmfSender) {
 			if (context->pc) {
 				auto senders = context->pc->GetSenders();
@@ -603,6 +611,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+		if (!context) {
+			return;
+		}
 		context->trickle = HelperUtils::isTrickleEnabled(event->trickle);
 		if (!event->media.has_value()) {
 			return;
@@ -900,7 +911,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return;
+		}
 		if (event->jsep.has_value()) {
 			if (!context->pc) {
 				DLOG("No PeerConnection: if this is an answer, use createAnswer and not handleRemoteJsep");
@@ -933,7 +946,9 @@ namespace vi {
 					return;
 				}
 				auto context = pluginClient->pluginContext()->webrtcContext;
-
+				if (!context) {
+					return;
+				}
 				context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
 
 				for (const auto& candidate : context->candidates) {
@@ -982,45 +997,47 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-		if (context) {
-			if (hangupRequest == true) {
-				auto lambda = [wself = weak_from_this()](const std::string& json) {
-					DLOG("janus = {}", json);
-					if (auto self = wself.lock()) {
-					}
-				};
-				std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
-				_client->hangup(_sessionId, handleId, callback);
-			}
-			try {
-				// Try a MediaStreamTrack.stop() for each track
-				if (!context->streamExternal && context->myStream) {
-					DLOG("Stopping local stream tracks");
-					stopAllTracks(context->myStream);
-				}
-			}
-			catch (...) {
-				// Do nothing if this fails
-			}
-			context->streamExternal = false;
-			context->myStream = nullptr;
-			// Close PeerConnection
-			try {
-				if (context->pc) {
-					context->pc->Close();
-				}
-			}
-			catch (...) {
-				// Do nothing
-			}
-			context->pc = nullptr;
-			context->candidates.clear();
-			context->mySdp = absl::nullopt;
-			context->remoteSdp = absl::nullopt;
-			context->iceDone = false;
-			context->dataChannels.clear();
-			context->dtmfSender = nullptr;
+		if (!context) {
+			return;
 		}
+		if (hangupRequest == true) {
+			auto lambda = [wself = weak_from_this()](const std::string& json) {
+				DLOG("janus = {}", json);
+				if (auto self = wself.lock()) {
+				}
+			};
+			std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
+			_client->hangup(_sessionId, handleId, callback);
+		}
+		try {
+			// Try a MediaStreamTrack.stop() for each track
+			if (!context->streamExternal && context->myStream) {
+				DLOG("Stopping local stream tracks");
+				stopAllTracks(context->myStream);
+			}
+		}
+		catch (...) {
+			// Do nothing if this fails
+		}
+		context->streamExternal = false;
+		context->myStream = nullptr;
+		// Close PeerConnection
+		try {
+			if (context->pc) {
+				context->pc->Close();
+			}
+		}
+		catch (...) {
+			// Do nothing
+		}
+		context->pc = nullptr;
+		context->candidates.clear();
+		context->mySdp = absl::nullopt;
+		context->remoteSdp = absl::nullopt;
+		context->iceDone = false;
+		context->dataChannels.clear();
+		context->dtmfSender = nullptr;
+
 		_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), handleId]() {
 			auto self = wself.lock();
 			if (!self) {
@@ -1140,6 +1157,9 @@ namespace vi {
 			bool hasCandidata = model.xhas("candidate");
 
 			auto& context = pluginClient->pluginContext()->webrtcContext;
+			if (!context) {
+				return;
+			}
 			if (context->pc && context->remoteSdp) {
 				// Add candidate right now
 				if (!hasCandidata || (hasCandidata && model.candidate.xhas("completed") && model.candidate.completed == true)) {
@@ -1400,7 +1420,9 @@ namespace vi {
 		auto wself = weak_from_this();
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
-
+		if (!context) {
+			return;
+		}
 		if (stream) {
 			DLOG("audio tracks: {}", stream->GetAudioTracks().size());
 			DLOG("video tracks: {}", stream->GetVideoTracks().size());
@@ -1615,6 +1637,9 @@ namespace vi {
 					}
 					if (auto pluginClient = self->getHandler(handleId)) {
 						auto context = pluginClient->pluginContext()->webrtcContext;
+						if (!context) {
+							return;
+						}
 						if (self->_trackIdsMap.find(track->id()) != self->_trackIdsMap.end()) {
 							pluginClient->onRemoteTrack(track, self->_trackIdsMap[track->id()], false);
 							auto it = self->_trackIdsMap.find(track->id());
@@ -1704,6 +1729,9 @@ namespace vi {
 
 				if (auto pluginClient = self->getHandler(handleId)) {
 					auto context = pluginClient->pluginContext()->webrtcContext;
+					if (!context) {
+						return;
+					}
 					if (context->myStream->GetVideoTracks().size() > 0) {
 						auto track = context->myStream->GetVideoTracks()[0];
 						pluginClient->onLocalTrack(track, true);
@@ -1741,6 +1769,9 @@ namespace vi {
 					return;
 				}
 				auto context = pluginClient->pluginContext()->webrtcContext;
+				if (!context) {
+					return;
+				}
 				context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
 				for (const auto& candidate : context->candidates) {
 					context->pc->AddIceCandidate(candidate.get());
@@ -1780,6 +1811,9 @@ namespace vi {
 
 		DLOG("Sending offer/answer SDP...");
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+		if (!context) {
+			return;
+		}
 		if (!context->mySdp) {
 			WLOG("Local SDP instance is invalid, not sending anything...");
 			return;
@@ -1801,6 +1835,9 @@ namespace vi {
 						return;
 					}
 					auto context = pluginClient->pluginContext()->webrtcContext;
+					if (!context) {
+						return;
+					}
 					(*cb)(true, "", context->mySdp.value());
 				});
 			}
@@ -1816,6 +1853,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+		if (!context) {
+			return;
+		}
 		if (!context->pc) {
 			ELOG("Invalid peerconnection");
 		}
@@ -1843,6 +1883,9 @@ namespace vi {
 				return;
 			}
 			auto context = pluginClient->pluginContext()->webrtcContext;
+			if (!context) {
+				return;
+			}
 			if (context->dataChannels.find(dcLabel) != context->dataChannels.end()) {
 				auto dc = context->dataChannels[dcLabel];
 				if (dc->state() == webrtc::DataChannelInterface::DataState::kOpen) {
@@ -2003,6 +2046,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+		if (!context) {
+			return;
+		}
 		bool simulcast = event->simulcast.value_or(false);
 		if (!simulcast) {
 			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
@@ -2073,7 +2119,9 @@ namespace vi {
 				return;
 			}
 			auto context = pluginClient->pluginContext()->webrtcContext;
-
+			if (!context) {
+				return;
+			}
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
@@ -2147,6 +2195,9 @@ namespace vi {
 		}
 
 		const auto& context = pluginClient->pluginContext()->webrtcContext;
+		if (!context) {
+			return;
+		}
 		bool simulcast = event->simulcast.value_or(false);
 		if (!simulcast) {
 			DLOG("Creating offer (iceDone = {})", context->iceDone ? "true" : "false");
@@ -2218,6 +2269,9 @@ namespace vi {
 				return;
 			}
 			auto context = pluginClient->pluginContext()->webrtcContext;
+			if (!context) {
+				return;
+			}
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
