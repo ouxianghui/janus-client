@@ -403,7 +403,7 @@ namespace vi {
 		if (status() == ServiceStauts::UP) {
 			if (const auto& pluginClient = getHandler(handleId)) {
 				auto wself = weak_from_this();
-				auto lambda = [wself, pluginClient, event](const std::string& json) {
+				auto lambda = [wself, event](const std::string& json) {
 					DLOG("janus = {}", json);
 					if (auto self = wself.lock()) {
 						if (!event) {
@@ -923,14 +923,23 @@ namespace vi {
 
 			auto wself = weak_from_this();
 			SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
-			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([context, event, wself]() {
+			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([event, handleId, wself]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				auto pluginClient = self->getHandler(handleId);
+				if (!pluginClient) {
+					return;
+				}
+				auto context = pluginClient->pluginContext()->webrtcContext;
+
 				context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
 
 				for (const auto& candidate : context->candidates) {
 					context->pc->AddIceCandidate(candidate.get());
 				}
 				context->candidates.clear();
-				auto self = wself.lock();
 				if (event->callback && self) {
 					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
 						(*cb)(true, "success");
@@ -1012,8 +1021,14 @@ namespace vi {
 			context->dataChannels.clear();
 			context->dtmfSender = nullptr;
 		}
-		_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
-			pluginClient->onCleanup();
+		_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), handleId]() {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			if (auto pluginClient = self->getHandler(handleId)) {
+				pluginClient->onCleanup();
+			}
 		});
 	}
 
@@ -1106,6 +1121,8 @@ namespace vi {
 			return;
 		}
 
+		auto wself = weak_from_this();
+
 		int32_t retries = 0;
 
 		if (response.janus == "keepalive") {
@@ -1170,8 +1187,14 @@ namespace vi {
 			// The PeerConnection with the server is up! Notify this
 			DLOG("Got a webrtcup event on session: {}", _sessionId);
 
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
-				pluginClient->onWebrtcState(true, "");
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onWebrtcState(true, "");
+				}
 			});
 
 			return;
@@ -1182,17 +1205,29 @@ namespace vi {
 
 			HangupResponse model;
 			x2struct::X::loadjson(json, model, false, true);
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, reason = model.reason]() {
-				pluginClient->onWebrtcState(false, reason);
-				pluginClient->onHangup();
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself, reason = model.reason]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onWebrtcState(false, reason);
+					pluginClient->onHangup();
+				}
 			});
 		}
 		else if (response.janus == "detached") {
 			// A plugin asked the core to detach one of our handles
 			DLOG("Got a detached event on session: {}", _sessionId);
 
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient]() {
-				pluginClient->onDetached();
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onDetached();
+				}
 			});
 		}
 		else if (response.janus == "media") {
@@ -1201,16 +1236,29 @@ namespace vi {
 			MediaResponse model;
 			x2struct::X::loadjson(json, model, false, true);
 
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onMediaState(model.type, model.receiving, model.mid);
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself, model]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onMediaState(model.type, model.receiving, model.mid);
+
+				}
 			});
 		}
 		else if (response.janus == "slowlink") {
 			DLOG("Got a slowlink event on session: {}", _sessionId);
 			SlowlinkResponse model;
 			x2struct::X::loadjson(json, model, false, true);
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, model]() {
-				pluginClient->onSlowLink(model.uplink, model.lost, model.mid);
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself, model]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onSlowLink(model.uplink, model.lost, model.mid);
+				}
 			});
 		}
 		else if (response.janus == "event") {
@@ -1229,8 +1277,14 @@ namespace vi {
 			//std::string data = x2struct::X::tojson(event.plugindata);
 			std::string jsep = x2struct::X::tojson(event.jsep);
 
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, json, jsep]() {
-				pluginClient->onMessage(json, jsep);
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [sender, wself, json, jsep]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(sender)) {
+					pluginClient->onMessage(json, jsep);
+				}
 			});
 		}
 		else if (response.janus == "timeout") {
@@ -1447,10 +1501,17 @@ namespace vi {
 
 			DLOG("Preparing local SDP and gathering candidates (trickle = {})", pluginClient->pluginContext()->webrtcContext->trickle ? "true" : "false");
 
-			auto icccb = std::make_shared<IceConnectionChangeCallback>([pluginClient, wself](webrtc::PeerConnectionInterface::IceConnectionState newState) {
+			auto icccb = std::make_shared<IceConnectionChangeCallback>([handleId, wself](webrtc::PeerConnectionInterface::IceConnectionState newState) {
 				if (auto self = wself.lock()) {
-					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, newState]() {
-						pluginClient->onIceState(newState);
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, handleId, newState]() {
+						auto self = wself.lock();
+						if (!self) {
+							return;
+						}
+						if (auto pluginClient = self->getHandler(handleId)) {
+							pluginClient->onIceState(newState);
+						}
+						
 					});
 				}
 			});
@@ -1461,12 +1522,12 @@ namespace vi {
 			});
 			context->pcObserver->setIceGatheringChangeCallback(igccb);
 
-			auto iccb = std::make_shared<IceCandidateCallback>([pluginClient, wself, event](const webrtc::IceCandidateInterface* candidate) {
+			auto iccb = std::make_shared<IceCandidateCallback>([handleId, wself, event](const webrtc::IceCandidateInterface* candidate) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
-
+				auto pluginClient = self->getHandler(handleId);
 				auto handleId = pluginClient->pluginContext()->handleId;
 				if (candidate) {
 					if (pluginClient->pluginContext()->webrtcContext->trickle) {
@@ -1501,14 +1562,14 @@ namespace vi {
 
 			context->pcObserver->setIceCandidateCallback(iccb);
 
-			auto atcb = std::make_shared<AddTrackCallback>([pluginClient, wself, event](rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
+			auto atcb = std::make_shared<AddTrackCallback>([handleId, wself, event](rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) {
 				DLOG("Adding Remote Track");
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
-				auto& context = pluginClient->pluginContext()->webrtcContext;
-				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, transceiver, wself]() {
+
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [handleId, transceiver, wself]() {
 					auto self = wself.lock();
 					if (!self) {
 						return;
@@ -1524,21 +1585,23 @@ namespace vi {
 						return;
 					}
 					self->_trackIdsMap[track->id()] = transceiver->mid().value_or("");
-					pluginClient->onRemoteTrack(track, transceiver->mid().value_or(""), true);
+					if (auto pluginClient = self->getHandler(handleId)) {
+						pluginClient->onRemoteTrack(track, transceiver->mid().value_or(""), true);
+					}
 				});
 			});
 
 			context->pcObserver->setAddTrackCallback(atcb);
 
-			auto rtcb = std::make_shared<RemoveTrackCallback>([pluginClient, wself, event](rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
+			auto rtcb = std::make_shared<RemoveTrackCallback>([handleId, wself, event](rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) {
 				DLOG("Removing Remote Track");
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
+
 				std::string idd = receiver->id();
-				auto& context = pluginClient->pluginContext()->webrtcContext;
-				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context, receiver, wself]() {
+				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [handleId, receiver, wself]() {
 					auto self = wself.lock();
 					if (!self) {
 						return;
@@ -1550,10 +1613,13 @@ namespace vi {
 					if (!track) {
 						return;
 					}
-					if (self->_trackIdsMap.find(track->id()) != self->_trackIdsMap.end()) {
-						pluginClient->onRemoteTrack(track, self->_trackIdsMap[track->id()], false);
-						auto it = self->_trackIdsMap.find(track->id());
-						self->_trackIdsMap.erase(it);
+					if (auto pluginClient = self->getHandler(handleId)) {
+						auto context = pluginClient->pluginContext()->webrtcContext;
+						if (self->_trackIdsMap.find(track->id()) != self->_trackIdsMap.end()) {
+							pluginClient->onRemoteTrack(track, self->_trackIdsMap[track->id()], false);
+							auto it = self->_trackIdsMap.find(track->id());
+							self->_trackIdsMap.erase(it);
+						}
 					}
 				});
 			});
@@ -1630,10 +1696,18 @@ namespace vi {
 		}
 
 		if (context->myStream) {
-			_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, context]() {
-				if (context->myStream->GetVideoTracks().size() > 0) {
-					auto track = context->myStream->GetVideoTracks()[0];
-					pluginClient->onLocalTrack(track, true);
+			_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, handleId]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+
+				if (auto pluginClient = self->getHandler(handleId)) {
+					auto context = pluginClient->pluginContext()->webrtcContext;
+					if (context->myStream->GetVideoTracks().size() > 0) {
+						auto track = context->myStream->GetVideoTracks()[0];
+						pluginClient->onLocalTrack(track, true);
+					}
 				}
 			});
 		}
@@ -1657,9 +1731,17 @@ namespace vi {
 
 			SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
 
-			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([wself, context, handleId, event]() {
+			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([wself, handleId, event]() {
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				auto pluginClient = self->getHandler(handleId);
+				if (!pluginClient) {
+					return;
+				}
+				auto context = pluginClient->pluginContext()->webrtcContext;
 				context->remoteSdp = { event->jsep->type, event->jsep->sdp, false };
-
 				for (const auto& candidate : context->candidates) {
 					context->pc->AddIceCandidate(candidate.get());
 				}
@@ -1709,7 +1791,16 @@ namespace vi {
 			context->mySdp = { ld->type(), sdp, context->trickle.value_or(false) };
 			context->sdpSent = true;
 			if (event && event->answerOfferCallback) {
-				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, context]() {
+				_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, wself = weak_from_this(), handleId]() {
+					auto self = wself.lock();
+					if (!self) {
+						return;
+					}
+					auto pluginClient = self->getHandler(handleId);
+					if (!pluginClient) {
+						return;
+					}
+					auto context = pluginClient->pluginContext()->webrtcContext;
 					(*cb)(true, "", context->mySdp.value());
 				});
 			}
@@ -1742,33 +1833,50 @@ namespace vi {
 
 		std::shared_ptr<DCObserver> observer = std::make_shared<DCObserver>();
 
-		auto scc = std::make_shared<StateChangeCallback>([pluginClient, dcLabel, context, wself]() {
+		auto scc = std::make_shared<StateChangeCallback>([handleId, dcLabel, wself]() {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			auto pluginClient = self->getHandler(handleId);
+			if (!pluginClient) {
+				return;
+			}
+			auto context = pluginClient->pluginContext()->webrtcContext;
 			if (context->dataChannels.find(dcLabel) != context->dataChannels.end()) {
-				auto self = wself.lock();
-				if (!self) {
-					return;
-				}
 				auto dc = context->dataChannels[dcLabel];
 				if (dc->state() == webrtc::DataChannelInterface::DataState::kOpen) {
-					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, dcLabel]() {
-						pluginClient->onDataOpen(dcLabel);
+					self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, handleId, dcLabel]() {
+						auto self = wself.lock();
+						if (!self) {
+							return;
+						}
+						if (auto pluginClient = self->getHandler(handleId)) {
+							pluginClient->onDataOpen(dcLabel);
+						}
 					});
 				}
 			}
 		});
 		observer->setStateChangeCallback(scc);
 
-		auto mc = std::make_shared<MessageCallback>([pluginClient, dcLabel, wself](const webrtc::DataBuffer& buffer) {
+		auto mc = std::make_shared<MessageCallback>([handleId, dcLabel, wself](const webrtc::DataBuffer& buffer) {
 			auto self = wself.lock();
 			if (!self) {
 				return;
 			}
-			self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [pluginClient, buffer, dcLabel]() {
+			self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, handleId, buffer, dcLabel]() {
 				size_t size = buffer.data.size();
 				char* msg = new char[size + 1];
 				memcpy(msg, buffer.data.data(), size);
 				msg[size] = 0;
-				pluginClient->onData(std::string(msg, size), dcLabel);
+				auto self = wself.lock();
+				if (!self) {
+					return;
+				}
+				if (auto pluginClient = self->getHandler(handleId)) {
+					pluginClient->onData(std::string(msg, size), dcLabel);
+				}
 				delete[] msg;
 			});
 		});
@@ -1955,7 +2063,17 @@ namespace vi {
 		createOfferObserver.reset(new rtc::RefCountedObject<CreateSessionDescObserver>());
 
 		auto wself = weak_from_this();
-		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
+		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, handleId, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			auto pluginClient = self->getHandler(handleId);
+			if (!pluginClient) {
+				return;
+			}
+			auto context = pluginClient->pluginContext()->webrtcContext;
+
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
@@ -1963,7 +2081,7 @@ namespace vi {
 
 			SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
 
-			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([context, event]() {
+			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([]() {
 				DLOG("Set session description success.");
 			}));
 
@@ -1997,7 +2115,6 @@ namespace vi {
 				return;
 			}
 
-			auto self = wself.lock();
 			if (event->answerOfferCallback && self) {
 				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
 					(*cb)(true, "", jsep);
@@ -2091,7 +2208,16 @@ namespace vi {
 		std::unique_ptr<CreateSessionDescObserver> createAnswerObserver;
 		createAnswerObserver.reset(new rtc::RefCountedObject<CreateSessionDescObserver>());
 
-		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, context, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
+		std::shared_ptr<CreateSessionDescSuccessCallback> success = std::make_shared<CreateSessionDescSuccessCallback>([event, handleId, options, wself, sendVideo, simulcast](webrtc::SessionDescriptionInterface* desc) {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			auto pluginClient = self->getHandler(handleId);
+			if (!pluginClient) {
+				return;
+			}
+			auto context = pluginClient->pluginContext()->webrtcContext;
 			if (!desc) {
 				ELOG("Invalid description.");
 				return;
@@ -2099,7 +2225,7 @@ namespace vi {
 
 			SetSessionDescObserver* ssdo(new rtc::RefCountedObject<SetSessionDescObserver>());
 
-			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([context, event]() {
+			ssdo->setSuccessCallback(std::make_shared<SetSessionDescSuccessCallback>([]() {
 				DLOG("Set session description success.");
 			}));
 
@@ -2133,7 +2259,6 @@ namespace vi {
 				return;
 			}
 
-			auto self = wself.lock();
 			if (event->answerOfferCallback && self) {
 				self->_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->answerOfferCallback, jsep]() {
 					(*cb)(true, "", jsep);
