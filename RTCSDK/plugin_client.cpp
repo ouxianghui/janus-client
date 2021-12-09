@@ -5,8 +5,8 @@
  **/
 
 #include "plugin_client.h"
-#include "task_scheduler.h"
-#include "thread_manager.h"
+#include "utils/task_scheduler.h"
+#include "utils/thread_provider.h"
 #include "logger/logger.h"
 
 namespace vi {
@@ -19,6 +19,7 @@ namespace vi {
 
 	PluginClient::~PluginClient()
 	{
+		DLOG("~PluginClient()");
 		stopStatsReport();
 	}
 
@@ -230,7 +231,7 @@ namespace vi {
 						return;
 					}
 
-					auto eventHandlerThread = TMgr->thread(vi::ThreadName::WORKER);
+					auto eventHandlerThread = TMgr->thread("worker");
 					eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, report]() {
 						if (auto self = wself.lock()) {
 							self->onStatsReport(report);

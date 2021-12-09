@@ -8,49 +8,75 @@
 #include <memory>
 #include "spdlog/cfg/env.h"
 #include "spdlog/logger.h"
-#include "spdlog/sinks/stdout_color_sinks.h"
 #include "spdlog/sinks/rotating_file_sink.h"
+#include "spdlog/sinks/msvc_sink.h"
+#include "spdlog//async.h"
+#include "rtc_log_sink.h"
+#include "rtc_base/logging.h"
 
 namespace vi {
 
-	void Logger::startup()
-	{
-		//spdlog::cfg::load_env_levels();
+	std::shared_ptr<spdlog::logger> Logger::_appLogger;
 
-		std::string pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [%t] [%s:%#] (%!) %v");
-		auto consoleSink = std::make_shared<spdlog::sinks::stdout_color_sink_mt>();
+	std::shared_ptr<spdlog::logger> Logger::_rtcLogger;
+
+	std::unique_ptr<RTCLogSink> Logger::_rtcLogSink;
+
+	Logger::Logger()
+	{
+	}
+
+	Logger::~Logger()
+	{
+
+	}
+
+	void Logger::init()
+	{
+		spdlog::cfg::load_env_levels();
+
+		spdlog::init_thread_pool(32768, 3);
+
+		std::string pattern("[%Y-%m-%d %H:%M:%S.%e] [%n] [%l] [%t] [%s:%#] [%!] %v");
+
+		auto consoleSink = std::make_shared<spdlog::sinks::windebug_sink_mt>();
 		consoleSink->set_level(spdlog::level::trace);
 		consoleSink->set_pattern(pattern);
 
-		auto sdkFileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/sdk_log.txt", 1024 * 1024 * 5, 3);
-		sdkFileSink->set_level(spdlog::level::trace);
-		sdkFileSink->set_pattern(pattern);
+		_appLogger = spdlog::create_async_nb<spdlog::sinks::rotating_file_sink_mt, std::string, size_t, size_t>("app", "logs/app_log.txt", 1024 * 1024 * 5, 5);
+		_appLogger->set_level(spdlog::level::trace);
+		_appLogger->set_pattern(pattern);
+		_appLogger->sinks().emplace_back(consoleSink);
 
-		spdlog::sinks_init_list sinks{ consoleSink, sdkFileSink };
-		_sdkLogger = std::make_shared<spdlog::logger>("sdk", sinks);
-		_sdkLogger->set_level(spdlog::level::trace);
-		_sdkLogger->set_pattern(pattern);
-
-		auto rtcFileSink = std::make_shared<spdlog::sinks::rotating_file_sink_mt>("logs/rtc_log.txt", 1024 * 1024 * 5, 3);
-		rtcFileSink->set_level(spdlog::level::trace);
-
-		_rtcLogger = std::make_shared<spdlog::logger>("rtc", rtcFileSink);
+		_rtcLogger = spdlog::create_async_nb<spdlog::sinks::rotating_file_sink_mt, std::string, size_t, size_t>("rtc", "logs/rtc_log.txt", 1024 * 1024 * 5, 3);
 		_rtcLogger->set_level(spdlog::level::trace);
+
+		if (!_rtcLogSink) {
+			_rtcLogSink = std::make_unique<RTCLogSink>();
+			rtc::LogMessage::SetLogToStderr(false);
+			rtc::LogMessage::AddLogToStream(_rtcLogSink.get(), rtc::LS_WARNING);
+		}
 	}
 
-	void Logger::shutdown()
+	void Logger::destroy()
 	{
-		spdlog::shutdown();
-	}
+		_rtcLogger->flush();
+		_appLogger->flush();
+		spdlog::drop_all();
 
-	std::shared_ptr<spdlog::logger>& Logger::sdkLogger()
-	{
-		return _sdkLogger;
+		if (_rtcLogSink) {
+			rtc::LogMessage::RemoveLogToStream(_rtcLogSink.get());
+		}
 	}
 
 	std::shared_ptr<spdlog::logger>& Logger::rtcLogger()
 	{
 		return _rtcLogger;
+	}
+
+	std::shared_ptr<spdlog::logger>& Logger::appLogger()
+	{
+		return _appLogger;
 	}
 
 }

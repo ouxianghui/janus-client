@@ -10,15 +10,15 @@
 #include <thread>
 #include "i_message_transport.h"
 #include <unordered_map>
-#include "Websocket/i_connection_listener.h"
-#include "Websocket/websocket_endpoint.h"
-#include "Service/observable.h"
+#include "websocket/i_connection_listener.h"
+#include "websocket/websocket_endpoint.h"
+#include "utils/observable.h"
 
 namespace vi {
 	class MessageTransport
 		: public IMessageTransport
 		, public IConnectionListener
-		, public core::Observable
+		, public Observable
 		, public std::enable_shared_from_this<MessageTransport>
 	{
 	public:
@@ -72,7 +72,6 @@ namespace vi {
 		std::mutex _callbackMutex;
 		std::unordered_map<std::string, std::shared_ptr<JCCallback>> _callbacksMap;
 
-		std::mutex _listenerMutex;
 		std::vector<std::weak_ptr<IMessageTransportListener>> _listeners;
 	};
 }

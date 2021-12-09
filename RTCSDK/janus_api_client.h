@@ -9,9 +9,9 @@
 #include <memory>
 #include <unordered_map>
 #include "i_sfu_api_client.h"
-#include "Websocket/websocket_endpoint.h"
+#include "websocket/websocket_endpoint.h"
 #include "i_message_transport_listener.h"
-#include "service/observable.h"
+#include "utils/universal_observable.hpp"
 
 namespace rtc {
 	class Thread;
@@ -22,11 +22,11 @@ namespace vi {
 	class JanusApiClient
 		: public ISfuApiClient
 		, public IMessageTransportListener
-		, public core::Observable
+		, public UniversalObservable<ISfuApiClientListener>
 		, public std::enable_shared_from_this<JanusApiClient>
 	{
 	public:
-		JanusApiClient(rtc::Thread* callbackThread = nullptr);
+		JanusApiClient(const std::string& callbackThreadName);
 
 		~JanusApiClient() override;
 
@@ -75,11 +75,10 @@ namespace vi {
 		std::shared_ptr<JCCallback> wrapAsyncCallback(std::shared_ptr<JCCallback> callback);
 
 	private:
+		std::string _callbackThreadName;
 		std::string _url;
-		rtc::Thread* _thread;
 		std::string _token;
 		std::string _apisecret;
 		std::shared_ptr<IMessageTransport> _transport;
-		std::vector<std::weak_ptr<ISfuApiClientListener>> _listeners;
 	};
 }

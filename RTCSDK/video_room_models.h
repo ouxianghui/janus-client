@@ -7,13 +7,15 @@
 #pragma once
 
 #include "message_models.h"
+#include "json/jsonable.hpp"
+#include "absl/types/optional.h"
 
 namespace vi {
 	namespace vr {
 		struct Publisher {
-			int64_t id;
-			std::string display;
-			bool talking;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> display;
+			absl::optional<bool> talking;
 
 			/*{
 			 *	"type" : "<type of published stream #1 (audio|video|data)" > ,
@@ -27,75 +29,82 @@ namespace vi {
 			 *	"talking" : <true | false, whether the publisher stream has audio activity or not (only if audio levels are used)>,
 			}*/
 			struct Stream {
-				std::string type;
-				int64_t mindex;
-				std::string mid;
-				bool disabled = false;
-				std::string codec;
-				std::string description;
-				bool simulcast = false;
-				bool svc = false;
-				bool talking = false;
+				absl::optional<std::string> type;
+				absl::optional<int64_t> mindex;
+				absl::optional<std::string> mid;
+				absl::optional<bool> disabled;
+				absl::optional<std::string> codec;
+				absl::optional<std::string> description;
+				absl::optional<bool> simulcast;
+				absl::optional<bool> svc;
+				absl::optional<bool> talking;
 
-				XTOSTRUCT(O(type, mindex, mid, disabled, codec, description, simulcast, svc, talking));
+				FIELDS_MAP("type", type, "mindex", mindex, "mid", mid, "disabled", disabled, "codec", codec, "description", description, "simulcast", simulcast, "svc", svc, "talking", talking);
 			};
-			std::vector<Stream> streams;
-			XTOSTRUCT(O(id, display, talking, streams));
+
+			absl::optional<std::vector<Stream>> streams;
+
+			FIELDS_MAP("id", id, "display", display, "talking", talking, "streams", streams);
 		};
 
 		// Video Room event
 		struct JoiningData {
-			int64_t id;
-			std::string display;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> display;
 
-			XTOSTRUCT(O(id, display));
+			FIELDS_MAP("id", id, "display", display);
 		};
 
 		struct EventData {
-			std::string videoroom;
-			int64_t error_code = 0;
-			std::string error;
-			JoiningData joining;
-			std::string configured;
-			std::vector<Publisher> publishers;
-			int64_t unpublished = -1;
-			int64_t leaving = -1;
-			std::string started;
-			std::string paused;
-			std::string switched;
-			int64_t id = -1;
-			std::string left;
-			std::string audio_codec;
-			std::string video_codec;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+			absl::optional<JoiningData> joining;
+			absl::optional<std::string> configured;
+			absl::optional<std::vector<Publisher>> publishers;
+			absl::optional<int64_t> unpublished;
+			absl::optional<int64_t> leaving;
+			absl::optional<std::string> started;
+			absl::optional<std::string> paused;
+			absl::optional<std::string> switched;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> left;
+			absl::optional<std::string> audio_codec;
+			absl::optional<std::string> video_codec;
 
-			XTOSTRUCT(O(videoroom,
-				error_code,
-				error,
-				joining,
-				configured,
-				publishers,
-				unpublished,
-				leaving,
-				started,
-				paused,
-				switched,
-				id,
-				left,
-				audio_codec,
-				video_codec
-			));
+			FIELDS_MAP("videoroom", videoroom,
+				"error_code", error_code,
+				"error", error,
+				"joining", joining,
+				"configured", configured,
+				"publishers", publishers,
+				"unpublished", unpublished,
+				"leaving", leaving,
+				"started", started,
+				"paused", paused,
+				"switched", switched,
+				"id", id,
+				"left", left,
+				"audio_codec", audio_codec,
+				"video_codec", video_codec
+			);
 		};
 
 		struct EventPluginData {
-			std::string plugin;
-			EventData data;
+			absl::optional<std::string> plugin;
+			absl::optional<EventData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct VideoRoomEvent : public JanusResponse {
-			EventPluginData plugindata;
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+		struct VideoRoomEvent {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<EventPluginData> plugindata;
+
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -130,44 +139,49 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct PublisherJoinRequest {
-			std::string request = "join";
-			std::string ptype = "publisher";	
-			int64_t room;
-			std::string display;
-			//std::string token;
-			XTOSTRUCT(O(request, ptype, room, display/*, token*/));
+			absl::optional<std::string> request = "join";
+			absl::optional<std::string> ptype = "publisher";	
+			absl::optional<int64_t> room;
+			absl::optional<std::string> display;
+			absl::optional<std::string> token;
+
+			FIELDS_MAP("request", request, "ptype", ptype, "room", room, "display", display, "token", token);
 		};
 
 		struct Attendee {
-			int64_t id;
-			std::string display;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> display;
 
-			XTOSTRUCT(O(id, display));
+			FIELDS_MAP("id", id, "display", display);
 		};
 
 		struct PublisherJoinData {
-			std::string videoroom;
-			int64_t room;
-			std::string description;
-			int64_t id;
-			int64_t private_id;
-			std::vector<Publisher> publishers;
-			std::vector<Attendee> attendees;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
+			absl::optional<std::string> description;
+			absl::optional<int64_t> id;
+			absl::optional<int64_t> private_id;
+			absl::optional<std::vector<Publisher>> publishers;
+			absl::optional<std::vector<Attendee>> attendees;
 
-			XTOSTRUCT(O(videoroom, room, description, id, private_id, publishers, attendees));
+			FIELDS_MAP("videoroom", videoroom, "room", room, "description", description, "id", id, "private_id", private_id, "publishers", publishers, "attendees", attendees);
 		};
 
 		struct PublisherJoinPluginData {
-			std::string plugin;
-			PublisherJoinData data;
+			absl::optional<std::string> plugin;
+			absl::optional<PublisherJoinData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct PublisherJoinEvent : public JanusResponse {
-			PublisherJoinPluginData plugindata;
+		struct PublisherJoinEvent {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<PublisherJoinPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 
@@ -207,48 +221,57 @@ namespace vi {
 		//\endverbatim
 
 		struct SubscriberJoinRequest {
-			std::string request = "join";
-			int64_t room;
-			std::string ptype = "subscriber";
-			int64_t feed;
-			int64_t private_id;
+			absl::optional<std::string> request = "join";
+			absl::optional<int64_t> room;
+			absl::optional<std::string> ptype = "subscriber";
+			absl::optional<int64_t> feed;
+			absl::optional<int64_t> private_id;
 
 			struct Stream {
-				int64_t feed;
-				std::string mid;
-				XTOSTRUCT(O(feed, mid));
+				absl::optional<int64_t> feed;
+				absl::optional<std::string> mid;
+				
+				FIELDS_MAP("feed", feed, "mid", mid);
 			};
-			std::vector<Stream> streams;
+			absl::optional<std::vector<Stream>> streams;
 
-			XTOSTRUCT(O(request,
-				room,
-				ptype,
-				feed,
-				private_id,
-				streams
-			));
+			FIELDS_MAP("request", request,
+				"room", room,
+				"ptype", ptype,
+				"feed", feed,
+				"private_id", private_id,
+				"streams", streams
+			);
 		};
 
 		struct SubscriberJoinData {
-			std::string videoroom;
-			int64_t room;
-			int64_t feed;
-			std::string display;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
+			absl::optional<int64_t> feed;
+			absl::optional<std::string> display;
 
-			XTOSTRUCT(O(videoroom, room, feed, display));
+			FIELDS_MAP("videoroom", videoroom,
+				"room", room,
+				"feed", feed,
+				"display", display
+			);
 		};
 
 		struct SubscriberJoinPluginData {
-			std::string plugin;
-			SubscriberJoinData data;
+			absl::optional<std::string> plugin;
+			absl::optional<SubscriberJoinData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct SubscriberJoinEvent : public JanusResponse {
-			SubscriberJoinPluginData plugindata;
+		struct SubscriberJoinEvent {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<SubscriberJoinPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -305,38 +328,42 @@ namespace vi {
 		 * }
 		*/
 		struct AttachedData {
-			std::string videoroom;
-			int64_t room;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
 
 			struct Stream {
-				bool active = false;
-				int64_t mindex;
-				std::string mid;
-				std::string type;
-				int64_t feed_id;
-				std::string feed_mid;
-				std::string feed_display;
-				bool send = false;
-				bool ready = false;
+				absl::optional<bool> active;
+				absl::optional<int64_t> mindex;
+				absl::optional<std::string> mid;
+				absl::optional<std::string> type;
+				absl::optional<int64_t> feed_id;
+				absl::optional<std::string> feed_mid;
+				absl::optional<std::string> feed_display;
+				absl::optional<bool> send;
+				absl::optional<bool> ready;
 
-				XTOSTRUCT(O(active, mindex, mid, type, feed_id, feed_mid, feed_display, send, ready));
+				FIELDS_MAP("active", active, "mindex", mindex, "mid", mid, "type", type, "feed_id", feed_id, "feed_mid", feed_mid, "feed_display", feed_display, "send", send, "ready", ready);
 			};
-			std::vector<Stream> streams;
+			absl::optional<std::vector<Stream>> streams;
 
-			XTOSTRUCT(O(videoroom, room, streams));
+			FIELDS_MAP("videoroom", videoroom, "room", room, "streams", streams);
 		};
 
 		struct AttachedPluginData {
-			std::string plugin;
-			AttachedData data;
+			absl::optional<std::string> plugin;
+			absl::optional<AttachedData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct AttachedEvent : public JanusResponse {
-			AttachedPluginData plugindata;
+		struct AttachedEvent {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<AttachedPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -369,81 +396,90 @@ namespace vi {
 		 * ]
 		}*/
 		struct UpdatedData {
-			std::string videoroom;
-			int64_t room;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
 
 			struct Stream {
-				int64_t mindex;
-				std::string mid;
-				std::string type;
-				int64_t feed_id;
-				int64_t feed_mid;
-				std::string feed_display;
-				bool send = false;
-				bool ready = false;
+				absl::optional<int64_t> mindex;
+				absl::optional<std::string> mid;
+				absl::optional<std::string> type;
+				absl::optional<int64_t> feed_id;
+				absl::optional<int64_t> feed_mid;
+				absl::optional<std::string> feed_display;
+				absl::optional<bool> send;
+				absl::optional<bool> ready;
 
-				XTOSTRUCT(O(mindex, mid, type, feed_id, feed_mid, feed_display, send, ready));
+				FIELDS_MAP("mindex", mindex, "mid", mid, "type", type, "feed_id", feed_id, "feed_mid", feed_mid, "feed_display", feed_display, "send", send, "ready", ready);
 			};
-			std::vector<Stream> streams;
+			absl::optional<std::vector<Stream>> streams;
 
-			XTOSTRUCT(O(videoroom, room, streams));
+			FIELDS_MAP("videoroom", videoroom, "room", room, "streams", streams);
 		};
 
 		struct UpdatedPluginData {
-			std::string plugin;
-			UpdatedData data;
+			absl::optional<std::string> plugin;
+			absl::optional<UpdatedData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct UpdatedEvent : public JanusResponse {
-			UpdatedPluginData plugindata;
+		struct UpdatedEvent {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<UpdatedPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		struct UnpublishRequest {
-			std::string request = "unpublish";
-			XTOSTRUCT(O(request));
+			absl::optional<std::string> request = "unpublish";
+
+			FIELDS_MAP("request", request);
 		};
 
 		struct SubscribeRequest {
-			std::string request = "subscribe";
+			absl::optional<std::string> request = "subscribe";
 
 			struct Stream {
-				int64_t feed;
-				std::string mid;
-				XTOSTRUCT(O(feed, mid));
-			};
-			std::vector<Stream> streams;
+				absl::optional<int64_t> feed;
+				absl::optional<std::string> mid;
 
-			XTOSTRUCT(O(request, streams));
+				FIELDS_MAP("feed", feed, "mid", mid);
+			};
+			absl::optional<std::vector<Stream>> streams;
+
+			FIELDS_MAP("request", request, "streams", streams);
 		};
 
 		struct UnsubscribeRequest {
-			std::string request = "unsubscribe";
+			absl::optional<std::string> request = "unsubscribe";
 
 			struct Stream {
-				int64_t feed;
-				std::string mid;
-				std::string sub_mid;
-				XTOSTRUCT(O(feed, mid, sub_mid));
-			};
-			std::vector<Stream> streams;
+				absl::optional<int64_t> feed;
+				absl::optional<std::string> mid;
+				absl::optional<std::string> sub_mid;
 
-			XTOSTRUCT(O(request, streams));
+				FIELDS_MAP("feed", feed, "mid", mid, "sub_mid", sub_mid);
+			};
+			absl::optional<std::vector<Stream>> streams;
+
+			FIELDS_MAP("request", request, "streams", streams);
 		};
 
 		struct StartPeerConnectionRequest {
-			std::string request = "start";
-			int64_t room;
-			XTOSTRUCT(O(request, room));
+			absl::optional<std::string> request = "start";
+			absl::optional<int64_t> room;
+
+			FIELDS_MAP("request", request, "room", room);
 		};
 
 		struct PausePeerConnectionRequest {
-			std::string request = "pause";
-			int64_t room;
-			XTOSTRUCT(O(request, room));
+			absl::optional<std::string> request = "pause";
+			absl::optional<int64_t> room;
+
+			FIELDS_MAP("request", request, "room", room);
 		};
 
 		/*To conclude, you can leave a room you previously joined as publisher
@@ -491,8 +527,9 @@ namespace vi {
 		*/
 
 		struct LeaveRequest {
-			std::string request = "leave";
-			XTOSTRUCT(O(request));
+			absl::optional<std::string> request = "leave";
+
+			FIELDS_MAP("request", request);
 		};
 
 		//\verbatim
@@ -509,45 +546,49 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct CreateRoomRequest {
-			std::string request = "create";
-			int64_t room;
-			bool permanent;
-			std::string description;
-			std::string secret;
-			std::string pin;
-			bool is_private = false;
-			std::vector<std::string> allowed;
+			absl::optional<std::string> request = "create";
+			absl::optional<int64_t> room;
+			absl::optional<bool> permanent;
+			absl::optional<std::string> description;
+			absl::optional<std::string> secret;
+			absl::optional<std::string> pin;
+			absl::optional<bool> is_private = false;
+			absl::optional<std::vector<std::string>> allowed;
 
-			XTOSTRUCT(O(request),
-				O(room),
-				O(permanent),
-				O(description),
-				O(secret),
-				O(pin),
-				O(is_private),
-				O(allowed));
+			FIELDS_MAP("request", request,
+				"room", room,
+				"permanent", permanent,
+				"description", description,
+				"secret", secret,
+				"pin", pin,
+				"is_private", is_private,
+				"allowed", allowed);
 		};
 
 		struct RoomCurdData {
-			std::string videoroom;
-			int64_t room;
-			bool permanent;
-			bool exists;
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
+			absl::optional<bool> permanent;
+			absl::optional<bool> exists;
 
-			XTOSTRUCT(O(videoroom, room, permanent, exists));
+			FIELDS_MAP("videoroom", videoroom, "room", room, "permanent", permanent, "exists", exists);
 		};
 
 		struct RoomCurdPluginData {
-			std::string plugin;
+			absl::optional<std::string> plugin;
 			RoomCurdData data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct RoomCurdResponse : public JanusResponse {
-			RoomCurdPluginData plugindata;
+		struct RoomCurdResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<RoomCurdPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -602,33 +643,33 @@ namespace vi {
 		 //}
 		 //\endverbatim
 		struct EditRoomRequest {
-			std::string request = "edit";
-			int64_t room;
-			std::string secret;
-			std::string new_description;
-			std::string new_secret;
-			std::string new_pin;
-			bool new_is_private;
-			bool new_require_pvtid;
-			int64_t new_bitrate;
-			int64_t new_fir_freq;
-			bool new_lock_record;
-			int64_t new_publishers;
-			bool permanent;
+			absl::optional<std::string> request = "edit";
+			absl::optional<int64_t> room;
+			absl::optional<std::string> secret;
+			absl::optional<std::string> new_description;
+			absl::optional<std::string> new_secret;
+			absl::optional<std::string> new_pin;
+			absl::optional<bool> new_is_private;
+			absl::optional<bool> new_require_pvtid;
+			absl::optional<int64_t> new_bitrate;
+			absl::optional<int64_t> new_fir_freq;
+			absl::optional<bool> new_lock_record;
+			absl::optional<int64_t> new_publishers;
+			absl::optional<bool> permanent;
 
-			XTOSTRUCT(O(request,
-				room,
-				secret,
-				new_description,
-				new_secret,
-				new_pin,
-				new_is_private,
-				new_require_pvtid,
-				new_bitrate,
-				new_fir_freq,
-				new_lock_record,
-				new_publishers,
-				permanent));
+			FIELDS_MAP("request", request,
+				"room", room,
+				"secret", secret,
+				"new_description", new_description,
+				"new_secret", new_secret,
+				"new_pin", new_pin,
+				"new_is_private", new_is_private,
+				"new_require_pvtid", new_require_pvtid,
+				"new_bitrate", new_bitrate,
+				"new_fir_freq", new_fir_freq,
+				"new_lock_record", new_lock_record,
+				"new_publishers", new_publishers,
+				"permanent", permanent);
 		};
 
 		/*
@@ -644,15 +685,15 @@ namespace vi {
 		 //}
 		 //\endverbatim
 		struct DestroyRoomRequest {
-			std::string request = "destroy";
-			int64_t room;
-			std::string secret;
-			bool permanent;
+			absl::optional<std::string> request = "destroy";
+			absl::optional<int64_t> room;
+			absl::optional<std::string> secret;
+			absl::optional<bool> permanent;
 
-			XTOSTRUCT(O(request,
-				room,
-				secret,
-				permanent));
+			FIELDS_MAP("request", request,
+				"room", room,
+				"secret", secret,
+				"permanent", permanent);
 		};
 
 		/*
@@ -666,10 +707,10 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct ExistsRequest {
-			std::string request = "exists";
-			int64_t room;
+			absl::optional<std::string> request = "exists";
+			absl::optional<int64_t> room;
 
-			XTOSTRUCT(O(request, room));
+			FIELDS_MAP("request", request, "room", room);
 		};
 
 		/*
@@ -688,17 +729,17 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct AllowedRequest {
-			std::string request = "allowed";
-			std::string secret;
-			std::string action;
-			int64_t room;
-			std::vector<std::string> allowed;
+			absl::optional<std::string> request = "allowed";
+			absl::optional<std::string> secret;
+			absl::optional<std::string> action;
+			absl::optional<int64_t> room;
+			absl::optional<std::vector<std::string>> allowed;
 
-			XTOSTRUCT(O(request,
-				secret,
-				action,
-				room,
-				allowed));
+			FIELDS_MAP("request", request,
+				"secret", secret,
+				"action", action,
+				"room", room,
+				"allowed", allowed);
 		};
 
 		/*
@@ -714,30 +755,36 @@ namespace vi {
 		 //}
 		 //\endverbatim
 		struct TokenInfo {
-			std::string token;
-			XTOSTRUCT(O(token));
+			absl::optional<std::string> token;
+
+			FIELDS_MAP("token", token);
 		};
 
 		struct AllowedData {
-			std::string videoroom;
-			int64_t room;
-			std::vector<TokenInfo> allowed;
-			int64_t error_code = 0;
-			std::string error;
-			XTOSTRUCT(O(videoroom, room, allowed, error_code, error));
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
+			absl::optional<std::vector<TokenInfo>> allowed;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+
+			FIELDS_MAP("videoroom", videoroom, "room", room, "allowed", allowed, "error_code", error_code, "error", error);
 		};
 
 		struct AllowedPluginData {
-			std::string plugin;
-			AllowedData data;
+			absl::optional<std::string> plugin;
+			absl::optional<AllowedData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct AllowedResponse : public JanusResponse {
-			AllowedPluginData plugindata;
+		struct AllowedResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<AllowedPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -757,35 +804,40 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct KickRequest {
-			std::string request = "kick";
-			std::string secret;
-			int64_t room;
-			int64_t id;
+			absl::optional<std::string> request = "kick";
+			absl::optional<std::string> secret;
+			absl::optional<int64_t> room;
+			absl::optional<int64_t> id;
 
-			XTOSTRUCT(O(request,
-				secret,
-				room,
-				id));
+			FIELDS_MAP("request", request,
+				"secret", secret,
+				"room", room,
+				"id", id);
 		};
 
 		struct KickData {
-			std::string videoroom;
-			int64_t error_code = 0;
-			std::string error;
-			XTOSTRUCT(O(videoroom, error_code, error));
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+
+			FIELDS_MAP("videoroom", videoroom, "error_code", error_code, "error", error);
 		};
 
 		struct KickPluginData {
-			std::string plugin;
-			KickData data;
+			absl::optional<std::string> plugin;
+			absl::optional<KickData> data;
 
-			XTOSTRUCT(O(plugin, data));
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct KickResponse : public JanusResponse {
-			KickPluginData plugindata;
+		struct KickResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<KickPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*   
@@ -807,19 +859,19 @@ namespace vi {
 		 * }
 		*/
 		struct ModerateRequest {
-			std::string request = "moderate";
-			std::string secret;
-			int64_t room;
-			int64_t id;
-			std::string mid;
-			bool mute = false;
+			absl::optional<std::string> request = "moderate";
+			absl::optional<std::string> secret;
+			absl::optional<int64_t> room;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> mid;
+			absl::optional<bool> mute = false;
 
-			XTOSTRUCT(O(request,
-				secret,
-				room,
-				id,
-				mid, 
-				mute));
+			FIELDS_MAP("request", request,
+				"secret", secret,
+				"room", room,
+				"id", id,
+				"mid", mid,
+				"mute", mute);
 		};
 
 		/*
@@ -833,57 +885,63 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct FetchRoomsListRequest {
-			std::string request = "list";
+			absl::optional<std::string> request = "list";
 
-			XTOSTRUCT(O(request));
+			FIELDS_MAP("request", request);
 		};
 
 		struct VideoRoomInfo {
-			int64_t room;
-			std::string description;
-			int64_t max_publishers;
-			int64_t bitrate;
-			bool bitrate_cap;
-			int64_t fir_freq;
-			std::string audiocodec;
-			std::string videocodec;
-			bool record;
-			std::string record_dir;
-			bool lock_record;
-			int64_t num_participants;
+			absl::optional<int64_t> room;
+			absl::optional<std::string> description;
+			absl::optional<int64_t> max_publishers;
+			absl::optional<int64_t> bitrate;
+			absl::optional<bool> bitrate_cap;
+			absl::optional<int64_t> fir_freq;
+			absl::optional<std::string> audiocodec;
+			absl::optional<std::string> videocodec;
+			absl::optional<bool> record;
+			absl::optional<std::string> record_dir;
+			absl::optional<bool> lock_record;
+			absl::optional<int64_t> num_participants;
 
-			XTOSTRUCT(O(room,
-				description,
-				max_publishers,
-				bitrate,
-				bitrate_cap,
-				fir_freq,
-				audiocodec,
-				videocodec,
-				record,
-				record_dir,
-				lock_record,
-				num_participants));
+			FIELDS_MAP("room", room,
+				"description", description,
+				"max_publishers", max_publishers,
+				"bitrate", bitrate,
+				"bitrate_cap", bitrate_cap,
+				"fir_freq", fir_freq,
+				"audiocodec", audiocodec,
+				"videocodec", videocodec,
+				"record", record,
+				"record_dir", record_dir,
+				"lock_record", lock_record,
+				"num_participants", num_participants);
 		};
 
 		struct FetchRoomsListData {
-			std::string videoroom;
-			std::vector<VideoRoomInfo> list;
-			int64_t error_code = 0;
-			std::string error;
-			XTOSTRUCT(O(videoroom, list, error_code, error));
+			absl::optional<std::string> videoroom;
+			absl::optional<std::vector<VideoRoomInfo>> list;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+
+			FIELDS_MAP("videoroom", videoroom, "list", list, "error_code", error_code, "error", error);
 		};
 
 		struct FetchRoomsListPluginData {
-			std::string plugin;
-			FetchRoomsListData data;
-			XTOSTRUCT(O(plugin, data));
+			absl::optional<std::string> plugin;
+			absl::optional<FetchRoomsListData> data;
+
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct FetchRoomsListResponse : public JanusResponse {
-			FetchRoomsListPluginData plugindata;
+		struct FetchRoomsListResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<FetchRoomsListPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -898,40 +956,46 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct FetchParticipantsRequest {
-			std::string request = "listparticipants";
-			int64_t room;
+			absl::optional<std::string> request = "listparticipants";
+			absl::optional<int64_t> room;
 
-			XTOSTRUCT(O(request, room));
+			FIELDS_MAP("request", request, "room", room);
 		};
 
 		struct ParticipantInfo {
-			int64_t id;
-			std::string display;
-			bool publisher;
-			bool talking;
+			absl::optional<int64_t> id;
+			absl::optional<std::string> display;
+			absl::optional<bool> publisher;
+			absl::optional<bool> talking;
 
-			XTOSTRUCT(O(id, display, publisher, talking));
+			FIELDS_MAP("id", id, "display", display, "publisher", publisher, "talking", talking);
 		};
 
 		struct ParticipantData {
-			std::string videoroom;
-			int64_t room;
-			std::vector<ParticipantInfo> participants;
-			int64_t error_code = 0;
-			std::string error;
-			XTOSTRUCT(O(videoroom, room, participants, error_code, error));
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> room;
+			absl::optional<std::vector<ParticipantInfo>> participants;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+		
+			FIELDS_MAP("videoroom", videoroom, "room", room, "participants", participants, "error_code", error_code, "error", error);
 		};
 
 		struct ParticipantPluginData {
-			std::string plugin;
-			ParticipantData data;
-			XTOSTRUCT(O(plugin, data));
+			absl::optional<std::string> plugin;
+			absl::optional<ParticipantData> data;
+
+			FIELDS_MAP("plugin", plugin, "data", data);
 		};
 
-		struct FetchParticipantsResponse : public JanusResponse {
-			ParticipantPluginData plugindata;
+		struct FetchParticipantsResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<ParticipantPluginData> plugindata;
 
-			XTOSTRUCT(I(JanusResponse), O(plugindata));
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
 		};
 
 		/*
@@ -968,33 +1032,35 @@ namespace vi {
 		 //}
 		 //\endverbatim
 		struct PublishRequest {
-			std::string request = "publish";
-			std::string audiocodec;
-			std::string videocodec;
-			int64_t bitrate;
-			bool record;
-			std::string filename;
-			std::string display;
-			int64_t audio_level_average;
-			int64_t audio_active_packets;
+			absl::optional<std::string> request = "publish";
+			absl::optional<std::string> audiocodec;
+			absl::optional<std::string> videocodec;
+			absl::optional<int64_t> bitrate;
+			absl::optional<bool> record;
+			absl::optional<std::string> filename;
+			absl::optional<std::string> display;
+			absl::optional<int64_t> audio_level_average;
+			absl::optional<int64_t> audio_active_packets;
 
 			struct Description {
-				std::string mid;
-				std::string description;
-				XTOSTRUCT(O(mid, description));
+				absl::optional<std::string> mid;
+				absl::optional<std::string> description;
+
+				FIELDS_MAP("mid", mid, "description", description);
 			};
-			std::vector<Description> descriptions;
-			XTOSTRUCT(O(request,
-				audiocodec,
-				videocodec,
-				bitrate,
-				record,
-				filename,
-				display,
-				audio_level_average,
-				audio_active_packets,
-				descriptions
-			));
+			absl::optional<std::vector<Description>> descriptions;
+
+			FIELDS_MAP("request", request,
+				"audiocodec", audiocodec,
+				"videocodec", videocodec,
+				"bitrate", bitrate,
+				"record", record,
+				"filename", filename,
+				"display", display,
+				"audio_level_average", audio_level_average,
+				"audio_active_packets", audio_active_packets,
+				"descriptions", descriptions
+			);
 		};
 
 		/*
@@ -1021,29 +1087,30 @@ namespace vi {
 		//\endverbatim
 
 		struct SubscriberConfigureRequest {
-			std::string request = "configure";
-			std::string mid;
-			bool send = false;
-			//int64_t substream;
-			//int64_t temporal;
-			//int64_t fallback;
-			//int64_t spatial_layer;
-			//int64_t temporal_layer;
-			//int64_t audio_level_average;
-			//int64_t audio_active_packets;
-			bool restart = false;
-			XTOSTRUCT(O(request,
-				mid,
-				send,
-				restart
-				//substream,
-				//temporal,
-				//fallback,
-				//spatial_layer,
-				//temporal_layer,
-				//audio_level_average,
-				//audio_active_packets
-			));
+			absl::optional<std::string> request = "configure";
+			absl::optional<std::string> mid;
+			absl::optional<bool> send = false;
+			absl::optional<int64_t> substream;
+			absl::optional<int64_t> temporal;
+			absl::optional<int64_t> fallback;
+			absl::optional<int64_t> spatial_layer;
+			absl::optional<int64_t> temporal_layer;
+			absl::optional<int64_t> audio_level_average;
+			absl::optional<int64_t> audio_active_packets;
+			absl::optional<bool> restart = false;
+
+			FIELDS_MAP("request", request,
+				"mid", mid,
+				"send", send,
+				"restart", restart,
+				"substream", substream,
+				"temporal", temporal,
+				"fallback", fallback,
+				"spatial_layer", spatial_layer,
+				"temporal_layer", temporal_layer,
+				"audio_level_average", audio_level_average,
+				"audio_active_packets", audio_active_packets
+			);
 		};
 
 		/*
@@ -1075,42 +1142,43 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct PublisherConfigureRequest {
-			std::string request = "configure";
-			bool audio = false;
-			bool video = false;
-			bool data = false;
-			std::string mid;
-			bool send = false;
-			int64_t bitrate;
-			bool keyframe;
-			bool record;
-			std::string filename;
-			std::string display;
-			int64_t audio_level_average;
-			int64_t audio_active_packets;
+			absl::optional<std::string> request = "configure";
+			absl::optional<bool> audio = false;
+			absl::optional<bool> video = false;
+			absl::optional<bool> data = false;
+			absl::optional<std::string> mid;
+			absl::optional<bool> send = false;
+			absl::optional<int64_t> bitrate;
+			absl::optional<bool> keyframe;
+			absl::optional<bool> record;
+			absl::optional<std::string> filename;
+			absl::optional<std::string> display;
+			absl::optional<int64_t> audio_level_average;
+			absl::optional<int64_t> audio_active_packets;
 
 			struct Description {
-				std::string mid;
-				std::string description;
-				XTOSTRUCT(O(mid, description));
-			};
-			std::vector<Description> descriptions;
+				absl::optional<std::string> mid;
+				absl::optional<std::string> description;
 
-			XTOSTRUCT(O(request,
-				audio,
-				video,
-				data,
-				mid,
-				send,
-				bitrate,
-				keyframe,
-				record,
-				filename,
-				display,
-				audio_level_average,
-				audio_active_packets, 
-				descriptions
-			));
+				FIELDS_MAP("mid", mid, "description", description);
+			};
+			absl::optional<std::vector<Description>> descriptions;
+
+			FIELDS_MAP("request", request,
+				"audio", audio,
+				"video", video,
+				"data", data,
+				"mid", mid,
+				"send", send,
+				"bitrate", bitrate,
+				"keyframe", keyframe,
+				"record", record,
+				"filename", filename,
+				"display", display,
+				"audio_level_average", audio_level_average,
+				"audio_active_packets", audio_active_packets,
+				"descriptions", descriptions
+			);
 		};
 
 		//\verbatim
@@ -1130,16 +1198,18 @@ namespace vi {
 		//}
 		//\endverbatim
 		struct SwitchPublisherRequest {
-			std::string request = "switch";
+			absl::optional<std::string> request = "switch";
 			
 			struct Stream {
-				int64_t feed_id;
-				std::string mid;
-				std::string sub_mid;
-				XTOSTRUCT(O(feed_id, mid, sub_mid));
+				absl::optional<int64_t> feed_id;
+				absl::optional<std::string> mid;
+				absl::optional<std::string> sub_mid;
+				
+				FIELDS_MAP("feed_id", feed_id, "mid", mid, "sub_mid", sub_mid);
 			};
-			std::vector<Stream> streams;
-			XTOSTRUCT(O(request, streams));
+			absl::optional<std::vector<Stream>> streams;
+
+			FIELDS_MAP("request", request, "streams", streams);
 		};
 	}
 }

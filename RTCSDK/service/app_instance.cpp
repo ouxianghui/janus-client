@@ -9,13 +9,9 @@
 #include <memory>
 #include "unified_factory.h"
 #include "logger/logger.h"
-#include "notification_service.h"
-#include "webrtc_service.h"
-#include "webrtc_service_interface.h"
-#include "webrtc_service_proxy.h"
-#include "thread_manager.h"
+#include "utils/thread_provider.h"
+#include "utils/task_queue_provider.h"
 
-namespace core {
 
 AppInstance::AppInstance()
 {
@@ -23,50 +19,69 @@ AppInstance::AppInstance()
 
 AppInstance::~AppInstance()
 {
-	DLOG("~AppInstance()");
 }
 
-void AppInstance::initApp()
+void AppInstance::init()
 {
-    // init services here
-    installBizServices();
+	vi::Logger::init();
 
-	installWebRTCService();
+	initThreadProvider();
+
+	initTaskQueueProvider();
+
+	_unifiedFactory = std::make_shared<UnifiedFactory>();
+	_unifiedFactory->init();
+
+	registerServices();
 }
 
-void AppInstance::clearnup()
+void AppInstance::destroy()
 {
-	_webrtcService->cleanup();
-	_webrtcService = nullptr;
+	if (_unifiedFactory) {
+		_unifiedFactory->destroy();
+	}
+
+	vi::Logger::destroy();
 }
 
 std::shared_ptr<IUnifiedFactory> AppInstance::getUnifiedFactory()
 {
-    if (!_unifiedFactory) {
-        _unifiedFactory = std::make_shared<UnifiedFactory>();
-        _unifiedFactory->init();
-    }
     return _unifiedFactory;
+}
+
+void AppInstance::initThreadProvider()
+{
+	TMgr->init();
+	TMgr->create({ "service", "worker" });
+}
+
+void AppInstance::initTaskQueueProvider()
+{
+	//QMgr->init();
+	//QMgr->create({ {"service_queue", webrtc::TaskQueueFactory::Priority::NORMAL}, {"core_queue", webrtc::TaskQueueFactory::Priority::NORMAL}, {"worker_queue", webrtc::TaskQueueFactory::Priority::NORMAL} });
+}
+
+void AppInstance::registerServices()
+{
+	auto sf = _unifiedFactory->getServiceFactory();
+	assert(sf != nullptr);
+
+	//sf->registerService(typeid(IBizService).name(), std::make_shared<BizService>());
+}
+
+void AppInstance::unregisterServices()
+{
+	auto sf = _unifiedFactory->getServiceFactory();
+	assert(sf != nullptr);
+
+	//sf->unregisterService(typeid(IBizService).name());
 }
 
 std::shared_ptr<vi::WebRTCServiceInterface> AppInstance::getWebrtcService()
 {
-	return _webrtcService;
-}
+	if (_unifiedFactory) {
+		return _unifiedFactory->getWebrtcService();
+	}
 
-void AppInstance::installBizServices()
-{
-    auto uf = getUnifiedFactory();
-
-    auto ns = std::make_shared<NotificationService>(uf);
-    ns->init();
-}
-
-void AppInstance::installWebRTCService()
-{
-	_webrtcService = vi::WebRTCServiceProxy::Create(TMgr->thread(vi::ThreadName::SERVICE), std::make_shared<vi::WebRTCService>(TMgr->thread(vi::ThreadName::WORKER)));
-
-	_webrtcService->init();
-}
-
+	return nullptr;
 }

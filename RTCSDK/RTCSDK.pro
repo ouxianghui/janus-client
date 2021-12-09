@@ -17,7 +17,6 @@ INCLUDEPATH += ./GeneratedFiles \
     ./../include \
     ./../include/asio/include \
     ./../include/websocketpp \
-    ./../include/x2struct \
     ./../RTCCore
 DEPENDPATH += .
 MOC_DIR += ./GeneratedFiles/$(ConfigurationName)

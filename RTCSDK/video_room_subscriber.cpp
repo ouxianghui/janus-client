@@ -2,13 +2,12 @@
 #include "string_utils.h"
 #include "logger/logger.h"
 #include "participant.h"
-#include "x2struct.hpp"
-#include "thread_manager.h"
+#include "utils/thread_provider.h"
 #include "Service/app_instance.h"
 #include "video_room_api.h"
 #include "pc/media_stream.h"
-#include "api/media_stream_proxy.h"
-#include "api/media_stream_track_proxy.h"
+#include "pc/media_stream_proxy.h"
+#include "pc/media_stream_track_proxy.h"
 
 namespace vi {
 
@@ -17,7 +16,6 @@ namespace vi {
 	{
 		_pluginContext->plugin = plugin;
 		_pluginContext->opaqueId = opaqueId;
-		_listeners = std::make_shared<std::vector<std::weak_ptr<IVideoRoomListener>>>();
 		_attached = false;
 	}
 
@@ -30,12 +28,12 @@ namespace vi {
 
 	void VideoRoomSubscriber::addListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
-		addBizObserver<IVideoRoomListener>(*_listeners, listener);
+		UniversalObservable<IVideoRoomListener>::addWeakObserver(listener, std::string("main"));
 	}
 
 	void VideoRoomSubscriber::removeListener(std::shared_ptr<IVideoRoomListener> listener)
 	{
-		removeBizObserver<IVideoRoomListener>(*_listeners, listener);
+		UniversalObservable<IVideoRoomListener>::removeObserver(listener);
 	}
 
 	void VideoRoomSubscriber::setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi)
@@ -86,11 +84,17 @@ namespace vi {
 		request.private_id = _privateId;
 
 		for (const auto& pub : publishers) {
-			for (const auto& str : pub.streams) {
-				vr::SubscriberJoinRequest::Stream stream;
-				stream.feed = pub.id;
-				stream.mid = str.mid;
-				request.streams.emplace_back(stream);
+			if (pub.streams) {
+				auto ss = std::vector<vr::SubscriberJoinRequest::Stream>();
+				for (const auto& str : pub.streams.value()) {
+					vr::SubscriberJoinRequest::Stream stream;
+					stream.feed = pub.id;
+					stream.mid = str.mid;
+					ss.emplace_back(stream);
+				}
+				if (!ss.empty()) {
+					request.streams = ss;
+				}
 			}
 		}
 
@@ -101,11 +105,17 @@ namespace vi {
 				if (response.empty()) {
 					return;
 				}
-				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
-				x2struct::X::loadjson(response, *rar, false, true);
+
+				std::string err;
+				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+				if (!err.empty()) {
+					DLOG("parse JanusResponse failed");
+					return;
+				}
 			};
 			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = x2struct::X::tojson(request);
+			event->message = request.toJsonStr();
+			DLOG("request.toJsonStr(): {}", request.toJsonStr());
 			event->callback = cb;
 			sendMessage(event);
 		}
@@ -118,11 +128,17 @@ namespace vi {
 		request.request = "subscribe";
 
 		for (const auto& pub : publishers) {
-			for (const auto& str : pub.streams) {
-				vr::SubscribeRequest::Stream stream;
-				stream.feed = pub.id;
-				stream.mid = str.mid;
-				request.streams.emplace_back(stream);
+			if (pub.streams) {
+				auto ss = std::vector<vr::SubscribeRequest::Stream>();
+				for (const auto& str : pub.streams.value()) {
+					vr::SubscribeRequest::Stream stream;
+					stream.feed = pub.id;
+					stream.mid = str.mid;
+					ss.emplace_back(stream);
+				}
+				if (!ss.empty()) {
+					request.streams = ss;
+				}
 			}
 		}
 
@@ -133,11 +149,16 @@ namespace vi {
 				if (response.empty()) {
 					return;
 				}
-				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
-				x2struct::X::loadjson(response, *rar, false, true);
+
+				std::string err;
+				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+				if (!err.empty()) {
+					DLOG("parse JanusResponse failed");
+					return;
+				}
 			};
 			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = x2struct::X::tojson(request);
+			event->message = request.toJsonStr();
 			event->callback = cb;
 			sendMessage(event);
 		}
@@ -151,7 +172,9 @@ namespace vi {
 
 		vr::UnsubscribeRequest::Stream stream;
 		stream.feed = id;
-		request.streams.emplace_back(stream);
+		auto ss = std::vector<vr::UnsubscribeRequest::Stream>();
+		ss.emplace_back(stream);
+		request.streams = ss;
 
 		if (auto webrtcService = _pluginContext->webrtcService.lock()) {
 			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
@@ -160,11 +183,16 @@ namespace vi {
 				if (response.empty()) {
 					return;
 				}
-				std::shared_ptr<JanusResponse> rar = std::make_shared<JanusResponse>();
-				x2struct::X::loadjson(response, *rar, false, true);
+
+				std::string err;
+				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+				if (!err.empty()) {
+					DLOG("parse JanusResponse failed");
+					return;
+				}
 			};
 			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = x2struct::X::tojson(request);
+			event->message = request.toJsonStr();
 			event->callback = cb;
 			sendMessage(event);
 		}
@@ -202,48 +230,61 @@ namespace vi {
 	{
 		DLOG(" ::: Got a message (subscriber) :::");
 
-		vr::VideoRoomEvent vrEvent;
-		x2struct::X::loadjson(data, vrEvent, false, true);
-
-		const auto& pluginData = vrEvent.plugindata;
-
-		if (!pluginData.xhas("plugin")) {
+		std::string err;
+		std::shared_ptr<vr::VideoRoomEvent> vrEvent = fromJsonString<vr::VideoRoomEvent>(data, err);
+		if (!err.empty()) {
+			DLOG("parse JanusResponse failed");
 			return;
 		}
 
-		if (pluginData.plugin != "janus.plugin.videoroom") {
+		const auto& pluginData = vrEvent->plugindata;
+
+		if (!pluginData->plugin) {
 			return;
 		}
 
-		if (!pluginData.data.xhas("videoroom")) {
+		if (pluginData->plugin.value_or("") != "janus.plugin.videoroom") {
 			return;
 		}
 
-		const auto& event = pluginData.data.videoroom;
+		if (!pluginData->data->videoroom) {
+			return;
+		}
 
-		if (event == "attached") {
+		const auto& event = pluginData->data->videoroom;
+
+		if (event.value_or("") == "attached") {
 			_attached = true;
-			vr::AttachedEvent aEvent;
-			x2struct::X::loadjson(data, aEvent, false, true);
-			DLOG("Successfully attached to feed in room {}", aEvent.plugindata.data.room);
+			std::string err;
+			std::shared_ptr<vr::AttachedEvent> aEvent = fromJsonString<vr::AttachedEvent>(data, err);
+			if (!err.empty()) {
+				DLOG("parse JanusResponse failed");
+				return;
+			}
+
+			DLOG("Successfully attached to feed in room {}", aEvent->plugindata->data->room.value_or(0));
 		}
-		else if (event == "event") {
+		else if (event.value_or("") == "event") {
 			// Check if we got an event on a simulcast-related event from this publisher
 			//const auto& substream = data.substream;
 			//const auto& temporal = data.temporal;
 
-			// TODO:
-			if (pluginData.data.xhas("updated")) {
-				DLOG("updated event.");
+			if (pluginData->data->error) {
+				DLOG("error event: {}", pluginData->data->error.value_or(""));
 			}
-			else if (pluginData.data.xhas("error")) {
-				DLOG("error event: {}", pluginData.data.error);
-			} 
 		}
 
-		Jsep jsep;
-		x2struct::X::loadjson(jsepString, jsep, false, true);
-		if (!jsep.type.empty() && !jsep.sdp.empty()) {
+		if (jsepString.empty()) {
+			return;
+		}
+		err.clear();
+		std::shared_ptr<Jsep> jsep = fromJsonString<Jsep>(jsepString, err);
+		if (!err.empty()) {
+			DLOG("parse JanusResponse failed");
+			return;
+		}
+
+		if (jsep->type && jsep->sdp && !jsep->type.value().empty() && !jsep->sdp.value().empty()) {
 			DLOG("Handling SDP as well...");
 			//// Answer and attach
 			auto wself = weak_from_this();
@@ -266,11 +307,11 @@ namespace vi {
 						};
 
 						std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-						event->message = x2struct::X::tojson(request);
+						event->message = request.toJsonStr();
 						Jsep jsep;
 						jsep.type = jsepConfig.type;
 						jsep.sdp = jsepConfig.sdp;
-						event->jsep = x2struct::X::tojson(jsep);
+						event->jsep = jsep.toJsonStr();
 						event->callback = callback;
 						self->sendMessage(event);
 					}
@@ -285,8 +326,8 @@ namespace vi {
 			media.videoSend = false;
 			event->media = media;
 			JsepConfig st;
-			st.type = jsep.type;
-			st.sdp = jsep.sdp;
+			st.type = jsep->type.value_or("");
+			st.sdp = jsep->sdp.value_or("");
 			event->jsep = st;
 			createAnswer(event);
 		}
@@ -297,7 +338,7 @@ namespace vi {
 	void VideoRoomSubscriber::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on)
 	{
 		if (on) {
-			notifyObserver4Change<IVideoRoomListener>(*_listeners, [wself = weak_from_this(), pid = stoul(mid.c_str()), track](const std::shared_ptr<IVideoRoomListener>& listener) {
+			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
@@ -309,16 +350,16 @@ namespace vi {
 				auto vrs = std::dynamic_pointer_cast<VideoRoomSubscriber>(self);
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					vrs->_remoteStreams[track->id()] = webrtc::MediaStreamProxy::Create(TMgr->thread(ThreadName::MEDIA_STREAM), webrtc::MediaStream::Create(track->id()));
+					vrs->_remoteStreams[track->id()] = webrtc::MediaStream::Create(track->id());
 					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
 					vrs->_remoteStreams[track->id()]->AddTrack(vt);
 					auto t = vrs->_remoteStreams[track->id()]->GetVideoTracks()[0];
-					listener->onCreateVideoTrack(pid, t);
+					observer->onCreateVideoTrack(pid, t);
 				}
 			});
 		}
 		else {
-			notifyObserver4Change<IVideoRoomListener>(*_listeners, [wself = weak_from_this(), pid = stoul(mid.c_str()), track](const std::shared_ptr<IVideoRoomListener>& listener) {
+			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
@@ -332,7 +373,9 @@ namespace vi {
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 					if (vrs->_remoteStreams.find(track->id()) != vrs->_remoteStreams.end()) {
 						auto vt = vrs->_remoteStreams[track->id()]->GetVideoTracks()[0];
-						listener->onRemoveVideoTrack(pid, vt);
+
+						observer->onRemoveVideoTrack(pid, vt);
+
 						vrs->_remoteStreams[track->id()]->RemoveTrack(vt.get());
 						auto it = vrs->_remoteStreams.find(track->id());
 						vrs->_remoteStreams.erase(it);

@@ -7,169 +7,252 @@
 #pragma once
 
 #include <string>
-#include "x2struct.hpp"
+#include "json/jsonable.hpp"
+#include "absl/types/optional.h"
+
 
 namespace vi {
-	using namespace x2struct;
 
 	struct JanusRequest {
-		std::string janus;
-		std::string token;
-		std::string apisecret;
-		std::string transaction;
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
 
-		XTOSTRUCT(O(janus, token, apisecret, transaction));
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction);
 	};
 
 	struct JanusResponse {
-		std::string janus;
-		std::string transaction;		
-		int64_t session_id = -1;
-		int64_t sender = -1;
-		XTOSTRUCT(O(janus, transaction, session_id, sender));
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;		
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender);
 	};
 
 	struct Jsep {
-		std::string type;
-		std::string sdp;
+		absl::optional<std::string> type;
+		absl::optional<std::string> sdp;
 
-		XTOSTRUCT(O(type, sdp));
+		FIELDS_MAP("type", type, "sdp", sdp);
 	};
 
 	struct JanusError {
-		int64_t code;
-		std::string reason;
+		absl::optional<int64_t> code;
+		absl::optional<std::string> reason;
 
-		XTOSTRUCT(O(code), O(reason));
+		FIELDS_MAP("code", code, "reason", reason);
 	};
 
 	struct JanusData {
-		std::string videoroom;
+		absl::optional<std::string> videoroom;
 
-		XTOSTRUCT(O(videoroom));
+		FIELDS_MAP("videoroom", videoroom);
 	};
 
 	struct PluginData {
-		std::string plugin;
-		JanusData data;
+		absl::optional<std::string> plugin;
+		absl::optional<JanusData> data;
 
-		XTOSTRUCT(O(plugin, data));
+		FIELDS_MAP("plugin", plugin, "data", data);
 	};
 
-	struct ReconnectRequest : public JanusRequest {
-		int64_t session_id;
+	struct ReconnectRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
 
-		XTOSTRUCT(I(JanusRequest), O(session_id));
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id);
 	};
 
-	struct KeepAliveRequest : public JanusRequest {
-		int64_t session_id;
+	struct KeepAliveRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
 
-		XTOSTRUCT(I(JanusRequest), O(session_id));
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id);
 	};
 
-	struct AttachRequest : public JanusRequest {
-		int64_t session_id;
-		std::string plugin;
-		std::string opaque_id;
-		XTOSTRUCT(I(JanusRequest), O(session_id, plugin, opaque_id));
+	struct AttachRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+
+		absl::optional<int64_t> session_id;
+		absl::optional<std::string> plugin;
+		absl::optional<std::string> opaque_id;
+
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "plugin", plugin, "opaque_id", opaque_id);
 	};
 
 	struct AttachData {
-		int64_t id;
-		XTOSTRUCT(O(id));
+		absl::optional<int64_t> id;
+
+		FIELDS_MAP("id", id);
 	};
 
-	struct AttachResponse : public JanusResponse {
-		AttachData data;
-		XTOSTRUCT(I(JanusResponse), O(data));
+	struct AttachResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<AttachData> data;
+
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "data", data);
 	};
 
-	struct DetachRequest : public JanusRequest {
-		int64_t session_id;
-		int64_t handle_id;
-		XTOSTRUCT(I(JanusRequest), O(session_id, handle_id));
+	struct DetachRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> handle_id;
+		
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "handle_id", handle_id);
 	};
 
-	struct HangupRequest : public JanusRequest {
-		int64_t session_id;
-		int64_t handle_id;
-		XTOSTRUCT(I(JanusRequest), O(session_id, handle_id));
+	struct HangupRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> handle_id;
+		
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "handle_id", handle_id);
 	};
 
-	struct HangupResponse : public JanusResponse {
-		std::string reason;
-		XTOSTRUCT(I(JanusResponse), O(reason));
+	struct HangupResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<std::string> reason;
+
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "reason", reason);
 	};
 
-	struct MediaResponse : public JanusResponse {
-		std::string type;
-		bool receiving;
-		std::string mid;
-		XTOSTRUCT(I(JanusResponse), O(type, receiving, mid));
+	struct MediaResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<std::string> type;
+		absl::optional<bool> receiving;
+		absl::optional<std::string> mid;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "type", type, "receiving", receiving, "mid", mid);
 	};
 
-	struct SlowlinkResponse : public JanusResponse {
-		bool uplink;
-		bool lost;
-		std::string mid;
-		XTOSTRUCT(I(JanusResponse), O(uplink, lost, mid));
+	struct SlowlinkResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<bool> uplink;
+		absl::optional<bool> lost;
+		absl::optional<std::string> mid;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "uplink", uplink, "lost", lost, "mid", mid);
 	};
 
-	struct JanusEvent : public JanusResponse {
-		PluginData plugindata;
-		Jsep jsep;
-		XTOSTRUCT(I(JanusResponse), O(plugindata, jsep));
+	struct JanusEvent {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<PluginData> plugindata;
+		absl::optional<Jsep> jsep;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata, "jsep", jsep);
 	};
 
-	struct DestroyRequest : public JanusRequest {
-		int64_t session_id;
+	struct DestroyRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
 
-		XTOSTRUCT(I(JanusRequest), O(session_id));
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id);
 	};
 
 	struct CreateSessionData {
-		int64_t id;
-		XTOSTRUCT(O(id));
+		absl::optional<int64_t> id;
+		
+		FIELDS_MAP("id", id);
 	};
 
-	struct CreateSessionResponse : public JanusResponse {
-		CreateSessionData data;
-		XTOSTRUCT(I(JanusResponse), O(data));
+	struct CreateSessionResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<CreateSessionData> data;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "data", data);
 	};
 
 	struct CandidateData {
-		std::string candidate;
-		std::string sdpMid;
-		int64_t sdpMLineIndex;
-		bool completed;
-		XTOSTRUCT(O(candidate, sdpMid, sdpMLineIndex, completed));
+		absl::optional<std::string> candidate;
+		absl::optional<std::string> sdpMid;
+		absl::optional<int64_t> sdpMLineIndex;
+		absl::optional<bool> completed;
+		
+		FIELDS_MAP("candidate", candidate, "sdpMid", sdpMid, "sdpMLineIndex", sdpMLineIndex, "completed", completed);
 	};
 
-	struct TrickleRequest : public JanusRequest {
-		int64_t session_id;
-		int64_t handle_id;
-		CandidateData candidate;
-		XTOSTRUCT(I(JanusRequest), O(session_id, handle_id, candidate));
+	struct TrickleRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> handle_id;
+		absl::optional<CandidateData> candidate;
+		
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "handle_id", handle_id, "candidate", candidate);
 	};
 
-	struct TrickleResponse : public JanusResponse {
-		CandidateData candidate;
-		XTOSTRUCT(I(JanusResponse), O(candidate));
+	struct TrickleResponse {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> sender;
+		absl::optional<CandidateData> candidate;
+		
+		FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "candidate", candidate);
 
 	};
-	struct MessageRequest : public JanusRequest {
-		int64_t session_id;
-		int64_t handle_id;
-		std::string body;
-		XTOSTRUCT(I(JanusRequest), O(session_id, handle_id, body));
+	struct MessageRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> handle_id;
+		absl::optional<std::string> body;
+		
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "handle_id", handle_id, "body", body);
 	};
 
-	struct JsepRequest : public JanusRequest {
-		int64_t session_id;
-		int64_t handle_id;
-		std::string body;
-		std::string jsep;
-		XTOSTRUCT(I(JanusRequest), O(session_id, handle_id, body, jsep));
+	struct JsepRequest {
+		absl::optional<std::string> janus;
+		absl::optional<std::string> token;
+		absl::optional<std::string> apisecret;
+		absl::optional<std::string> transaction;
+		absl::optional<int64_t> session_id;
+		absl::optional<int64_t> handle_id;
+		absl::optional<std::string> body;
+		absl::optional<std::string> jsep;
+		
+		FIELDS_MAP("janus", janus, "token", token, "apisecret", apisecret, "transaction", transaction, "session_id", session_id, "handle_id", handle_id, "body", body, "jsep", jsep);
 	};
 }

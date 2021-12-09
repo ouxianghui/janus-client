@@ -7,9 +7,11 @@
 #pragma once
 
 #include <memory>
-#include "i_biz_service_factory.h"
 
-namespace core {
+namespace vi {
+    class IServiceFactory;
+    class WebRTCServiceInterface;
+}
 
 class IUnifiedFactory {
 public:
@@ -17,7 +19,10 @@ public:
 
     virtual void init() = 0;
 
-    virtual std::shared_ptr<IBizServiceFactory> getBizServiceFactory() = 0;
+	virtual void destroy() = 0;
+
+    virtual std::shared_ptr<vi::IServiceFactory> getServiceFactory() = 0;
+
+	virtual std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() = 0;
 };
 
-}

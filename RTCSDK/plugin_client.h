@@ -73,8 +73,8 @@ namespace vi {
 		void stopStatsReport() override;
 
 	protected:
-		uint64_t _id;
-		uint64_t _privateId;
+		uint64_t _id = 0;
+		uint64_t _privateId = 0;
 		std::shared_ptr<PluginContext> _pluginContext;
 
 		std::shared_ptr<TaskScheduler> _rtcStatsTaskScheduler;

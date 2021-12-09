@@ -12,25 +12,27 @@
 #include <memory>
 #include <sstream>
 
-namespace core {
-
-class AppInstance : public IAppInstance, public core::Singleton<AppInstance>
+class AppInstance : public IAppInstance, public vi::Singleton<AppInstance>
 {
 public:
     ~AppInstance() override;
 
-    void initApp() override;
+    void init() override;
 
-    void clearnup() override;
+    void destroy() override;
 
     std::shared_ptr<IUnifiedFactory> getUnifiedFactory() override;
 
 	std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() override;
 
 protected:
-    void installBizServices();
+	void initThreadProvider();
 
-	void installWebRTCService();
+	void initTaskQueueProvider();
+
+	void registerServices();
+
+	void unregisterServices();
 
 private:
     AppInstance();
@@ -38,13 +40,11 @@ private:
     AppInstance& operator=(const AppInstance&) = delete;
 
 private:
-    friend class core::Singleton<AppInstance>;
+    friend class vi::Singleton<AppInstance>;
     std::shared_ptr<IUnifiedFactory> _unifiedFactory;
-	std::shared_ptr<vi::WebRTCServiceInterface> _webrtcService;
 };
 
-}
 
-#define rtcApp core::AppInstance::instance()
+#define rtcApp AppInstance::instance()
 #define UFactory rtcApp->getUnifiedFactory()
-#define FetchService(S) UFactory->getBizServiceFactory()->getService<S>()
+#define FetchService(S) UFactory->getServiceFactory()->getService<S>()

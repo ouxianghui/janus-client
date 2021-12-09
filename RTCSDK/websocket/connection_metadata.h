@@ -9,7 +9,7 @@
 #include <memory>
 #include <websocketpp/config/asio_no_tls_client.hpp>
 #include <websocketpp/client.hpp>
-#include "Websocket/i_connection_listener.h"
+#include "websocket/i_connection_listener.h"
 
 
 typedef websocketpp::client<websocketpp::config::asio_client> client;

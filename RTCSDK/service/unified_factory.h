@@ -9,9 +9,7 @@
 #include <memory>
 #include <map>
 #include "i_unified_factory.h"
-#include "i_biz_service.h"
-
-namespace core {
+#include "utils/i_service.hpp"
 
 class UnifiedFactory : public IUnifiedFactory, public std::enable_shared_from_this<UnifiedFactory>
 {
@@ -20,11 +18,15 @@ public:
 
     void init() override;
 
-    std::shared_ptr<IBizServiceFactory> getBizServiceFactory() override;   
+	void destroy() override;
+
+    std::shared_ptr<vi::IServiceFactory> getServiceFactory() override;  
+
+	std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() override;
 
 private:
-    std::shared_ptr<IBizServiceFactory> _bizServiceFactory = nullptr;
-};
+    std::shared_ptr<vi::IServiceFactory> _serviceFactory;
 
-}
+	std::shared_ptr<vi::WebRTCServiceInterface> _webrtcService;
+};
 

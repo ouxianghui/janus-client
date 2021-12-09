@@ -1,7 +1,7 @@
 #include "janus_connection_dialog.h"
 #include "service/app_instance.h"
 #include "webrtc_service_interface.h"
-#include "thread_manager.h"
+#include "utils/thread_provider.h"
 
 JanusConnectionDialog::JanusConnectionDialog(QWidget *parent)
 	: QDialog(parent)
@@ -40,7 +40,7 @@ void JanusConnectionDialog::on_cancelConnectPushButton_clicked()
 void JanusConnectionDialog::onStatus(vi::ServiceStauts status)
 {
 	if (vi::ServiceStauts::UP == status) {
-		TMgr->thread(vi::ThreadName::MAIN)->PostTask(RTC_FROM_HERE, [wself = weak_from_this()]() {
+		TMgr->thread("main")->PostTask(RTC_FROM_HERE, [wself = weak_from_this()]() {
 			if (auto self = wself.lock()) {
 				self->accept();
 			}

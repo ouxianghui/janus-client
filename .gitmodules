@@ -1,6 +1,3 @@
-[submodule "3rd/x2struct"]
-	path = 3rd/x2struct
-	url = https://github.com/xyz347/x2struct.git
 [submodule "3rd/websocketpp"]
 	path = 3rd/websocketpp
 	url = https://github.com/zaphoyd/websocketpp.git
@@ -13,3 +10,6 @@
 [submodule "3rd/concurrentqueue"]
 	path = 3rd/concurrentqueue
 	url = https://github.com/cameron314/concurrentqueue.git
+[submodule "3rd/rapidjson"]
+	path = 3rd/rapidjson
+	url = https://github.com/Tencent/rapidjson.git

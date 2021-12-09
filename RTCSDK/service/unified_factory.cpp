@@ -5,9 +5,11 @@
  **/
 
 #include "unified_factory.h"
-#include "biz_service_factory.h"
-
-namespace core {
+#include "utils/service_factory.hpp"
+#include "webrtc_service.h"
+#include "webrtc_service_interface.h"
+#include "webrtc_service_proxy.h"
+#include "utils/thread_provider.h"
 
 UnifiedFactory::UnifiedFactory()
 {
@@ -16,17 +18,36 @@ UnifiedFactory::UnifiedFactory()
 
 void UnifiedFactory::init()
 {
-    getBizServiceFactory();
+	if (!_serviceFactory) {
+		_serviceFactory = std::make_shared<vi::ServiceFactory>();
+		_serviceFactory->init();
+	}
+
+	if (!_webrtcService) {
+		_webrtcService = vi::WebRTCServiceProxy::Create(TMgr->thread("service"), std::make_shared<vi::WebRTCService>());
+		_webrtcService->init();
+	}
 }
 
-std::shared_ptr<IBizServiceFactory> UnifiedFactory::getBizServiceFactory()
+void UnifiedFactory::destroy()
 {
-    if (!_bizServiceFactory) {
-        _bizServiceFactory = std::make_shared<BizServiceFactory>(shared_from_this());
-        _bizServiceFactory->init();
-    }
+	if (_webrtcService) {
+		_webrtcService->cleanup();
+		_webrtcService = nullptr;
+	}
 
-    return _bizServiceFactory;
+	if (_serviceFactory) {
+		_serviceFactory->destroy();
+		_serviceFactory = nullptr;
+	}
 }
 
+std::shared_ptr<vi::IServiceFactory> UnifiedFactory::getServiceFactory()
+{
+    return _serviceFactory;
+}
+
+std::shared_ptr<vi::WebRTCServiceInterface> UnifiedFactory::getWebrtcService()
+{
+	return _webrtcService;
 }

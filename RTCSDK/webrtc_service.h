@@ -16,6 +16,7 @@
 #include "i_sfu_api_client_listener.h"
 #include "webrtc_service_events.h"
 #include "webrtc_service_interface.h"
+#include "utils/universal_observable.hpp"
 
 namespace rtc {
 	class Thread;
@@ -28,11 +29,11 @@ namespace vi {
 	class WebRTCService
 		: public WebRTCServiceInterface
 		, public ISfuApiClientListener
-		, public core::Observable
+		, public UniversalObservable<IWebRTCServiceListener>
 		, public std::enable_shared_from_this<WebRTCService>
 	{
 	public:
-		WebRTCService(rtc::Thread* eventHandlerThread);
+		WebRTCService();
 
 		~WebRTCService() override;
 
@@ -182,8 +183,6 @@ namespace vi {
 		uint64_t _heartbeatTaskId = 0;
 
 		ServiceStauts _serviceStatus = ServiceStauts::DOWN;
-
-		std::vector<std::weak_ptr<IWebRTCServiceListener>> _listeners;
 
 		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _pcf;
 

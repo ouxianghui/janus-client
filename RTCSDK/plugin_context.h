@@ -44,7 +44,7 @@ namespace vi {
 		std::weak_ptr<WebRTCServiceInterface> webrtcService;
 		std::string plugin;
 		std::string opaqueId;
-		int64_t handleId;
+		int64_t handleId = -1;
 		std::string handleToken;
 		std::atomic_bool detached = false;
 		std::shared_ptr<WebrtcContext> webrtcContext;

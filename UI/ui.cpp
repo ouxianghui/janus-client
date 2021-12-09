@@ -10,7 +10,6 @@
 #include "message_models.h"
 #include "string_utils.h"
 #include "webrtc_service_events.h"
-#include "x2struct.hpp"
 #include "api/media_stream_interface.h"
 #include "gl_video_renderer.h"
 #include "participant.h"
@@ -147,8 +146,8 @@ void UI::onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
 		return;
 	}
 	if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-        if (_vr->getId() != pid) {
-            GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
+        //if (_vr->getId() != pid) {
+			GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
             renderer->init();
             renderer->show();
 
@@ -156,16 +155,16 @@ void UI::onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
             view->init();
 
             _galleryView->insertView(view);
-        }
-        else {
-            GLVideoRenderer* renderer = new GLVideoRenderer(this);
-            renderer->init();
-            renderer->show();
+   //     }
+   //     else {
+			//GLVideoRenderer* renderer = new GLVideoRenderer(this);
+   //         renderer->init();
+   //         renderer->show();
 
-            _selfContentView = std::make_shared<ContentView>(pid, track, renderer);
-            _selfContentView->init();
-            _selfView->layout()->addWidget(_selfContentView->view());
-        }
+   //         _selfContentView = std::make_shared<ContentView>(pid, track, renderer);
+   //         _selfContentView->init();
+   //         _selfView->layout()->addWidget(_selfContentView->view());
+   //     }
 	}
 }
 
@@ -200,8 +199,8 @@ void UI::on_actionPublishStream_triggered(bool checked)
 		return;
 	}
 	if (checked) {
-		vi::vr::FetchParticipantsRequest req;
-		req.room = _vr->getRoomId();
+		auto req = std::make_shared<vi::vr::FetchParticipantsRequest>();
+		req->room = _vr->getRoomId();
 		_vr->getVideoRoomApi()->fetchParticipants(req, nullptr);
 	}
 	else {
@@ -243,12 +242,12 @@ void UI::on_actionJoinRoom_triggered(bool checked)
     if (_vr) {
         RoomInfoDialog dlg;
         if (dlg.exec() == QDialog::Accepted) {
-            vi::vr::PublisherJoinRequest req;
-            req.request = "join";
-            req.room = dlg.getRoomId();
-            req.ptype = "publisher";
-            req.display = "ADSL2";
-			_vr->setRoomId(req.room);
+            auto req = std::make_shared<vi::vr::PublisherJoinRequest>();
+            req->request = "join";
+            req->room = dlg.getRoomId();
+            req->ptype = "publisher";
+            req->display = "ADSL32";
+			_vr->setRoomId(req->room.value());
             _vr->getVideoRoomApi()->join(req, nullptr);
         }
     }

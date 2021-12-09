@@ -8,16 +8,13 @@
 #include <iostream>
 #include "message_transport.h"
 #include "message_models.h"
-#include "x2struct.hpp"
 #include "string_utils.h"
 #include "logger/logger.h"
-#include "thread_manager.h"
 #include "rtc_base/thread.h"
 
 namespace vi {
 
-	JanusApiClient::JanusApiClient(rtc::Thread* callbackThread)
-		: _thread(callbackThread)
+	JanusApiClient::JanusApiClient(const std::string& callbackThreadName) : _callbackThreadName(callbackThreadName)
 	{
 		_transport = std::make_shared<MessageTransport>();
 	}
@@ -39,12 +36,12 @@ namespace vi {
 
 	void JanusApiClient::addListener(std::shared_ptr<ISfuApiClientListener> listener)
 	{
-		addBizObserver<ISfuApiClientListener>(_listeners, listener);
+		UniversalObservable<ISfuApiClientListener>::addWeakObserver(listener, _callbackThreadName);
 	}
 
 	void JanusApiClient::removeListener(std::shared_ptr<ISfuApiClientListener> listener)
 	{
-		removeBizObserver<ISfuApiClientListener>(_listeners, listener);
+		UniversalObservable<ISfuApiClientListener>::removeObserver(listener);
 	}
 
 	void JanusApiClient::init()
@@ -66,9 +63,9 @@ namespace vi {
 		request.token = _token;
 		request.apisecret = _apisecret;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -82,9 +79,9 @@ namespace vi {
 		request.apisecret = _apisecret;
 		request.session_id = sessionId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -98,9 +95,9 @@ namespace vi {
 		request.apisecret = _apisecret;
 		request.session_id = sessionId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -114,9 +111,9 @@ namespace vi {
 		request.apisecret = _apisecret;
 		request.session_id = sessionId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -132,9 +129,9 @@ namespace vi {
 		request.plugin = plugin;
 		request.opaque_id = opaqueId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -149,9 +146,9 @@ namespace vi {
 		request.session_id = sessionId;
 		request.handle_id = handleId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -168,9 +165,9 @@ namespace vi {
 			request.handle_id = handleId;
 			request.body = "#-MESSAGE-#";
 
-			auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+			auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-			std::string data = x2struct::X::tojson(request);
+			std::string data = request.toJsonStr();
 			DLOG("before replace, data = {}", data.c_str());
 			std::string tag("\"#-MESSAGE-#\"");
 			size_t pos = data.find(tag);
@@ -191,9 +188,9 @@ namespace vi {
 			request.body = "#-MESSAGE-#";
 			request.jsep = "#-JSEP-#";
 
-			auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+			auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-			std::string data = x2struct::X::tojson(request);
+			std::string data = request.toJsonStr();
 
 			DLOG("before replace, data = {}", data.c_str());
 
@@ -227,9 +224,9 @@ namespace vi {
 		request.handle_id = handleId;
 		request.candidate = candidate;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
@@ -244,93 +241,64 @@ namespace vi {
 		request.session_id = sessionId;
 		request.handle_id = handleId;
 
-		auto handler = std::make_shared<JCHandler>(request.transaction, wrapAsyncCallback(callback));
+		auto handler = std::make_shared<JCHandler>(request.transaction.value(), wrapAsyncCallback(callback));
 
-		std::string data = x2struct::X::tojson(request);
+		std::string data = request.toJsonStr();
 
 		_transport->send(data, handler);
 	}
 
 	void JanusApiClient::onOpened()
 	{
-		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISfuApiClientListener>& listener) {
+		UniversalObservable<ISfuApiClientListener>::notifyObservers([wself = weak_from_this()](const auto& observer) {
 			if (auto self = wself.lock()) {
-				if (self->_thread) {
-					self->_thread->PostTask(RTC_FROM_HERE, [listener]() {
-						listener->onOpened();
-					});
-				}
-				else {
-					listener->onOpened();
-				}
+				observer->onOpened();
 			}
 		});
 	}
 
 	void JanusApiClient::onClosed()
 	{
-		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this()](const std::shared_ptr<ISfuApiClientListener>& listener) {
+		UniversalObservable<ISfuApiClientListener>::notifyObservers([wself = weak_from_this()](const auto& observer) {
 			if (auto self = wself.lock()) {
-				if (self->_thread) {
-					self->_thread->PostTask(RTC_FROM_HERE, [listener]() {
-						listener->onClosed();
-					});
-				}
-				else {
-					listener->onClosed();
-				}
+				observer->onClosed();
 			}
 		});
 	}
 
 	void JanusApiClient::onFailed(int errorCode, const std::string& reason)
 	{
-		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), errorCode, reason](const std::shared_ptr<ISfuApiClientListener>& listener) {
+		UniversalObservable<ISfuApiClientListener>::notifyObservers([wself = weak_from_this(), errorCode, reason](const auto& observer) {
 			if (auto self = wself.lock()) {
-				if (self->_thread) {
-					self->_thread->PostTask(RTC_FROM_HERE, [listener, errorCode, reason]() {
-						listener->onFailed(errorCode, reason);
-					});
-				}
-				else {
-					listener->onFailed(errorCode, reason);
-				}
+				observer->onFailed(errorCode, reason);
 			}
 		});
 	}
 
 	void JanusApiClient::onMessage(const std::string& json)
 	{
-		notifyObserver4Change<ISfuApiClientListener>(_listeners, [wself = weak_from_this(), json](const std::shared_ptr<ISfuApiClientListener>& listener) {
+		UniversalObservable<ISfuApiClientListener>::notifyObservers([wself = weak_from_this(), json](const auto& observer) {
 			if (auto self = wself.lock()) {
-				if (self->_thread) {
-					self->_thread->PostTask(RTC_FROM_HERE, [listener, json]() {
-						listener->onMessage(json);
-					});
-				}
-				else {
-					listener->onMessage(json);
-				}
+				observer->onMessage(json);
 			}
 		});
 	}
 
 	std::shared_ptr<JCCallback> JanusApiClient::wrapAsyncCallback(std::shared_ptr<JCCallback> callback)
 	{
-		if (!_thread) {
-			return callback;
-		}
-		else {
-			auto lambda = [wself = weak_from_this(), callback](const std::string& json) {
-				if (auto self = wself.lock()) {
-					if (self->_thread && callback) {
-						self->_thread->PostTask(RTC_FROM_HERE, [callback, json]() {
-							(*callback)(json);
-						});
-					}
+		auto lambda = [wself = weak_from_this(), callback](const std::string& json) {
+			if (auto self = wself.lock()) {
+				if (callback) {
+					self->UniversalObservable<ISfuApiClientListener>::notifyObservers([wself, callback, json](const auto& observer) {
+						if (auto self = wself.lock()) {
+							if (callback) {
+								(*callback)(json);
+							}
+						}
+					});
 				}
-			};
-			return std::make_shared<JCCallback>(lambda);
-		}
+			}
+		};
+		return std::make_shared<JCCallback>(lambda);
 	}
 }

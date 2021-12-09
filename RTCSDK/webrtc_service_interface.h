@@ -9,13 +9,11 @@
 #include <memory>
 #include <functional>
 #include "webrtc_service_events.h"
-#include "Service/abstract_biz_service.h"
-#include "Service/i_unified_factory.h"
+#include "service/i_unified_factory.h"
 #include "i_webrtc_service_listener.h"
 
 namespace vi {
 	class PluginClient;
-	using namespace core;
 	class WebRTCServiceInterface
 	{
 	public:

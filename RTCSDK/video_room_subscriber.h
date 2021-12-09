@@ -2,7 +2,7 @@
 
 #include <functional>
 #include "plugin_client.h"
-#include "service/observable.h"
+#include "utils/universal_observable.hpp"
 #include "video_room_models.h"
 
 namespace vi {
@@ -11,7 +11,7 @@ namespace vi {
 
 	using DelayedTask = std::function<void()>;
 
-	class VideoRoomSubscriber : public PluginClient, public core::Observable
+	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomListener>
 	{
 	public:
 		VideoRoomSubscriber(std::shared_ptr<WebRTCServiceInterface> wrs, const std::string& pluginName, const std::string& opaqueId);
@@ -72,8 +72,6 @@ namespace vi {
 		int64_t _roomId;
 
 		std::weak_ptr<IVideoRoomApi> _videoRoomApi;
-
-		std::shared_ptr<std::vector<std::weak_ptr<IVideoRoomListener>>> _listeners;
 
 		// key: mid
 		std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _remoteStreams;

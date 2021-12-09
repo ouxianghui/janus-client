@@ -28,14 +28,11 @@
 #include "pc/video_track_source.h"
 #include "local_video_capture.h"
 #include "gl_video_renderer.h"
-#include "task_scheduler.h"
-#include "logger/logger_installer.h"
-#include "thread_manager.h"
 #include "participant.h"
 #include "api/media_stream_interface.h"
 #include "janus_connection_dialog.h"
-
-using namespace core;
+#include "rtc_base/win32_socket_init.h"
+#include "rtc_base/physical_socket_server.h"
 
 static void registerMetaTypes()
 {
@@ -56,27 +53,32 @@ static void initOpenGL() {
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 }
+bool g_showCrashDialog = false;
 
+LONG WINAPI OurCrashHandler(EXCEPTION_POINTERS* exceptionInfo)
+{
+	std::cout << "Gotcha: " << exceptionInfo->ExceptionRecord->ExceptionInformation << std::endl;
+
+	return g_showCrashDialog ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER;
+}
 int main(int argc, char *argv[])
 {
-	vi::LoggerInstaller::instance()->install();
-
-	registerMetaTypes();
+	::SetUnhandledExceptionFilter(OurCrashHandler);
 
 	rtc::WinsockInitializer winsockInit;
 	rtc::Win32SocketServer w32ss;
 	rtc::Win32Thread w32Thread(&w32ss);
 	rtc::ThreadManager::Instance()->SetCurrentThread(&w32Thread);
 
-	TMgr->init();
+	rtcApp->init(); 
+
+	registerMetaTypes();
 
 	rtc::InitializeSSL();
 
 	QApplication a(argc, argv);
 
 	initOpenGL();
-
-	rtcApp->initApp();
 
 	int ret = 0;
 
@@ -95,13 +97,11 @@ int main(int argc, char *argv[])
 		ret = a.exec();
 	}
 
-	rtcApp->clearnup();
+	rtcApp->destroy();
 
 	rtc::CleanupSSL();
 
-	TMgr->destroy();
-
-	vi::LoggerInstaller::instance()->uninstall();
+	TMgr->stopAll();
 
 	return ret; 
 }

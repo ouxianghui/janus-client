@@ -16,7 +16,7 @@ namespace vi
 
 	void RTCLogSink::OnLogMessage(const std::string& message, rtc::LoggingSeverity severity) 
 	{
-		RTC_TLOG(message);
+		TLOG_RTC(message);
 	}
 
 	void RTCLogSink::OnLogMessage(const std::string& message) 
