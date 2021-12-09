@@ -11,10 +11,6 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <mutex>
-//#include "api/task_queue/queued_task.h"
-//#include "api/task_queue/task_queue_base.h"
-//#include "api/task_queue/task_queue_factory.h"
-//#include "api/task_queue/default_task_queue_factory.h"
 #include "absl/memory/memory.h"
 #include <iostream>
 #include <chrono>
@@ -145,7 +141,6 @@ namespace vi {
 
 		void init() {
 			std::string schedulerId = "post-" + std::to_string((uint64_t)this);
-			//_taskQueue = _factory->CreateTaskQueue(schedulerId, webrtc::TaskQueueFactory::Priority::NORMAL);
 			_thread = rtc::Thread::Create();
 			_thread->SetName(schedulerId, nullptr);
 			_thread->Start();
@@ -159,7 +154,6 @@ namespace vi {
 				std::lock_guard<std::mutex> lock(_mutex);
 				_taskIdSet.emplace(id);
 			}
-			//_taskQueue->PostDelayedTask(std::move(task), milliseconds);
 			_thread->PostDelayedTask(std::move(task), milliseconds);
 
 			return id;
@@ -173,7 +167,6 @@ namespace vi {
 				std::lock_guard<std::mutex> lock(_mutex);
 				_taskIdSet.emplace(id);
 			}
-			//_taskQueue->PostDelayedTask(std::move(task), milliseconds);
 			_thread->PostDelayedTask(std::move(task), milliseconds);
 			return id;
 		}
@@ -191,8 +184,6 @@ namespace vi {
 	private:
 		std::mutex _mutex;
 		std::unordered_set<uint64_t> _taskIdSet;
-		//static std::unique_ptr<webrtc::TaskQueueFactory> _factory;
-		//std::unique_ptr<webrtc::TaskQueueBase, webrtc::TaskQueueDeleter> _taskQueue;
 		std::shared_ptr<rtc::Thread> _thread;
 	};
 

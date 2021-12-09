@@ -7,10 +7,10 @@
 #pragma once
 
 namespace vi {
-	class TextRoom
+	class TextRoomClient
 	{
 	public:
-		TextRoom();
-		~TextRoom();
+		TextRoomClient();
+		~TextRoomClient();
 	};
 }

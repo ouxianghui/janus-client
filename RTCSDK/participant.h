@@ -7,7 +7,7 @@
 #pragma once
 
 #include "plugin_client.h"
-#include "i_video_room_listener.h"
+#include "i_video_room_event_handler.h"
 
 namespace vi {
 	class Participant

@@ -26,14 +26,14 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomSubscriber::addListener(std::shared_ptr<IVideoRoomListener> listener)
+	void VideoRoomSubscriber::registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
 	{
-		UniversalObservable<IVideoRoomListener>::addWeakObserver(listener, std::string("main"));
+		UniversalObservable<IVideoRoomEventHandler>::addWeakObserver(handler, std::string("main"));
 	}
 
-	void VideoRoomSubscriber::removeListener(std::shared_ptr<IVideoRoomListener> listener)
+	void VideoRoomSubscriber::unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
 	{
-		UniversalObservable<IVideoRoomListener>::removeObserver(listener);
+		UniversalObservable<IVideoRoomEventHandler>::removeObserver(handler);
 	}
 
 	void VideoRoomSubscriber::setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi)
@@ -338,7 +338,7 @@ namespace vi {
 	void VideoRoomSubscriber::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on)
 	{
 		if (on) {
-			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
@@ -359,7 +359,7 @@ namespace vi {
 			});
 		}
 		else {
-			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;

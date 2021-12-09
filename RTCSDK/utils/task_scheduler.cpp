@@ -8,8 +8,6 @@
 #include "rtc_base/thread.h"
 
 namespace vi {
-	//std::unique_ptr<webrtc::TaskQueueFactory> TaskScheduler::_factory = webrtc::CreateDefaultTaskQueueFactory();
-
 	std::shared_ptr<TaskScheduler> TaskScheduler::create()
 	{
 		return std::shared_ptr<TaskScheduler>(new TaskScheduler(), [thread = rtc::Thread::Current()](TaskScheduler* ptr){

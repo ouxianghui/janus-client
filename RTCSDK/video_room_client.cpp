@@ -4,7 +4,7 @@
  * Created:   2020-10-01
  **/
 
-#include "video_room.h"
+#include "video_room_client.h"
 #include "string_utils.h"
 #include "logger/logger.h"
 #include "participant.h"
@@ -16,14 +16,14 @@
 #include "pc/media_stream_track_proxy.h"
 
 namespace vi {
-	VideoRoom::VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs)
+	VideoRoomClient::VideoRoomClient(std::shared_ptr<WebRTCServiceInterface> wrs)
 		: PluginClient(wrs)
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
 	}
 
-	VideoRoom::~VideoRoom()
+	VideoRoomClient::~VideoRoomClient()
 	{
 		DLOG("~VideoRoom()");
 		if (_pluginContext->webrtcContext->pc) {
@@ -31,7 +31,7 @@ namespace vi {
 		}
 	}
 
-	void VideoRoom::init()
+	void VideoRoomClient::init()
 	{
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
@@ -39,42 +39,42 @@ namespace vi {
 		_subscriber->setRoomApi(_videoRoomApi);
 	}
 
-	void VideoRoom::addListener(std::shared_ptr<IVideoRoomListener> listener)
+	void VideoRoomClient::registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
 	{
-		UniversalObservable<IVideoRoomListener>::addWeakObserver(listener, std::string("main"));
+		UniversalObservable<IVideoRoomEventHandler>::addWeakObserver(handler, std::string("main"));
 
-		_subscriber->addListener(listener);
+		_subscriber->registerEventHandler(handler);
 	}
 
-	void VideoRoom::removeListener(std::shared_ptr<IVideoRoomListener> listener)
+	void VideoRoomClient::unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
 	{
-		UniversalObservable<IVideoRoomListener>::removeObserver(listener);
+		UniversalObservable<IVideoRoomEventHandler>::removeObserver(handler);
 
-		_subscriber->removeListener(listener);
+		_subscriber->unregisterEventHandler(handler);
 	}
 
-	std::shared_ptr<Participant> VideoRoom::getParticipant(int64_t pid)
+	std::shared_ptr<Participant> VideoRoomClient::getParticipant(int64_t pid)
 	{
 		return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
 	}
 
-	void VideoRoom::setRoomId(int64_t roomId)
+	void VideoRoomClient::setRoomId(int64_t roomId)
 	{
 		_roomId = roomId;
 		_subscriber->setRoomId(_roomId);
 	}
 
-	int64_t VideoRoom::getRoomId() const
+	int64_t VideoRoomClient::getRoomId() const
 	{
 		return _roomId;
 	}
 
-	std::shared_ptr<IVideoRoomApi> VideoRoom::getVideoRoomApi()
+	std::shared_ptr<IVideoRoomApi> VideoRoomClient::getVideoRoomApi()
 	{
 		return _videoRoomApi;
 	}
 
-	void VideoRoom::onAttached(bool success)
+	void VideoRoomClient::onAttached(bool success)
 	{
 		if (success) {
 			DLOG("Plugin attached! ({}, id = {})", _pluginContext->plugin.c_str(), _id);
@@ -85,16 +85,16 @@ namespace vi {
 		}
 	}
 
-	void VideoRoom::onHangup() {}
+	void VideoRoomClient::onHangup() {}
 
-	void VideoRoom::onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) {}
+	void VideoRoomClient::onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) {}
 
-	void VideoRoom::onMediaState(const std::string& media, bool on, const std::string& mid)
+	void VideoRoomClient::onMediaState(const std::string& media, bool on, const std::string& mid)
 	{
 		DLOG("Janus {} receiving our {}", (on ? "started" : "stopped"), media.c_str());
 	}
 
-	void VideoRoom::onWebrtcState(bool isActive, const std::string& reason)
+	void VideoRoomClient::onWebrtcState(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
@@ -114,7 +114,7 @@ namespace vi {
 				});
 			}
 
-			UniversalObservable<IVideoRoomListener>::notifyObservers([isActive, reason](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([isActive, reason](const auto& observer) {
 				observer->onMediaState(isActive, reason);
 			});
 		}
@@ -122,9 +122,9 @@ namespace vi {
 		startStatsReport();
 	}
 
-	void VideoRoom::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
+	void VideoRoomClient::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
 
-	void VideoRoom::onMessage(const std::string& data, const std::string& jsepString)
+	void VideoRoomClient::onMessage(const std::string& data, const std::string& jsepString)
 	{
 		DLOG(" ::: Got a message (publisher).");
 
@@ -280,10 +280,10 @@ namespace vi {
 		}
 	}
 
-	void VideoRoom::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on)
+	void VideoRoomClient::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on)
 	{
 		if (on) {
-			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
@@ -292,13 +292,13 @@ namespace vi {
 					return;
 				}
 
-				auto vr = std::dynamic_pointer_cast<VideoRoom>(self);
+				auto vrc = std::dynamic_pointer_cast<VideoRoomClient>(self);
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					vr->_localStreams[track->id()] = webrtc::MediaStream::Create(track->id());
+					vrc->_localStreams[track->id()] = webrtc::MediaStream::Create(track->id());
 					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					vr->_localStreams[track->id()]->AddTrack(vt);
-					auto t = vr->_localStreams[track->id()]->GetVideoTracks()[0];
+					vrc->_localStreams[track->id()]->AddTrack(vt);
+					auto t = vrc->_localStreams[track->id()]->GetVideoTracks()[0];
 					//auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
 					observer->onCreateVideoTrack(pid, vt);
 				}
@@ -306,7 +306,7 @@ namespace vi {
 
 		}
 		else {
-			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
 				auto self = wself.lock();
 				if (!self) {
 					return;
@@ -315,38 +315,38 @@ namespace vi {
 					return;
 				}
 
-				auto vr = std::dynamic_pointer_cast<VideoRoom>(self);
+				auto vrc = std::dynamic_pointer_cast<VideoRoomClient>(self);
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					if (vr->_localStreams.find(track->id()) != vr->_localStreams.end()) {
-						auto vt = vr->_localStreams[track->id()]->GetVideoTracks()[0];
+					if (vrc->_localStreams.find(track->id()) != vrc->_localStreams.end()) {
+						auto vt = vrc->_localStreams[track->id()]->GetVideoTracks()[0];
 						//auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
 						observer->onRemoveVideoTrack(pid, vt);
 
-						vr->_localStreams[track->id()]->RemoveTrack(vt.get());
-						auto it = vr->_localStreams.find(track->id());
-						vr->_localStreams.erase(it);
+						vrc->_localStreams[track->id()]->RemoveTrack(vt.get());
+						auto it = vrc->_localStreams.find(track->id());
+						vrc->_localStreams.erase(it);
 					}
 				}
 			});
 		}
 	}
 
-	void VideoRoom::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) {}
+	void VideoRoomClient::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) {}
 
-	void VideoRoom::onData(const std::string& data, const std::string& label) {}
+	void VideoRoomClient::onData(const std::string& data, const std::string& label) {}
 
-	void VideoRoom::onDataOpen(const std::string& label) {}
+	void VideoRoomClient::onDataOpen(const std::string& label) {}
 
-	void VideoRoom::onCleanup()
+	void VideoRoomClient::onCleanup()
 	{
 		_pluginContext->webrtcContext->myStream = nullptr;
 	}
 
-	void VideoRoom::onDetached() {}
+	void VideoRoomClient::onDetached() {}
 
-	void VideoRoom::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
+	void VideoRoomClient::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
 
-	void VideoRoom::publishOwnStream(bool audioOn)
+	void VideoRoomClient::publishOwnStream(bool audioOn)
 	{
 		auto wself = weak_from_this();
 		auto event = std::make_shared<PrepareWebRTCEvent>();
@@ -390,7 +390,7 @@ namespace vi {
 		createOffer(event);
 	}
 
-	void VideoRoom::unpublishOwnStream()
+	void VideoRoomClient::unpublishOwnStream()
 	{
 		vr::UnpublishRequest request;
 		if (auto webrtcService = pluginContext()->webrtcService.lock()) {
@@ -405,20 +405,20 @@ namespace vi {
 		}
 	}
 
-	void VideoRoom::createParticipant(const ParticipantSt& info)
+	void VideoRoomClient::createParticipant(const ParticipantSt& info)
 	{
 		auto participant = std::make_shared<Participant>(info.id, info.displayName);
 
 		_participantsMap[info.id] = participant;
-		UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), participant](const auto& observer) {
+		UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), participant](const auto& observer) {
 			observer->onCreateParticipant(participant);
 		});
 	}
 
-	void VideoRoom::removeParticipant(int64_t id)
+	void VideoRoomClient::removeParticipant(int64_t id)
 	{
 		if (_participantsMap.find(id) != _participantsMap.end()) {
-			UniversalObservable<IVideoRoomListener>::notifyObservers([wself = weak_from_this(), participant = _participantsMap[id]](const auto& observer) {
+			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), participant = _participantsMap[id]](const auto& observer) {
 				observer->onRemoveParticipant(participant);
 			});
 		}

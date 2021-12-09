@@ -8,7 +8,7 @@
 
 #include "plugin_client.h"
 #include "utils/universal_observable.hpp"
-#include "i_video_room_listener.h"
+#include "i_video_room_event_handler.h"
 
 
 namespace webrtc {
@@ -26,18 +26,18 @@ namespace vi {
 		std::string displayName;
 	};
 
-	class VideoRoom : public PluginClient, public UniversalObservable<IVideoRoomListener>
+	class VideoRoomClient : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoom(std::shared_ptr<WebRTCServiceInterface> wrs);
+		VideoRoomClient(std::shared_ptr<WebRTCServiceInterface> wrs);
 
-		~VideoRoom();
+		~VideoRoomClient();
 
 		void init();
 
-		void addListener(std::shared_ptr<IVideoRoomListener> listener);
+		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
-		void removeListener(std::shared_ptr<IVideoRoomListener> listener);
+		void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
 		std::shared_ptr<Participant> getParticipant(int64_t pid);
 

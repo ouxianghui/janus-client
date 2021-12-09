@@ -9,22 +9,22 @@
 #include <QObject>
 #include <memory>
 #include "participant.h"
-#include "i_video_room_listener.h"
+#include "i_video_room_event_handler.h"
 
 
-class VideoRoomListenerProxy 
+class VideoRoomEventProxy 
 	: public QObject
-	, public vi::IVideoRoomListener
-	, public std::enable_shared_from_this<VideoRoomListenerProxy>
+	, public vi::IVideoRoomEventHandler
+	, public std::enable_shared_from_this<VideoRoomEventProxy>
 {
 	Q_OBJECT
 
 public:
-	VideoRoomListenerProxy(QObject *parent);
-	~VideoRoomListenerProxy();
+	VideoRoomEventProxy(QObject *parent);
+	~VideoRoomEventProxy();
 
 private:
-	// IVideoRoomListener
+	// IVideoRoomEventHandler
 	void onMediaState(bool isActive, const std::string& reason) override;
 
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;

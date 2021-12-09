@@ -6,7 +6,7 @@
 
 namespace vi {
 	class Participant;
-	class VideoRoom;
+	class VideoRoomClient;
 }
 
 class ParticipantsListView : public QWidget, public std::enable_shared_from_this<ParticipantsListView>
@@ -14,7 +14,7 @@ class ParticipantsListView : public QWidget, public std::enable_shared_from_this
 	Q_OBJECT
 
 public:
-	ParticipantsListView(std::shared_ptr<vi::VideoRoom> vr, QWidget *parent = Q_NULLPTR);
+	ParticipantsListView(std::shared_ptr<vi::VideoRoomClient> vr, QWidget *parent = Q_NULLPTR);
 	~ParticipantsListView();
 
 	void addParticipant(std::shared_ptr<vi::Participant> participant);
@@ -25,5 +25,5 @@ public:
 
 private:
 	Ui::ParticipantsListView ui;
-	std::weak_ptr<vi::VideoRoom> _videoRoom;
+	std::weak_ptr<vi::VideoRoomClient> _vrc;
 };

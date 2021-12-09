@@ -23,7 +23,7 @@
     <ClInclude Include="i_sfu_api_client_listener.h" />
     <ClInclude Include="i_text_room_listener.h" />
     <ClInclude Include="i_video_room_api.h" />
-    <ClInclude Include="i_video_room_listener.h" />
+    <ClInclude Include="i_video_room_event_handler.h" />
     <ClInclude Include="i_webrtc_event_handler.h" />
     <ClInclude Include="i_webrtc_service_listener.h" />
     <ClInclude Include="janus_api_client.h" />
@@ -47,7 +47,7 @@
     <ClInclude Include="service\i_unified_factory.h" />
     <ClInclude Include="service\unified_factory.h" />
     <ClInclude Include="string_utils.h" />
-    <ClInclude Include="text_room.h" />
+    <ClInclude Include="text_room_client.h" />
     <ClInclude Include="utils\interface_proxy.hpp" />
     <ClInclude Include="utils\i_notification.h" />
     <ClInclude Include="utils\i_observer.hpp" />
@@ -65,7 +65,7 @@
     <ClInclude Include="utils\task_scheduler.h" />
     <ClInclude Include="utils\thread_provider.h" />
     <ClInclude Include="utils\universal_observable.hpp" />
-    <ClInclude Include="video_room.h" />
+    <ClInclude Include="video_room_client.h" />
     <ClInclude Include="video_room_api.h" />
     <ClInclude Include="video_room_models.h" />
     <ClInclude Include="video_room_subscriber.h" />
@@ -94,14 +94,14 @@
     <ClCompile Include="service\app_instance.cpp" />
     <ClCompile Include="service\unified_factory.cpp" />
     <ClCompile Include="string_utils.cpp" />
-    <ClCompile Include="text_room.cpp" />
+    <ClCompile Include="text_room_client.cpp" />
     <ClCompile Include="utils\notification_center.cpp" />
     <ClCompile Include="utils\notification_keys.cpp" />
     <ClCompile Include="utils\service_factory.cpp" />
     <ClCompile Include="utils\task_queue_provider.cpp" />
     <ClCompile Include="utils\task_scheduler.cpp" />
     <ClCompile Include="utils\thread_provider.cpp" />
-    <ClCompile Include="video_room.cpp" />
+    <ClCompile Include="video_room_client.cpp" />
     <ClCompile Include="video_room_api.cpp" />
     <ClCompile Include="video_room_subscriber.cpp" />
     <ClCompile Include="weak_proxy.cpp" />

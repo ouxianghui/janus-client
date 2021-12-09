@@ -6,7 +6,7 @@
 #include <QToolButton>
 #include "Service/app_instance.h"
 #include "webrtc_service_interface.h"
-#include "video_room.h"
+#include "video_room_client.h"
 #include "message_models.h"
 #include "string_utils.h"
 #include "webrtc_service_events.h"
@@ -14,7 +14,7 @@
 #include "gl_video_renderer.h"
 #include "participant.h"
 #include "logger/logger.h"
-#include "video_room_listener_proxy.h"
+#include "video_room_event_proxy.h"
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
 #include "room_info_dialog.h"
@@ -26,13 +26,13 @@ UI::UI(QWidget *parent)
     //ui.mainToolBar->setFixedHeight(64);
     this->setWindowState(Qt::WindowMaximized);
 
-	_videoRoomListenerProxy = std::make_shared<VideoRoomListenerProxy>(this);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::mediaState, this, &UI::onMediaState, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
-	connect(_videoRoomListenerProxy.get(), &VideoRoomListenerProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
+	_videoRoomEventProxy = std::make_shared<VideoRoomEventProxy>(this);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::mediaState, this, &UI::onMediaState, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
 
     ui.actionAudio->setEnabled(false);
     ui.actionVideo->setEnabled(false);
@@ -52,9 +52,9 @@ UI::~UI()
 void UI::init()
 {
 	auto wrs = rtcApp->getWebrtcService();
-	_vr = std::make_shared<vi::VideoRoom>(wrs);
-	_vr->init();
-	_vr->addListener(_videoRoomListenerProxy);
+	_vrc = std::make_shared<vi::VideoRoomClient>(wrs);
+	_vrc->init();
+	_vrc->registerEventHandler(_videoRoomEventProxy);
 
 	_galleryView = new GalleryView(this);
 	setCentralWidget(_galleryView);
@@ -82,7 +82,7 @@ void UI::init()
     buttonsViewLayout->addWidget(videoButton, 1);
     dockContentViewLayout->addWidget(buttonsView, 1);
 
-	_participantsListView = std::make_shared<ParticipantsListView>(_vr, this);
+	_participantsListView = std::make_shared<ParticipantsListView>(_vrc, this);
 	_participantsListView->setFixedWidth(200);
     dockContentViewLayout->addWidget(_participantsListView.get(), 400);
 
@@ -104,15 +104,15 @@ void UI::onMediaState(bool isActive, const std::string& reason)
 	if (isActive) {
 		ui.actionAudio->setEnabled(true);
 		ui.actionVideo->setEnabled(true);
-		if (_vr) {
-			if (_vr->isAudioMuted("")) {
+		if (_vrc) {
+			if (_vrc->isAudioMuted("")) {
 				ui.actionAudio->setChecked(false);
 			}
 			else {
 				ui.actionAudio->setChecked(true);
 			}
 
-			if (_vr->isVideoMuted("")) {
+			if (_vrc->isVideoMuted("")) {
 				ui.actionVideo->setChecked(false);
 			}
 			else {
@@ -146,7 +146,7 @@ void UI::onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
 		return;
 	}
 	if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-        //if (_vr->getId() != pid) {
+        //if (_vrc->getId() != pid) {
 			GLVideoRenderer* renderer = new GLVideoRenderer(_galleryView);
             renderer->init();
             renderer->show();
@@ -175,7 +175,7 @@ void UI::onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
 
 void UI::closeEvent(QCloseEvent* event)
 {
-	//_vr->hangup(true);
+	//_vrc->hangup(true);
 	if (_galleryView) {
 		_galleryView->removeAll();
 	}
@@ -184,8 +184,8 @@ void UI::closeEvent(QCloseEvent* event)
 void UI::on_actionAttachRoom_triggered(bool checked)
 {
 	if (checked) {
-		if (_vr) {
-			_vr->attach();
+		if (_vrc) {
+			_vrc->attach();
 		}
 	}
 	else {
@@ -195,13 +195,13 @@ void UI::on_actionAttachRoom_triggered(bool checked)
 
 void UI::on_actionPublishStream_triggered(bool checked)
 {
-	if (!_vr) {
+	if (!_vrc) {
 		return;
 	}
 	if (checked) {
 		auto req = std::make_shared<vi::vr::FetchParticipantsRequest>();
-		req->room = _vr->getRoomId();
-		_vr->getVideoRoomApi()->fetchParticipants(req, nullptr);
+		req->room = _vrc->getRoomId();
+		_vrc->getVideoRoomApi()->fetchParticipants(req, nullptr);
 	}
 	else {
 	}
@@ -239,7 +239,7 @@ void UI::on_actionCreateRoom_triggered()
 
 void UI::on_actionJoinRoom_triggered(bool checked)
 {
-    if (_vr) {
+    if (_vrc) {
         RoomInfoDialog dlg;
         if (dlg.exec() == QDialog::Accepted) {
             auto req = std::make_shared<vi::vr::PublisherJoinRequest>();
@@ -247,35 +247,35 @@ void UI::on_actionJoinRoom_triggered(bool checked)
             req->room = dlg.getRoomId();
             req->ptype = "publisher";
             req->display = "ADSL32";
-			_vr->setRoomId(req->room.value());
-            _vr->getVideoRoomApi()->join(req, nullptr);
+			_vrc->setRoomId(req->room.value());
+            _vrc->getVideoRoomApi()->join(req, nullptr);
         }
     }
 }
 
 void UI::on_actionAudio_triggered(bool checked)
 {
-	if (!_vr) {
+	if (!_vrc) {
 		return;
 	}
 
 	if (checked) {
-		_vr->unmuteAudio("");
+		_vrc->unmuteAudio("");
 	}
 	else {
-		_vr->muteAudio("");
+		_vrc->muteAudio("");
 	}
 }
 
 void UI::on_actionVideo_triggered(bool checked)
 {
-	if (!_vr) {
+	if (!_vrc) {
 		return;
 	}
 
 	if (checked) {
-		_vr->unmuteVideo("");
+		_vrc->unmuteVideo("");
 	} else {
-		_vr->muteVideo("");
+		_vrc->muteVideo("");
 	}
 }

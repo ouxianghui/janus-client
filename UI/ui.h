@@ -4,7 +4,7 @@
 #include "ui_ui.h"
 #include <memory>
 #include "i_webrtc_service_listener.h"
-#include "video_room.h"
+#include "video_room_client.h"
 #include "gl_video_renderer.h"
 #include "gallery_view.h"
 #include <QCloseEvent>
@@ -14,7 +14,7 @@ namespace vi {
 	class Participant;
 }
 
-class VideoRoomListenerProxy;
+class VideoRoomEventProxy;
 
 class UI
 	: public QMainWindow
@@ -36,7 +36,7 @@ private slots:
 	// IWebRTCServiceListener
 	void onStatus(vi::ServiceStauts status) override;
 
-	// IVideoRoomListener
+	// IVideoRoomEventHandler
 	void onMediaState(bool isActive, const std::string& reason);
 
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
@@ -78,7 +78,7 @@ private slots:
 private:
 	Ui::UIClass ui;
 
-	std::shared_ptr<vi::VideoRoom> _vr;
+	std::shared_ptr<vi::VideoRoomClient> _vrc;
 
     std::shared_ptr<IContentView> _selfContentView;
 
@@ -86,7 +86,7 @@ private:
 
 	GalleryView* _galleryView;
 
-	std::shared_ptr<VideoRoomListenerProxy> _videoRoomListenerProxy;
+	std::shared_ptr<VideoRoomEventProxy> _videoRoomEventProxy;
 
 	std::shared_ptr<ParticipantsListView> _participantsListView;
 };

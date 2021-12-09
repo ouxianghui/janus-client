@@ -4,14 +4,14 @@
  * Created:   2020-10-01
  **/
 
-#include "text_room.h"
+#include "text_room_client.h"
 
 namespace vi {
-	TextRoom::TextRoom()
+	TextRoomClient::TextRoomClient()
 	{
 	}
 
-	TextRoom::~TextRoom()
+	TextRoomClient::~TextRoomClient()
 	{
 	}
 }

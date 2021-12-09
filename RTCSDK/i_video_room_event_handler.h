@@ -16,9 +16,9 @@ namespace webrtc {
 
 namespace vi {
 	class Participant;
-	class IVideoRoomListener {
+	class IVideoRoomEventHandler {
 	public:
-		virtual ~IVideoRoomListener() {}
+		virtual ~IVideoRoomEventHandler() {}
 
 		virtual void onMediaState(bool isActive, const std::string& reason) = 0;
 

@@ -6,21 +6,21 @@
 #include "video_room_models.h"
 
 namespace vi {
-	class IVideoRoomListener;
+	class IVideoRoomEventHandler;
 	class IVideoRoomApi;
 
 	using DelayedTask = std::function<void()>;
 
-	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomListener>
+	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
 		VideoRoomSubscriber(std::shared_ptr<WebRTCServiceInterface> wrs, const std::string& pluginName, const std::string& opaqueId);
 
 		~VideoRoomSubscriber();
 
-		void addListener(std::shared_ptr<IVideoRoomListener> listener);
+		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
-		void removeListener(std::shared_ptr<IVideoRoomListener> listener);
+		void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
 		void setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi);
 

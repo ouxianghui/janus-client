@@ -1,15 +1,15 @@
 #include "participants_list_view.h"
 #include "participant.h"
-#include "video_room.h"
+#include "video_room_client.h"
 #include "participant_item_view.h"
 #include <QListWidgetItem>
 #include <QVariant>
 
 
 
-ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoom> vr, QWidget *parent)
+ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoomClient> vrc, QWidget *parent)
 	: QWidget(parent)
-	, _videoRoom(vr)
+	, _vrc(vrc)
 {
 	ui.setupUi(this);
 	ui.listWidgetParticipants->setViewMode(QListView::ListMode);  
