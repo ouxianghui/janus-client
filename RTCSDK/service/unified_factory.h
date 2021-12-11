@@ -22,11 +22,11 @@ public:
 
     std::shared_ptr<vi::IServiceFactory> getServiceFactory() override;  
 
-	std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() override;
+	std::shared_ptr<vi::SignalingServiceInterface> getSignalingService() override;
 
 private:
     std::shared_ptr<vi::IServiceFactory> _serviceFactory;
 
-	std::shared_ptr<vi::WebRTCServiceInterface> _webrtcService;
+	std::shared_ptr<vi::SignalingServiceInterface> _webrtcService;
 };
 

@@ -11,6 +11,7 @@
 #include "string_utils.h"
 #include "logger/logger.h"
 #include "rtc_base/thread.h"
+#include "logger/logger.h"
 
 namespace vi {
 
@@ -21,7 +22,8 @@ namespace vi {
 
 	JanusApiClient::~JanusApiClient()
 	{
-
+		DLOG("~JanusApiClient()");
+		_transport->disconnect();
 	}
 
 	void JanusApiClient::setToken(const std::string& token)

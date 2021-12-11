@@ -11,12 +11,12 @@
 #include "api/peer_connection_interface.h"
 #include "api/media_stream_interface.h"
 #include "absl/types/optional.h"
+#include "message_models.h"
 
 namespace vi {
 	using SuccessCallback = std::function<void()>;
 	using FailureCallback = std::function<void(const std::string& reason)>;
 	using EventCallback = std::function<void(bool success, const std::string& response)>;
-	class IWebRTCEventHandler;
 
 	class EventBase {
 	public:
@@ -25,19 +25,24 @@ namespace vi {
 		std::shared_ptr<EventCallback> callback;
 	};
 
-	class SendMessageEvent : public EventBase {
+	class MessageEvent : public EventBase {
 	public:
 		std::string message;
 		std::string jsep;
 	};
 
-	class SendDataEvent : public EventBase {
+	class TrickleCandidateEventEvent : public EventBase {
+	public:
+		CandidateData candidate;
+	};
+
+	class ChannelDataEvent : public EventBase {
 	public:
 		std::string text;
 		std::string label;
 	};
 
-	class SendDtmfEvent : public EventBase {
+	class DtmfEvent : public EventBase {
 	public:
 		std::string tones;
 		int duration;
@@ -80,9 +85,7 @@ namespace vi {
 		bool trickle;
 	};
 
-	using CreateAnswerOfferCallback = std::function<void(bool success, const std::string& reason, const JsepConfig& jsep)>;
-
-	class PrepareWebRTCEvent : public EventBase {
+	class PrepareWebrtcEvent : public EventBase {
 	public:
 		absl::optional<JsepConfig> jsep;
 		absl::optional<MediaConfig> media;
@@ -91,10 +94,9 @@ namespace vi {
 		absl::optional<bool> simulcast2;
 		absl::optional<bool> iceRestart;
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> stream;
-		std::shared_ptr<CreateAnswerOfferCallback> answerOfferCallback;
 	};
 
-	class PrepareWebRTCPeerEvent : public EventBase {
+	class PrepareWebrtcPeerEvent : public EventBase {
 	public:
 		absl::optional<JsepConfig> jsep;
 	};

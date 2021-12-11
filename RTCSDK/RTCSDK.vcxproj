@@ -15,17 +15,20 @@
     <None Include="RTCSDK.pro" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="audio_device_manager.h" />
     <ClInclude Include="helper_utils.h" />
+    <ClInclude Include="i_audio_device_manager.h" />
+    <ClInclude Include="i_media_controller.h" />
     <ClInclude Include="i_message_transport.h" />
     <ClInclude Include="i_message_transport_listener.h" />
-    <ClInclude Include="i_plugin_client.h" />
     <ClInclude Include="i_sfu_api_client.h" />
     <ClInclude Include="i_sfu_api_client_listener.h" />
+    <ClInclude Include="i_signaling_service_observer.h" />
     <ClInclude Include="i_text_room_listener.h" />
     <ClInclude Include="i_video_room_api.h" />
     <ClInclude Include="i_video_room_event_handler.h" />
+    <ClInclude Include="i_signaling_event_handler.h" />
     <ClInclude Include="i_webrtc_event_handler.h" />
-    <ClInclude Include="i_webrtc_service_listener.h" />
     <ClInclude Include="janus_api_client.h" />
     <ClInclude Include="json\jsonable.hpp" />
     <ClInclude Include="json\serialization_json.hpp" />
@@ -34,6 +37,7 @@
     <ClInclude Include="local_video_capture.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\rtc_log_sink.h" />
+    <ClInclude Include="media_controller.h" />
     <ClInclude Include="message_models.h" />
     <ClInclude Include="message_transport.h" />
     <ClInclude Include="participant.h" />
@@ -46,6 +50,7 @@
     <ClInclude Include="service\i_app_instance.h" />
     <ClInclude Include="service\i_unified_factory.h" />
     <ClInclude Include="service\unified_factory.h" />
+    <ClInclude Include="signaling_service_status.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="text_room_client.h" />
     <ClInclude Include="utils\interface_proxy.hpp" />
@@ -61,31 +66,37 @@
     <ClInclude Include="utils\observer.hpp" />
     <ClInclude Include="utils\service_factory.hpp" />
     <ClInclude Include="utils\singleton.h" />
-    <ClInclude Include="utils\task_queue_provider.h" />
     <ClInclude Include="utils\task_scheduler.h" />
     <ClInclude Include="utils\thread_provider.h" />
     <ClInclude Include="utils\universal_observable.hpp" />
+    <ClInclude Include="video_device_manager.h" />
     <ClInclude Include="video_room_client.h" />
     <ClInclude Include="video_room_api.h" />
+    <ClInclude Include="video_room_client_interface.h" />
+    <ClInclude Include="video_room_client_proxy.h" />
     <ClInclude Include="video_room_models.h" />
     <ClInclude Include="video_room_subscriber.h" />
     <ClInclude Include="weak_proxy.h" />
-    <ClInclude Include="webrtc_service.h" />
-    <ClInclude Include="webrtc_service_events.h" />
-    <ClInclude Include="webrtc_service_interface.h" />
-    <ClInclude Include="webrtc_service_proxy.h" />
+    <ClInclude Include="signaling_service.h" />
+    <ClInclude Include="signaling_events.h" />
+    <ClInclude Include="signaling_service_interface.h" />
+    <ClInclude Include="signaling_service_proxy.h" />
     <ClInclude Include="webrtc_utils.h" />
     <ClInclude Include="websocket\connection_metadata.h" />
     <ClInclude Include="websocket\i_connection_listener.h" />
     <ClInclude Include="websocket\websocket_endpoint.h" />
+    <ClInclude Include="i_video_device_manager.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="audio_device_manager.cpp" />
     <ClCompile Include="bad_any_cast.cc" />
     <ClCompile Include="helper_utils.cpp" />
+    <ClCompile Include="i_audio_device_manager.cpp" />
     <ClCompile Include="janus_api_client.cpp" />
     <ClCompile Include="local_video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />
+    <ClCompile Include="media_controller.cpp" />
     <ClCompile Include="message_transport.cpp" />
     <ClCompile Include="participant.cpp" />
     <ClCompile Include="plugin_client.cpp" />
@@ -98,15 +109,14 @@
     <ClCompile Include="utils\notification_center.cpp" />
     <ClCompile Include="utils\notification_keys.cpp" />
     <ClCompile Include="utils\service_factory.cpp" />
-    <ClCompile Include="utils\task_queue_provider.cpp" />
     <ClCompile Include="utils\task_scheduler.cpp" />
     <ClCompile Include="utils\thread_provider.cpp" />
+    <ClCompile Include="video_device_manager.cpp" />
     <ClCompile Include="video_room_client.cpp" />
     <ClCompile Include="video_room_api.cpp" />
     <ClCompile Include="video_room_subscriber.cpp" />
     <ClCompile Include="weak_proxy.cpp" />
-    <ClCompile Include="webrtc_service.cpp" />
-    <ClCompile Include="webrtc_utils.cpp" />
+    <ClCompile Include="signaling_service.cpp" />
     <ClCompile Include="websocket\connection_metadata.cpp" />
     <ClCompile Include="websocket\websocket_endpoint.cpp" />
   </ItemGroup>

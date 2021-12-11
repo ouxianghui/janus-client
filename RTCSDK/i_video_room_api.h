@@ -2,7 +2,7 @@
 
 #include <memory>
 #include "video_room_models.h"
-#include "webrtc_service_events.h"
+#include "signaling_events.h"
 
 namespace vi {
 

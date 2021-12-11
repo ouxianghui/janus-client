@@ -40,7 +40,9 @@ namespace vi {
 			}
 		}
 
-		_thread->join();
+		if (_thread->joinable()) {
+			_thread->join();
+		}
 	}
 
 	int WebsocketEndpoint::connect(std::string const& uri, std::shared_ptr<IConnectionListener> listener, const std::string& subprotocol) {

@@ -23,7 +23,7 @@ public:
 
     std::shared_ptr<IUnifiedFactory> getUnifiedFactory() override;
 
-	std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() override;
+	std::shared_ptr<vi::SignalingServiceInterface> getSignalingService() override;
 
 protected:
 	void initThreadProvider();

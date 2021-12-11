@@ -13,7 +13,7 @@
 #include <QObject>
 #include <memory>
 #include "Service/app_instance.h"
-#include "webrtc_service_interface.h"
+#include "signaling_service_interface.h"
 #include <QSurfaceFormat>
 
 #include "api/media_stream_interface.h"
@@ -87,9 +87,9 @@ int main(int argc, char *argv[])
 	if (QDialog::Accepted == jcDialog->exec()) {
 		jcDialog->cleanup();
 
-		auto wrs = rtcApp->getWebrtcService();
+		auto ss = rtcApp->getSignalingService();
 		std::shared_ptr<UI> w = std::make_shared<UI>();
-		wrs->addListener(w);
+		ss->registerObserver(w);
 		w->show();
 
 		w->init();

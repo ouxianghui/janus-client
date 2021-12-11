@@ -5,13 +5,14 @@
  **/
 
 #include "video_room_api.h"
-#include "webrtc_service_events.h"
+#include "signaling_events.h"
 #include "logger/logger.h"
 #include "video_room_models.h"
+#include "plugin_client.h"
 
 namespace vi {
 
-	VideoRoomApi::VideoRoomApi(std::shared_ptr<IPluginClient> pluginClient)
+	VideoRoomApi::VideoRoomApi(std::shared_ptr<PluginClient> pluginClient)
 		: _pluginClient(pluginClient)
 	{
 
@@ -29,7 +30,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {
@@ -102,7 +103,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {
@@ -235,7 +236,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {
@@ -268,7 +269,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {
@@ -301,7 +302,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {
@@ -334,7 +335,7 @@ namespace vi {
 			DLOG("invalid plugin client");
 			return;
 		}
-		std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
 		auto lambda = [callback](bool success, const std::string& response) {
 			DLOG("response: {}", response.c_str());
 			if (response.empty()) {

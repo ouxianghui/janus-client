@@ -10,8 +10,6 @@
 #include "unified_factory.h"
 #include "logger/logger.h"
 #include "utils/thread_provider.h"
-#include "utils/task_queue_provider.h"
-
 
 AppInstance::AppInstance()
 {
@@ -77,10 +75,10 @@ void AppInstance::unregisterServices()
 	//sf->unregisterService(typeid(IBizService).name());
 }
 
-std::shared_ptr<vi::WebRTCServiceInterface> AppInstance::getWebrtcService()
+std::shared_ptr<vi::SignalingServiceInterface> AppInstance::getSignalingService()
 {
 	if (_unifiedFactory) {
-		return _unifiedFactory->getWebrtcService();
+		return _unifiedFactory->getSignalingService();
 	}
 
 	return nullptr;

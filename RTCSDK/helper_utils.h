@@ -6,7 +6,7 @@
 
 #pragma once
 
-#include "webrtc_service_events.h"
+#include "signaling_events.h"
 
 namespace vi {
 	class HelperUtils

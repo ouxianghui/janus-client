@@ -11,8 +11,8 @@
 
 namespace vi {
 
-	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<WebRTCServiceInterface> wrs, const std::string& plugin, const std::string& opaqueId)
-		: PluginClient(wrs)
+	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& plugin, const std::string& opaqueId)
+		: PluginClient(ss)
 	{
 		_pluginContext->plugin = plugin;
 		_pluginContext->opaqueId = opaqueId;
@@ -21,9 +21,15 @@ namespace vi {
 
 	VideoRoomSubscriber::~VideoRoomSubscriber()
 	{
-		if (_pluginContext->webrtcContext->pc) {
-			_pluginContext->webrtcContext->pc->Close();
+		DLOG("~VideoRoomSubscriber()");
+		if (_pluginContext->pc) {
+			_pluginContext->pc->Close();
 		}
+	}
+
+	void VideoRoomSubscriber::init()
+	{
+		PluginClient::init();
 	}
 
 	void VideoRoomSubscriber::registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
@@ -98,27 +104,25 @@ namespace vi {
 			}
 		}
 
-		if (auto webrtcService = _pluginContext->webrtcService.lock()) {
-			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-			auto lambda = [](bool success, const std::string& response) {
-				DLOG("response: {}", response.c_str());
-				if (response.empty()) {
-					return;
-				}
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
+		auto lambda = [](bool success, const std::string& response) {
+			DLOG("response: {}", response.c_str());
+			if (response.empty()) {
+				return;
+			}
 
-				std::string err;
-				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
-				if (!err.empty()) {
-					DLOG("parse JanusResponse failed");
-					return;
-				}
-			};
-			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = request.toJsonStr();
-			DLOG("request.toJsonStr(): {}", request.toJsonStr());
-			event->callback = cb;
-			sendMessage(event);
-		}
+			std::string err;
+			std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+			if (!err.empty()) {
+				DLOG("parse JanusResponse failed");
+				return;
+			}
+		};
+		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+		event->message = request.toJsonStr();
+		DLOG("request.toJsonStr(): {}", request.toJsonStr());
+		event->callback = cb;
+		sendMessage(event);
 	}
 
 	void VideoRoomSubscriber::subscribe(const std::vector<vr::Publisher>& publishers)
@@ -142,26 +146,24 @@ namespace vi {
 			}
 		}
 
-		if (auto webrtcService = _pluginContext->webrtcService.lock()) {
-			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-			auto lambda = [](bool success, const std::string& response) {
-				DLOG("response: {}", response.c_str());
-				if (response.empty()) {
-					return;
-				}
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
+		auto lambda = [](bool success, const std::string& response) {
+			DLOG("response: {}", response.c_str());
+			if (response.empty()) {
+				return;
+			}
 
-				std::string err;
-				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
-				if (!err.empty()) {
-					DLOG("parse JanusResponse failed");
-					return;
-				}
-			};
-			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = request.toJsonStr();
-			event->callback = cb;
-			sendMessage(event);
-		}
+			std::string err;
+			std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+			if (!err.empty()) {
+				DLOG("parse JanusResponse failed");
+				return;
+			}
+		};
+		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+		event->message = request.toJsonStr();
+		event->callback = cb;
+		sendMessage(event);
 	}
 
 	void VideoRoomSubscriber::unsubscribeFrom(int64_t id)
@@ -176,26 +178,24 @@ namespace vi {
 		ss.emplace_back(stream);
 		request.streams = ss;
 
-		if (auto webrtcService = _pluginContext->webrtcService.lock()) {
-			std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-			auto lambda = [](bool success, const std::string& response) {
-				DLOG("response: {}", response.c_str());
-				if (response.empty()) {
-					return;
-				}
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
+		auto lambda = [](bool success, const std::string& response) {
+			DLOG("response: {}", response.c_str());
+			if (response.empty()) {
+				return;
+			}
 
-				std::string err;
-				std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
-				if (!err.empty()) {
-					DLOG("parse JanusResponse failed");
-					return;
-				}
-			};
-			std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
-			event->message = request.toJsonStr();
-			event->callback = cb;
-			sendMessage(event);
-		}
+			std::string err;
+			std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+			if (!err.empty()) {
+				DLOG("parse JanusResponse failed");
+				return;
+			}
+		};
+		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+		event->message = request.toJsonStr();
+		event->callback = cb;
+		sendMessage(event);
 	}
 
 	void VideoRoomSubscriber::onAttached(bool success)
@@ -212,11 +212,9 @@ namespace vi {
 
 	void VideoRoomSubscriber::onHangup() {}
 
-	void VideoRoomSubscriber::onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) {}
+	void VideoRoomSubscriber::onMediaStatus(const std::string& media, bool on, const std::string& mid) {}
 
-	void VideoRoomSubscriber::onMediaState(const std::string& media, bool on, const std::string& mid) {}
-
-	void VideoRoomSubscriber::onWebrtcState(bool isActive, const std::string& reason)
+	void VideoRoomSubscriber::onWebrtcStatus(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says this WebRTC PeerConnection (remote feed) is {} now", (isActive ? "up" : "down"));
 	}
@@ -287,40 +285,36 @@ namespace vi {
 		if (jsep->type && jsep->sdp && !jsep->type.value().empty() && !jsep->sdp.value().empty()) {
 			DLOG("Handling SDP as well...");
 			//// Answer and attach
-			auto wself = weak_from_this();
-			std::shared_ptr<PrepareWebRTCEvent> event = std::make_shared<PrepareWebRTCEvent>();
-			auto callback = std::make_shared<CreateAnswerOfferCallback>([wself, roomId = this->_roomId](bool success, const std::string& reason, const JsepConfig& jsepConfig) {
+			std::shared_ptr<PrepareWebrtcEvent> event = std::make_shared<PrepareWebrtcEvent>();
+			_pluginContext->offerAnswerCallback = std::make_shared<CreateOfferAnswerCallback>([wself = weak_from_this(), roomId = this->_roomId](bool success, const std::string& reason, const JsepConfig& jsepConfig) {
 				DLOG("Got a sdp, type: {}, sdp = {}", jsepConfig.type.c_str(), jsepConfig.sdp.c_str());
 				auto self = wself.lock();
 				if (!self) {
 					return;
 				}
 				if (success) {
-					if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
-						// TODO: use IVideoRoomApi
-						vr::StartPeerConnectionRequest request;
-						request.room = roomId;
+					// TODO: use IVideoRoomApi
+					vr::StartPeerConnectionRequest request;
+					request.room = roomId;
 
-						std::shared_ptr<SendMessageEvent> event = std::make_shared<vi::SendMessageEvent>();
-						auto lambda = [](bool success, const std::string& response) {
-							DLOG("response: {}", response.c_str());
-						};
+					std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
+					auto lambda = [](bool success, const std::string& response) {
+						DLOG("response: {}", response.c_str());
+					};
 
-						std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
-						event->message = request.toJsonStr();
-						Jsep jsep;
-						jsep.type = jsepConfig.type;
-						jsep.sdp = jsepConfig.sdp;
-						event->jsep = jsep.toJsonStr();
-						event->callback = callback;
-						self->sendMessage(event);
-					}
+					std::shared_ptr<vi::EventCallback> callback = std::make_shared<vi::EventCallback>(lambda);
+					event->message = request.toJsonStr();
+					Jsep jsep;
+					jsep.type = jsepConfig.type;
+					jsep.sdp = jsepConfig.sdp;
+					event->jsep = jsep.toJsonStr();
+					event->callback = callback;
+					self->sendMessage(event);
 				}
 				else {
 					DLOG("WebRTC error: {}", reason.c_str());
 				}
 			});
-			event->answerOfferCallback = callback;
 			MediaConfig media;
 			media.audioSend = false;
 			media.videoSend = false;
@@ -333,7 +327,22 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomSubscriber::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) {}
+	void VideoRoomSubscriber::onTimeout()
+	{
+
+	}
+
+	void VideoRoomSubscriber::onError(const std::string& desc)
+	{
+
+	}
+
+	void VideoRoomSubscriber::onCleanup() 
+	{
+		PluginClient::onCleanup();
+	}
+
+	void VideoRoomSubscriber::onDetached() {}
 
 	void VideoRoomSubscriber::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on)
 	{
@@ -384,14 +393,4 @@ namespace vi {
 			});
 		}
 	}
-
-	void VideoRoomSubscriber::onData(const std::string& data, const std::string& label) {}
-
-	void VideoRoomSubscriber::onDataOpen(const std::string& label) {}
-
-	void VideoRoomSubscriber::onCleanup() {}
-
-	void VideoRoomSubscriber::onDetached() {}
-
-	void VideoRoomSubscriber::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
 }

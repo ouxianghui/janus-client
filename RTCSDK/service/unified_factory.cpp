@@ -6,9 +6,9 @@
 
 #include "unified_factory.h"
 #include "utils/service_factory.hpp"
-#include "webrtc_service.h"
-#include "webrtc_service_interface.h"
-#include "webrtc_service_proxy.h"
+#include "signaling_service.h"
+#include "signaling_service_interface.h"
+#include "signaling_service_proxy.h"
 #include "utils/thread_provider.h"
 
 UnifiedFactory::UnifiedFactory()
@@ -24,7 +24,7 @@ void UnifiedFactory::init()
 	}
 
 	if (!_webrtcService) {
-		_webrtcService = vi::WebRTCServiceProxy::Create(TMgr->thread("service"), std::make_shared<vi::WebRTCService>());
+		_webrtcService = vi::SignalingServiceProxy::Create(TMgr->thread("service"), std::make_shared<vi::SignalingService>());
 		_webrtcService->init();
 	}
 }
@@ -47,7 +47,7 @@ std::shared_ptr<vi::IServiceFactory> UnifiedFactory::getServiceFactory()
     return _serviceFactory;
 }
 
-std::shared_ptr<vi::WebRTCServiceInterface> UnifiedFactory::getWebrtcService()
+std::shared_ptr<vi::SignalingServiceInterface> UnifiedFactory::getSignalingService()
 {
 	return _webrtcService;
 }

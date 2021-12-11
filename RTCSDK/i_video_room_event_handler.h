@@ -20,7 +20,7 @@ namespace vi {
 	public:
 		virtual ~IVideoRoomEventHandler() {}
 
-		virtual void onMediaState(bool isActive, const std::string& reason) = 0;
+		virtual void onMediaStatus(bool isActive, const std::string& reason) = 0;
 
 		virtual void onCreateParticipant(std::shared_ptr<Participant> participant) = 0;
 

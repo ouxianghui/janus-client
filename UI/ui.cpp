@@ -5,11 +5,11 @@
 #include <QGridLayout>
 #include <QToolButton>
 #include "Service/app_instance.h"
-#include "webrtc_service_interface.h"
+#include "signaling_service_interface.h"
 #include "video_room_client.h"
 #include "message_models.h"
 #include "string_utils.h"
-#include "webrtc_service_events.h"
+#include "signaling_events.h"
 #include "api/media_stream_interface.h"
 #include "gl_video_renderer.h"
 #include "participant.h"
@@ -27,7 +27,7 @@ UI::UI(QWidget *parent)
     this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomEventProxy = std::make_shared<VideoRoomEventProxy>(this);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::mediaState, this, &UI::onMediaState, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::mediaState, this, &UI::onMediaStatus, Qt::QueuedConnection);
 	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
 	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
@@ -51,8 +51,8 @@ UI::~UI()
 
 void UI::init()
 {
-	auto wrs = rtcApp->getWebrtcService();
-	_vrc = std::make_shared<vi::VideoRoomClient>(wrs);
+	auto ss = rtcApp->getSignalingService();
+	_vrc = std::make_shared<vi::VideoRoomClient>(ss);
 	_vrc->init();
 	_vrc->registerEventHandler(_videoRoomEventProxy);
 
@@ -93,33 +93,34 @@ void UI::init()
 	this->addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 }
 
-void UI::onStatus(vi::ServiceStauts status)
+void UI::onSessionStatus(vi::SessionStatus status)
 {
-	if (vi::ServiceStauts::UP == status) {
+	if (vi::SessionStatus::CONNECTED == status) {
+
 	}
 }
 
-void UI::onMediaState(bool isActive, const std::string& reason)
+void UI::onMediaStatus(bool isActive, const std::string& reason)
 {
-	if (isActive) {
-		ui.actionAudio->setEnabled(true);
-		ui.actionVideo->setEnabled(true);
-		if (_vrc) {
-			if (_vrc->isAudioMuted("")) {
-				ui.actionAudio->setChecked(false);
-			}
-			else {
-				ui.actionAudio->setChecked(true);
-			}
+	//if (isActive) {
+	//	ui.actionAudio->setEnabled(true);
+	//	ui.actionVideo->setEnabled(true);
+	//	if (_vrc) {
+	//		if (_vrc->isAudioMuted("")) {
+	//			ui.actionAudio->setChecked(false);
+	//		}
+	//		else {
+	//			ui.actionAudio->setChecked(true);
+	//		}
 
-			if (_vrc->isVideoMuted("")) {
-				ui.actionVideo->setChecked(false);
-			}
-			else {
-				ui.actionVideo->setChecked(true);
-			}
-		}
-	}
+	//		if (_vrc->isVideoMuted("")) {
+	//			ui.actionVideo->setChecked(false);
+	//		}
+	//		else {
+	//			ui.actionVideo->setChecked(true);
+	//		}
+	//	}
+	//}
 }
 
 void UI::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
@@ -259,12 +260,12 @@ void UI::on_actionAudio_triggered(bool checked)
 		return;
 	}
 
-	if (checked) {
-		_vrc->unmuteAudio("");
-	}
-	else {
-		_vrc->muteAudio("");
-	}
+	//if (checked) {
+	//	_vrc->unmuteAudio("");
+	//}
+	//else {
+	//	_vrc->muteAudio("");
+	//}
 }
 
 void UI::on_actionVideo_triggered(bool checked)
@@ -273,9 +274,9 @@ void UI::on_actionVideo_triggered(bool checked)
 		return;
 	}
 
-	if (checked) {
-		_vrc->unmuteVideo("");
-	} else {
-		_vrc->muteVideo("");
-	}
+	//if (checked) {
+	//	_vrc->unmuteVideo("");
+	//} else {
+	//	_vrc->muteVideo("");
+	//}
 }

@@ -25,7 +25,7 @@ public:
 
 private:
 	// IVideoRoomEventHandler
-	void onMediaState(bool isActive, const std::string& reason) override;
+	void onMediaStatus(bool isActive, const std::string& reason) override;
 
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;
 

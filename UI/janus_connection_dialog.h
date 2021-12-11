@@ -3,9 +3,10 @@
 #include <QDialog>
 #include "ui_janus_connection_dialog.h"
 #include <memory>
-#include "i_webrtc_service_listener.h"
+#include "i_signaling_service_observer.h"
+#include "signaling_service_status.h"
 
-class JanusConnectionDialog : public QDialog, public vi::IWebRTCServiceListener, public std::enable_shared_from_this<JanusConnectionDialog>
+class JanusConnectionDialog : public QDialog, public vi::ISignalingServiceObserver, public std::enable_shared_from_this<JanusConnectionDialog>
 {
 	Q_OBJECT
 
@@ -23,7 +24,10 @@ private slots:
     void on_cancelConnectPushButton_clicked();
 
 private:
-	void onStatus(vi::ServiceStauts status) override;
+
+	// ISignalingServiceObserver
+
+	void onSessionStatus(vi::SessionStatus status) override;
 
 private:
 	Ui::JanusConnectionDialog ui;

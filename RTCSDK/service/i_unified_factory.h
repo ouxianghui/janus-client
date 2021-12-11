@@ -10,7 +10,7 @@
 
 namespace vi {
     class IServiceFactory;
-    class WebRTCServiceInterface;
+    class SignalingServiceInterface;
 }
 
 class IUnifiedFactory {
@@ -23,6 +23,6 @@ public:
 
     virtual std::shared_ptr<vi::IServiceFactory> getServiceFactory() = 0;
 
-	virtual std::shared_ptr<vi::WebRTCServiceInterface> getWebrtcService() = 0;
+	virtual std::shared_ptr<vi::SignalingServiceInterface> getSignalingService() = 0;
 };
 

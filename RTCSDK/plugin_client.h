@@ -8,77 +8,130 @@
 
 #include <memory>
 #include <string>
-#include "i_plugin_client.h"
 #include "i_webrtc_event_handler.h"
+#include "i_signaling_event_handler.h"
+#include "signaling_service_status.h"
 
 namespace vi {
-	class WebRTCServiceInterface;
+	class SignalingServiceInterface;
 	class TaskScheduler;
 
 	class PluginClient
-		: public IPluginClient
-		, public IWebRTCEventHandler
+		: public ISignalingEventHandler
+		, public IWebrtcEventHandler
 		, public std::enable_shared_from_this<PluginClient>
 	{
 	public:
-		PluginClient(std::shared_ptr<WebRTCServiceInterface> wrs);
+		PluginClient(std::shared_ptr<SignalingServiceInterface> ss);
 
 		~PluginClient();
+
+		void init();
+
+		void destroy();
 
 		uint64_t getId() { return _id; }
 
 		// IPluginClient
-		void setHandleId(int64_t handleId) override;
+		void setHandleId(int64_t handleId);
 
-		const std::shared_ptr<PluginContext>& pluginContext() const override;
+		std::shared_ptr<PluginContext> pluginContext() { return _pluginContext; }
 
-		void attach() override;
+		void attach();
 
-		int32_t remoteVolume(const std::string& mid) override;
+		void sendMessage(std::shared_ptr<MessageEvent> event);
 
-		int32_t localVolume(const std::string& mid) override;
+		void sendSdp();
 
-		bool isAudioMuted(const std::string& mid) override;
+		void sendData(std::shared_ptr<ChannelDataEvent> event);
 
-		bool isVideoMuted(const std::string& mid) override;
+		void sendDtmf(std::shared_ptr<DtmfEvent> event);
 
-		bool muteAudio(const std::string& mid) override;
+		void createOffer(std::shared_ptr<PrepareWebrtcEvent> event);
 
-		bool muteVideo(const std::string& mid) override;
+		void createAnswer(std::shared_ptr<PrepareWebrtcEvent> event);
 
-		bool unmuteAudio(const std::string& mid) override;
+		void handleRemoteJsep(std::shared_ptr<PrepareWebrtcPeerEvent> event);
 
-		bool unmuteVideo(const std::string& mid) override;
+		void hangup(bool sendRequest);
 
-		std::string getBitrate(const std::string& mid) override;
+		void detach(std::shared_ptr<DetachEvent> event);
 
-		void sendMessage(std::shared_ptr<SendMessageEvent> event) override;
+		void startStatsMonitor();
 
-		void sendData(std::shared_ptr<SendDataEvent> event) override;
+		void stopStatsMonitor();
 
-		void sendDtmf(std::shared_ptr<SendDtmfEvent> event) override;
 
-		void createOffer(std::shared_ptr<PrepareWebRTCEvent> event) override;
+	protected:
+		void prepareWebrtc(bool isOffer, std::shared_ptr<PrepareWebrtcEvent> event);
 
-		void createAnswer(std::shared_ptr<PrepareWebRTCEvent> event) override;
+		void prepareStreams(std::shared_ptr<PrepareWebrtcEvent> event, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
 
-		void handleRemoteJsep(std::shared_ptr<PrepareWebRTCPeerEvent> event) override;
 
-		void hangup(bool sendRequest) override;
+		void createDataChannel(const std::string& dcLabel, rtc::scoped_refptr<webrtc::DataChannelInterface> incoming);
 
-		void detach(std::shared_ptr<DetachEvent> event) override;
+		void _createOffer(std::shared_ptr<PrepareWebrtcEvent> event);
 
-		void startStatsReport() override;
+		void _createAnswer(std::shared_ptr<PrepareWebrtcEvent> event);
 
-		void stopStatsReport() override;
+		void configTracks(const MediaConfig& media, rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc);
+
+		void stopAllTracks(rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
+
+		void cleanupWebrtc(bool hangupRequest = true);
+
+	protected:
+		// webrtc events
+
+		void OnStandardizedIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState new_state) override;
+
+		void OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState new_state) override;
+
+		void OnIceGatheringChange(webrtc::PeerConnectionInterface::IceGatheringState new_state) override;
+
+		void OnIceCandidate(const webrtc::IceCandidateInterface* candidate) override;
+
+		void OnTrack(rtc::scoped_refptr<webrtc::RtpTransceiverInterface> transceiver) override;
+
+		void OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver) override;
+
+	protected:
+		// plugin client events
+		 
+		virtual void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) {}
+
+		virtual void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) {}
+
+		virtual void onChannelOpened(const std::string& label) {}
+
+		virtual void onChannelClosed(const std::string& label) {}
+
+		virtual void onChannelData(const std::string& label, const std::string& data) {}
+
+		virtual void onStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
+
+	public:
+		// signaling service events
+
+		void onTrickle(const std::string& trickle) override;
+
+		void onCleanup() override;
 
 	protected:
 		uint64_t _id = 0;
+
 		uint64_t _privateId = 0;
+
 		std::shared_ptr<PluginContext> _pluginContext;
 
 		std::shared_ptr<TaskScheduler> _rtcStatsTaskScheduler;
+
 		uint64_t _rtcStatsTaskId = 0;
+
+		rtc::Thread* _eventHandlerThread = nullptr;
+
+		// key: trackId, value: mid
+		std::unordered_map<std::string, std::string> _trackIdsMap;
 	};
 }
 

@@ -3,12 +3,13 @@
 #include <QtWidgets/QMainWindow>
 #include "ui_ui.h"
 #include <memory>
-#include "i_webrtc_service_listener.h"
 #include "video_room_client.h"
 #include "gl_video_renderer.h"
 #include "gallery_view.h"
 #include <QCloseEvent>
 #include "participants_list_view.h"
+#include "i_signaling_service_observer.h"
+#include "signaling_service_status.h"
 
 namespace vi {
 	class Participant;
@@ -18,7 +19,7 @@ class VideoRoomEventProxy;
 
 class UI
 	: public QMainWindow
-	, public vi::IWebRTCServiceListener
+	, public vi::ISignalingServiceObserver
 	, public std::enable_shared_from_this<UI>
 {
 	Q_OBJECT
@@ -33,11 +34,14 @@ public:
 	std::shared_ptr<GLVideoRenderer> _renderer;
 
 private slots:
-	// IWebRTCServiceListener
-	void onStatus(vi::ServiceStauts status) override;
+
+	// ISignalingServiceObserver
+
+	void onSessionStatus(vi::SessionStatus status) override;
 
 	// IVideoRoomEventHandler
-	void onMediaState(bool isActive, const std::string& reason);
+
+	void onMediaStatus(bool isActive, const std::string& reason) ;
 
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
 																	   

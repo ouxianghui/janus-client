@@ -29,7 +29,7 @@ namespace vi {
 	class VideoRoomClient : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomClient(std::shared_ptr<WebRTCServiceInterface> wrs);
+		VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss);
 
 		~VideoRoomClient();
 
@@ -50,38 +50,39 @@ namespace vi {
 		int64_t getRoomId() const;
 
 	protected:
+
+		// signaling events
+
 		void onAttached(bool success) override;
 
-		void onHangup() override;
+		void onMediaStatus(const std::string& media, bool on, const std::string& mid) override;
 
-		void onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) override;
-
-		void onMediaState(const std::string& media, bool on, const std::string& mid) override;
-
-		void onWebrtcState(bool isActive, const std::string& reason) override;
+		void onWebrtcStatus(bool isActive, const std::string& desc) override;
 
 		void onSlowLink(bool uplink, bool lost, const std::string& mid) override;
 
 		void onMessage(const std::string& data, const std::string& jsep) override;
 
-		void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) override;
+		void onTimeout()override;
 
-		void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) override;
+		void onError(const std::string& desc) override;
 
-		void onData(const std::string& data, const std::string& label) override;
-
-		void onDataOpen(const std::string& label) override;
+		void onHangup() override;
 
 		void onCleanup() override;
 
 		void onDetached() override;
 
-		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
+	protected:
+
+		// webrtc events
+
+		virtual void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on);
 
 	protected:
-		void publishOwnStream(bool audioOn);
+		void publishStream(bool audioOn);
 
-		void unpublishOwnStream();
+		void unpublishStream();
 
 		void createParticipant(const ParticipantSt& info);
 

@@ -16,7 +16,7 @@ VideoRoomEventProxy::~VideoRoomEventProxy()
 }
 
 // IVideoRoomEventHandler
-void VideoRoomEventProxy::onMediaState(bool isActive, const std::string& reason)
+void VideoRoomEventProxy::onMediaStatus(bool isActive, const std::string& reason)
 {
 	emit mediaState(isActive, reason);
 }

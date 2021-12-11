@@ -8,14 +8,15 @@
 
 #include "i_video_room_api.h"
 #include <memory>
-#include "i_plugin_client.h"
 
 namespace vi {
+
+	class PluginClient;
 
 	class VideoRoomApi : public IVideoRoomApi
 	{
 	public:
-		VideoRoomApi(std::shared_ptr<IPluginClient> pluginClient);
+		VideoRoomApi(std::shared_ptr<PluginClient> pluginClient);
 
 		~VideoRoomApi();
 
@@ -61,7 +62,7 @@ namespace vi {
 		void action(const std::string& request, std::function<void(std::shared_ptr<JanusResponse>)> callback);
 
 	private:
-		std::weak_ptr<IPluginClient> _pluginClient;
+		std::weak_ptr<PluginClient> _pluginClient;
 	};
 
 }

@@ -14,9 +14,11 @@ namespace vi {
 	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomSubscriber(std::shared_ptr<WebRTCServiceInterface> wrs, const std::string& pluginName, const std::string& opaqueId);
+		VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& pluginName, const std::string& opaqueId);
 
 		~VideoRoomSubscriber();
+
+		void init();
 
 		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
@@ -35,33 +37,34 @@ namespace vi {
 		void unsubscribeFrom(int64_t id);
 
 	protected:
+
+		// signaling event
+
 		void onAttached(bool success) override;
 
-		void onHangup() override;
+		void onMediaStatus(const std::string& media, bool on, const std::string& mid) override;
 
-		void onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) override;
-
-		void onMediaState(const std::string& media, bool on, const std::string& mid) override;
-
-		void onWebrtcState(bool isActive, const std::string& reason) override;
+		void onWebrtcStatus(bool isActive, const std::string& desc) override;
 
 		void onSlowLink(bool uplink, bool lost, const std::string& mid) override;
 
 		void onMessage(const std::string& data, const std::string& jsep) override;
 
-		void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) override;
+		void onTimeout()override;
 
-		void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) override;
+		void onError(const std::string& desc) override;
 
-		void onData(const std::string& data, const std::string& label) override;
-
-		void onDataOpen(const std::string& label) override;
+		void onHangup() override;
 
 		void onCleanup() override;
 
 		void onDetached() override;
 
-		void onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
+	protected:
+
+		// webrtc events
+
+		void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) override;
 
 	private:
 		void join(const std::vector<vr::Publisher>& publishers);

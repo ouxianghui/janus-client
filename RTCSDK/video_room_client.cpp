@@ -16,8 +16,8 @@
 #include "pc/media_stream_track_proxy.h"
 
 namespace vi {
-	VideoRoomClient::VideoRoomClient(std::shared_ptr<WebRTCServiceInterface> wrs)
-		: PluginClient(wrs)
+	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss)
+		: PluginClient(ss)
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
@@ -25,17 +25,20 @@ namespace vi {
 
 	VideoRoomClient::~VideoRoomClient()
 	{
-		DLOG("~VideoRoom()");
-		if (_pluginContext->webrtcContext->pc) {
-			_pluginContext->webrtcContext->pc->Close();
+		DLOG("~VideoRoomClient()");
+		if (_pluginContext->pc) {
+			_pluginContext->pc->Close();
 		}
 	}
 
 	void VideoRoomClient::init()
 	{
+		PluginClient::init();
+
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
-		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->webrtcService.lock(), _pluginContext->plugin, _pluginContext->opaqueId);
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->plugin, _pluginContext->opaqueId);
+		_subscriber->init();
 		_subscriber->setRoomApi(_videoRoomApi);
 	}
 
@@ -87,18 +90,16 @@ namespace vi {
 
 	void VideoRoomClient::onHangup() {}
 
-	void VideoRoomClient::onIceState(webrtc::PeerConnectionInterface::IceConnectionState iceState) {}
-
-	void VideoRoomClient::onMediaState(const std::string& media, bool on, const std::string& mid)
+	void VideoRoomClient::onMediaStatus(const std::string& media, bool on, const std::string& mid)
 	{
 		DLOG("Janus {} receiving our {}", (on ? "started" : "stopped"), media.c_str());
 	}
 
-	void VideoRoomClient::onWebrtcState(bool isActive, const std::string& reason)
+	void VideoRoomClient::onWebrtcStatus(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
-			if (auto webrtcService = _pluginContext->webrtcService.lock()) {
+			if (auto webrtcService = _pluginContext->signalingService.lock()) {
 				auto request = std::make_shared<vr::PublishRequest>();
 				request->request = "configure";
 				request->bitrate = 256000;
@@ -115,11 +116,12 @@ namespace vi {
 			}
 
 			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([isActive, reason](const auto& observer) {
-				observer->onMediaState(isActive, reason);
+				observer->onMediaStatus(isActive, reason);
 			});
 		}
-		unmuteVideo("");
-		startStatsReport();
+		// TODO:-----------------------
+		//unmuteVideo("");
+		startStatsMonitor();
 	}
 
 	void VideoRoomClient::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
@@ -167,7 +169,7 @@ namespace vi {
 			DLOG("Successfully joined room {} with ID {}", pluginData->data->room.value_or(0), _id);
 
 			// TODO:
-			publishOwnStream(true);
+			publishStream(true);
 
 			// Any new feed to attach to
 			if (pluginData->data->publishers && !pluginData->data->publishers->empty()) {
@@ -251,7 +253,7 @@ namespace vi {
 			DLOG("Handling SDP as well...");
 			// TODO:
 			//sfutest.handleRemoteJsep({ jsep: jsep });
-			std::shared_ptr<PrepareWebRTCPeerEvent> event = std::make_shared<PrepareWebRTCPeerEvent>();
+			std::shared_ptr<PrepareWebrtcPeerEvent> event = std::make_shared<PrepareWebrtcPeerEvent>();
 			auto lambda = [](bool success, const std::string& response) {
 				DLOG("response: {}", response.c_str());
 			};
@@ -269,15 +271,25 @@ namespace vi {
 			}
 
 			const auto& audio = pluginData->data->audio_codec.value_or("");
-			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
+			if (_pluginContext->myStream && _pluginContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
 				WLOG("Our audio stream has been rejected, viewers won't hear us");
 			}
 
 			const auto& video = pluginData->data->video_codec.value_or("");
-			if (_pluginContext->webrtcContext->myStream && _pluginContext->webrtcContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
+			if (_pluginContext->myStream && _pluginContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
 				WLOG("Our video stream has been rejected, viewers won't see us");
 			}
 		}
+	}
+
+	void VideoRoomClient::onTimeout()
+	{
+
+	}
+
+	void VideoRoomClient::onError(const std::string& desc)
+	{
+
 	}
 
 	void VideoRoomClient::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on)
@@ -331,26 +343,18 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomClient::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) {}
-
-	void VideoRoomClient::onData(const std::string& data, const std::string& label) {}
-
-	void VideoRoomClient::onDataOpen(const std::string& label) {}
-
 	void VideoRoomClient::onCleanup()
 	{
-		_pluginContext->webrtcContext->myStream = nullptr;
+		PluginClient::onCleanup();
+		_pluginContext->myStream = nullptr;
 	}
 
 	void VideoRoomClient::onDetached() {}
 
-	void VideoRoomClient::onStatsReport(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) {}
-
-	void VideoRoomClient::publishOwnStream(bool audioOn)
+	void VideoRoomClient::publishStream(bool audioOn)
 	{
-		auto wself = weak_from_this();
-		auto event = std::make_shared<PrepareWebRTCEvent>();
-		auto callback = std::make_shared<CreateAnswerOfferCallback>([wself, audioOn](bool success, const std::string& reason, const JsepConfig& jsep) {
+		auto event = std::make_shared<PrepareWebrtcEvent>();
+		_pluginContext->offerAnswerCallback = std::make_shared<CreateOfferAnswerCallback>([wself = weak_from_this(), audioOn](bool success, const std::string& reason, const JsepConfig& jsep) {
 			auto self = wself.lock();
 			if (!self) {
 				return;
@@ -359,26 +363,23 @@ namespace vi {
 				vr::PublisherConfigureRequest request;
 				request.audio = audioOn;
 				request.video = true;
-				if (auto webrtcService = self->pluginContext()->webrtcService.lock()) {
-					auto event = std::make_shared<vi::SendMessageEvent>();
-					auto lambda = [](bool success, const std::string& response) {
-						DLOG("publishOwnStream: {}", response.c_str());
-					};
-					auto callback = std::make_shared<vi::EventCallback>(lambda);
-					event->message = request.toJsonStr();
-					Jsep jp; 
-					jp.type = jsep.type;
-					jp.sdp = jsep.sdp;
-					event->jsep = jp.toJsonStr();
-					event->callback = callback;
-					self->sendMessage(event);
-				}
+				auto event = std::make_shared<vi::MessageEvent>();
+				auto lambda = [](bool success, const std::string& response) {
+					DLOG("publishStream: {}", response.c_str());
+				};
+				auto callback = std::make_shared<vi::EventCallback>(lambda);
+				event->message = request.toJsonStr();
+				Jsep jp; 
+				jp.type = jsep.type;
+				jp.sdp = jsep.sdp;
+				event->jsep = jp.toJsonStr();
+				event->callback = callback;
+				self->sendMessage(event);
 			}
 			else {
 				DLOG("WebRTC error: {}", reason.c_str());
 			}
 		});
-		event->answerOfferCallback = callback;
 		MediaConfig media;
 		media.audioRecv = true;
 		media.videoRecv = true;
@@ -390,11 +391,11 @@ namespace vi {
 		createOffer(event);
 	}
 
-	void VideoRoomClient::unpublishOwnStream()
+	void VideoRoomClient::unpublishStream()
 	{
 		vr::UnpublishRequest request;
-		if (auto webrtcService = pluginContext()->webrtcService.lock()) {
-			auto event = std::make_shared<vi::SendMessageEvent>();
+		if (auto webrtcService = _pluginContext->signalingService.lock()) {
+			auto event = std::make_shared<vi::MessageEvent>();
 			auto lambda = [](bool success, const std::string& response) {
 				DLOG("response: {}", response.c_str());
 			};
@@ -423,4 +424,216 @@ namespace vi {
 			});
 		}
 	}
+
+	//int32_t SignalingService::getVolume(int64_t handleId, bool isRemote, const std::string& mid)
+//{
+//	const auto& pluginClient = getHandler(handleId);
+//	if (!pluginClient) {
+//		DLOG("Invalid handle");
+//	}
+
+//	const auto& context = pluginClient->pluginContext()->webrtcContext;
+
+//	return 0;
+//}
+
+//int32_t SignalingService::remoteVolume(int64_t handleId, const std::string& mid)
+//{
+//	return getVolume(handleId, true, mid);
+//}
+
+//int32_t SignalingService::localVolume(int64_t handleId, const std::string& mid)
+//{
+//	return getVolume(handleId, false, mid);
+//}
+
+//bool SignalingService::isAudioMuted(int64_t handleId, const std::string& mid)
+//{
+//	return isMuted(handleId, true, mid);
+//}
+
+//bool SignalingService::isVideoMuted(int64_t handleId, const std::string& mid)
+//{
+//	return isMuted(handleId, false, mid);
+//}
+
+//bool SignalingService::isMuted(int64_t handleId, bool isVideo, const std::string& mid)
+//{
+//	const auto& pluginClient = getHandler(handleId);
+//	if (!pluginClient) {
+//		DLOG("Invalid handle");
+//		return true;
+//	}
+
+//	const auto& context = pluginClient->pluginContext()->webrtcContext;
+//	if (!context) {
+//		return true;
+//	}
+//	if (!context->pc) {
+//		DLOG("Invalid PeerConnection");
+//		return true;
+//	}
+//	if (!context->myStream) {
+//		DLOG("Invalid local MediaStream");
+//		return true;
+//	}
+//	if (isVideo) {
+//		// Check video track
+//		if (context->myStream->GetVideoTracks().size() == 0) {
+//			DLOG("No video track");
+//			return true;
+//		}
+//		if (!mid.empty() && _pluginContext->unifiedPlan) {
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
+//			});
+//			if (it == transceivers.end()) {
+//				DLOG("No video transceiver with mid: {}", mid);
+//				return true;
+//			}
+//			if (!(*it)->sender() || !(*it)->sender()->track()) {
+//				DLOG("No video sender with mid: {}", mid);
+//				return true;
+//			}
+
+//			return (*it)->sender()->track()->enabled();
+//		}
+//		else {
+//			return !context->myStream->GetVideoTracks()[0]->enabled();
+//		}
+//	}
+//	else {
+//		// Check audio track
+//		if (context->myStream->GetAudioTracks().size() == 0) {
+//			DLOG("No audio track");
+//			return true;
+//		}
+//		if (!mid.empty() && _pluginContext->unifiedPlan) {
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
+//			});
+//			if (it == transceivers.end()) {
+//				DLOG("No audio transceiver with mid: {}", mid);
+//				return true;
+//			}
+//			if (!(*it)->sender() || !(*it)->sender()->track()) {
+//				DLOG("No audio sender with mid: {}", mid);
+//				return true;
+//			}
+
+//			return (*it)->sender()->track()->enabled();
+//		}
+//		else {
+//			return !context->myStream->GetAudioTracks()[0]->enabled();
+//		}
+//	}
+//	return true;
+//}
+
+//bool SignalingService::muteAudio(int64_t handleId, const std::string& mid)
+//{
+//	return mute(handleId, false, true, mid);
+//}
+
+//bool SignalingService::muteVideo(int64_t handleId, const std::string& mid)
+//{
+//	return mute(handleId, true, true, mid);
+//}
+
+//bool SignalingService::unmuteAudio(int64_t handleId, const std::string& mid)
+//{
+//	return mute(handleId, false, false, mid);
+//}
+
+//bool SignalingService::unmuteVideo(int64_t handleId, const std::string& mid)
+//{
+//	return mute(handleId, true, false, mid);
+//}
+
+//bool SignalingService::mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid)
+//{
+//	const auto& pluginClient = getHandler(handleId);
+//	if (!pluginClient) {
+//		DLOG("Invalid handle");
+//		return false;
+//	}
+
+//	const auto& context = pluginClient->pluginContext()->webrtcContext;
+//	if (!context) {
+//		return false;
+//	}
+//	if (!context->pc) {
+//		DLOG("Invalid PeerConnection");
+//		return false;
+//	}
+//	if (!context->myStream) {
+//		DLOG("Invalid local MediaStream");
+//		return false;
+//	}
+
+//	bool enabled = mute ? false : true;
+
+//	if (isVideo) {
+//		// Mute/unmute video track
+//		if (context->myStream->GetVideoTracks().size() == 0) {
+//			DLOG("No video track");
+//			return false;
+//		}
+//		if (!mid.empty() && _pluginContext->unifiedPlan) {
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
+//			});
+//			if (it == transceivers.end()) {
+//				DLOG("No video transceiver with mid: {}", mid);
+//				return true;
+//			}
+//			if (!(*it)->sender() || !(*it)->sender()->track()) {
+//				DLOG("No video sender with mid: {}", mid);
+//				return true;
+//			}
+//			return (*it)->sender()->track()->set_enabled(enabled);
+//		}
+//		else {
+//			return context->myStream->GetVideoTracks()[0]->set_enabled(enabled);
+//		}
+//	}
+//	else {
+//		// Mute/unmute audio track
+//		if (context->myStream->GetAudioTracks().size() == 0) {
+//			DLOG("No audio track");
+//			return false;
+//		}
+//		if (!mid.empty() && _pluginContext->unifiedPlan) {
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
+//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
+//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
+//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
+//			});
+//			if (it == transceivers.end()) {
+//				DLOG("No audio transceiver with mid: {}", mid);
+//				return true;
+//			}
+//			if (!(*it)->sender() || !(*it)->sender()->track()) {
+//				DLOG("No audio sender with mid: {}", mid);
+//				return true;
+//			}
+//			return (*it)->sender()->track()->set_enabled(enabled);
+//		}
+//		else {
+//			return context->myStream->GetAudioTracks()[0]->set_enabled(enabled);
+//		}
+//	}
+//	return false;
+//}
+
+//std::string SignalingService::getBitrate(int64_t handleId, const std::string& mid)
+//{
+//	return "";
+//}
 }
