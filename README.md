@@ -7,14 +7,14 @@
 * [Qt5](http://download.qt.io/archive/qt/) Used Qt for UI
 * [asio](https://github.com/chriskohlhoff/asio) Referenced by websocketpp
 * [websocketpp](https://github.com/zaphoyd/websocketpp) WebSockets support for the Janus API
-* [x2struct](https://github.com/xyz347/x2struct/) Used for conversion between C++ objects and json
+* [rapidjson](https://github.com/Tencent/rapidjson.git) Used for conversion between C++ objects and json
 * [glew](http://glew.sourceforge.net/) Used to render video frames
 * [spdlog](https://github.com/gabime/spdlog) Used to build a log system
 * WebRTC
 
 * *Note:* 
-* asio/websocketpp/x2struct/spdlog have joined this repository as submodules. 
-* glew and WebRTC library(M85, release, webrtc.7z) have been included directly in this repository. 
+* asio/websocketpp/rapidjson/spdlog have joined this repository as submodules. 
+* glew and WebRTC library(M96, debug/release, include/lib/bin) have been included directly in this repository. 
 
 ## Features
 * video room (available, and multistream branch is also avaliable)
