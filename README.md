@@ -17,13 +17,13 @@
 * glew and WebRTC library(M96, debug/release, include/lib/bin) have been included directly in this repository. 
 
 ## Features
-* video room (available, and multistream branch is also avaliable)
+* video room (available)
 * text room
 * video call
 * voice mail
 
 ## Arch
-<img src="https://github.com/ouxianghui/janus_client/blob/main/janus-client-arch.svg" height="500" /><br>
+<img src="https://github.com/ouxianghui/janus_client/blob/main/arch.svg" height="500" /><br>
 
 ## Compile
 Get the code:
@@ -32,7 +32,9 @@ Get the code:
   
   Open RTCSln.sln with Visual Studio(2019)
   
-## UI
+## Server
+
+* [janus-gateway](https://github.com/meetecho/janus-gateway.git) Checkout the 'multistream' branch
 
 
 ## Author
