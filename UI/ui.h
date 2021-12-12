@@ -15,7 +15,9 @@ namespace vi {
 	class Participant;
 }
 
+class MediaEventProxy;
 class VideoRoomEventProxy;
+class ParticipantsEventProxy;
 
 class UI
 	: public QMainWindow
@@ -41,17 +43,37 @@ private slots:
 
 	// IVideoRoomEventHandler
 
-	void onMediaStatus(bool isActive, const std::string& reason) ;
+	void onCreate();
 
-	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
-																	   
-	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant);
-																	   
-	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant);
+	void onJoin();
+
+	void onLeave();
+
+
+	// IMediaControlEventHandler
+
+	void onMediaStatus(bool isActive, const std::string& reason);
 
 	void onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
 
 	void onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track);
+
+	void onLocalAudioMuted(bool muted);
+
+	void onLocalVideoMuted(bool muted);
+
+	void onRemoteAudioMuted(const std::string& pid, bool muted);
+
+	void onRemoteVideoMuted(const std::string& pid, bool muted);
+
+
+	// IParticipantsControlEventHandler
+
+	void onCreateParticipant(std::shared_ptr<vi::Participant> participant);
+
+	void onUpdateParticipant(std::shared_ptr<vi::Participant> participant);
+
+	void onRemoveParticipant(std::shared_ptr<vi::Participant> participant);
 
 private slots:
 
@@ -90,7 +112,9 @@ private:
 
 	GalleryView* _galleryView;
 
+	std::shared_ptr<MediaEventProxy> _mediaEventProxy;
 	std::shared_ptr<VideoRoomEventProxy> _videoRoomEventProxy;
+	std::shared_ptr<ParticipantsEventProxy> _participantsEventProxy;
 
 	std::shared_ptr<ParticipantsListView> _participantsListView;
 };

@@ -8,8 +8,8 @@
 
 #include "plugin_client.h"
 #include "utils/universal_observable.hpp"
+#include "video_room_client_interface.h"
 #include "i_video_room_event_handler.h"
-
 
 namespace webrtc {
 	class MediaStreamInterface;
@@ -20,34 +20,52 @@ namespace vi {
 	class Participant;
 	class VideoRoomPublisher;
 	class VideoRoomSubscriber;
+	class ParticipantsContrller;
+	class ParticipantsContrllerInterface;
+	class MediaController;
+	class MediaControllerInterface;
 
-	struct ParticipantSt {
-		int64_t id;
-		std::string displayName;
-	};
-
-	class VideoRoomClient : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
+	class VideoRoomClient : public PluginClient, public VideoRoomClientInterface, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
 		VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss);
 
 		~VideoRoomClient();
 
-		void init();
+		//void init();
 
-		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
+		//void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
-		void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
+		//void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
-		std::shared_ptr<Participant> getParticipant(int64_t pid);
+		//std::shared_ptr<Participant> getParticipant(int64_t pid);
 
-		std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
+		//std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
 
-		uint64_t getId() { return PluginClient::getId(); }
+		//uint64_t getId() { return PluginClient::getId(); }
 
-		void setRoomId(int64_t roomId);
+		//void setRoomId(int64_t roomId);
 
-		int64_t getRoomId() const;
+		//int64_t getRoomId() const;
+
+
+		void init() override;
+
+		void destroy() override;
+
+		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler) override;
+
+		void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler) override;
+
+		void create(std::shared_ptr<vr::CreateRoomRequest> request) override;
+
+		void join(std::shared_ptr<vr::PublisherJoinRequest> request) override;
+
+		void leave(std::shared_ptr<vr::LeaveRequest> request) override;
+
+		std::shared_ptr<ParticipantsContrllerInterface> participantsController() override;
+
+		std::shared_ptr<MediaControllerInterface> mediaContrller() override;
 
 	protected:
 
@@ -84,20 +102,23 @@ namespace vi {
 
 		void unpublishStream();
 
-		void createParticipant(const ParticipantSt& info);
+		void createParticipant(std::shared_ptr<Participant> participant);
 
 		void removeParticipant(int64_t id);
 
 	private:
 		int64_t _roomId;
-		
-		std::map<int64_t, std::shared_ptr<Participant>> _participantsMap;
 
 		std::shared_ptr<IVideoRoomApi> _videoRoomApi;
 
 		std::shared_ptr<VideoRoomSubscriber> _subscriber;
 
-		// key: trackId
-		std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _localStreams;
+		std::shared_ptr<MediaController> _mediaController;
+
+		std::shared_ptr<MediaControllerInterface> _mediaControllerProxy;
+
+		std::shared_ptr<ParticipantsContrller> _participantsController;
+
+		std::shared_ptr<ParticipantsContrllerInterface> _participantsControllerProxy;
 	};
 }

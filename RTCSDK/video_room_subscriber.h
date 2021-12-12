@@ -8,13 +8,14 @@
 namespace vi {
 	class IVideoRoomEventHandler;
 	class IVideoRoomApi;
+	class MediaController;
 
 	using DelayedTask = std::function<void()>;
 
 	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& pluginName, const std::string& opaqueId);
+		VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& pluginName, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController);
 
 		~VideoRoomSubscriber();
 
@@ -76,13 +77,12 @@ namespace vi {
 
 		std::weak_ptr<IVideoRoomApi> _videoRoomApi;
 
-		// key: mid
-		std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _remoteStreams;
-
 		std::atomic_bool _attached;
 
 		std::vector<vr::Publisher> _publishers;
 
 		DelayedTask _joinTask;
+
+		std::weak_ptr<MediaController> _mediaController;
 	};
 }

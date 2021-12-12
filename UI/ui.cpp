@@ -18,6 +18,10 @@
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
 #include "room_info_dialog.h"
+#include "media_event_proxy.h"
+#include "participants_event_proxy.h"
+#include "media_controller.h"
+#include "participants_controller.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -27,12 +31,24 @@ UI::UI(QWidget *parent)
     this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomEventProxy = std::make_shared<VideoRoomEventProxy>(this);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::mediaState, this, &UI::onMediaStatus, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::create, this, &UI::onCreate, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::join, this, &UI::onJoin, Qt::QueuedConnection);
+	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::leave, this, &UI::onLeave, Qt::QueuedConnection);
+
+	_mediaEventProxy = std::make_shared<MediaEventProxy>(this);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::mediaStatus, this, &UI::onMediaStatus, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::localAudioMuted, this, &UI::onLocalAudioMuted, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::localVideoMuted, this, &UI::onLocalVideoMuted, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::remoteAudioMuted, this, &UI::onRemoteAudioMuted, Qt::QueuedConnection);
+	connect(_mediaEventProxy.get(), &MediaEventProxy::remoteVideoMuted, this, &UI::onRemoteVideoMuted, Qt::QueuedConnection);
+
+
+	_participantsEventProxy = std::make_shared<ParticipantsEventProxy>(this);
+	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
+	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
+	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
 
     ui.actionAudio->setEnabled(false);
     ui.actionVideo->setEnabled(false);
@@ -52,9 +68,14 @@ UI::~UI()
 void UI::init()
 {
 	auto ss = rtcApp->getSignalingService();
+
 	_vrc = std::make_shared<vi::VideoRoomClient>(ss);
 	_vrc->init();
+
 	_vrc->registerEventHandler(_videoRoomEventProxy);
+	_vrc->mediaContrller()->registerEventHandler(_mediaEventProxy);
+	_vrc->participantsController()->registerEventHandler(_participantsEventProxy);
+
 
 	_galleryView = new GalleryView(this);
 	setCentralWidget(_galleryView);
@@ -98,6 +119,42 @@ void UI::onSessionStatus(vi::SessionStatus status)
 	if (vi::SessionStatus::CONNECTED == status) {
 
 	}
+}
+
+void UI::onCreate()
+{
+
+}
+
+void UI::onJoin()
+{
+
+}
+
+void UI::onLeave()
+{
+
+}
+
+
+void UI::onLocalAudioMuted(bool muted)
+{
+
+}
+
+void UI::onLocalVideoMuted(bool muted)
+{
+
+}
+
+void UI::onRemoteAudioMuted(const std::string& pid, bool muted)
+{
+
+}
+
+void UI::onRemoteVideoMuted(const std::string& pid, bool muted)
+{
+
 }
 
 void UI::onMediaStatus(bool isActive, const std::string& reason)
@@ -199,13 +256,6 @@ void UI::on_actionPublishStream_triggered(bool checked)
 	if (!_vrc) {
 		return;
 	}
-	if (checked) {
-		auto req = std::make_shared<vi::vr::FetchParticipantsRequest>();
-		req->room = _vrc->getRoomId();
-		_vrc->getVideoRoomApi()->fetchParticipants(req, nullptr);
-	}
-	else {
-	}
 }
 
 void UI::on_actionJanusGateway_triggered()
@@ -248,8 +298,7 @@ void UI::on_actionJoinRoom_triggered(bool checked)
             req->room = dlg.getRoomId();
             req->ptype = "publisher";
             req->display = "ADSL32";
-			_vrc->setRoomId(req->room.value());
-            _vrc->getVideoRoomApi()->join(req, nullptr);
+            _vrc->join(req);
         }
     }
 }

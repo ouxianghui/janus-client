@@ -16,32 +16,18 @@ VideoRoomEventProxy::~VideoRoomEventProxy()
 }
 
 // IVideoRoomEventHandler
-void VideoRoomEventProxy::onMediaStatus(bool isActive, const std::string& reason)
+
+void VideoRoomEventProxy::onCreate()
 {
-	emit mediaState(isActive, reason);
+	emit create();
 }
 
-void VideoRoomEventProxy::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
+void VideoRoomEventProxy::onJoin()
 {
-	emit createParticipant(participant);
+	emit join();
 }
 
-void VideoRoomEventProxy::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
+void VideoRoomEventProxy::onLeave()
 {
-	emit onUpdateParticipant(participant);
-}
-
-void VideoRoomEventProxy::onRemoveParticipant(std::shared_ptr<vi::Participant> participant)
-{
-	emit removeParticipant(participant);
-}
-
-void VideoRoomEventProxy::onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track)
-{
-	emit createVideoTrack(pid, track);
-}
-
-void VideoRoomEventProxy::onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track)
-{
-	emit removeVideoTrack(pid, track);
+	emit leave();
 }

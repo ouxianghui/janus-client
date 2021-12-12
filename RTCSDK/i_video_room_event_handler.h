@@ -20,16 +20,11 @@ namespace vi {
 	public:
 		virtual ~IVideoRoomEventHandler() {}
 
-		virtual void onMediaStatus(bool isActive, const std::string& reason) = 0;
+		virtual void onCreate() = 0;
 
-		virtual void onCreateParticipant(std::shared_ptr<Participant> participant) = 0;
+		virtual void onJoin() = 0;
 
-		virtual void onUpdateParticipant(std::shared_ptr<Participant> participant) = 0;
+		virtual void onLeave() = 0;
 
-		virtual void onRemoveParticipant(std::shared_ptr<Participant> participant) = 0;
-
-		virtual void onCreateVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) = 0;
-
-		virtual void onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackInterface> track) = 0;
 	};
 }

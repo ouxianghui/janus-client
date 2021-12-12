@@ -14,6 +14,10 @@
 #include "pc/media_stream.h"
 #include "pc/media_stream_proxy.h"
 #include "pc/media_stream_track_proxy.h"
+#include "media_controller.h"
+#include "media_controller_proxy.h"
+#include "participants_controller.h"
+#include "participants_controller_proxy.h"
 
 namespace vi {
 	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss)
@@ -35,11 +39,22 @@ namespace vi {
 	{
 		PluginClient::init();
 
+		_mediaController = std::make_shared<MediaController>();
+		_mediaControllerProxy = MediaControllerProxy::Create(TMgr->thread("service"), _mediaController);
+
+		_participantsController = std::make_shared<ParticipantsContrller>();
+		_participantsControllerProxy = ParticipantsContrllerProxy::Create(TMgr->thread("service"), _participantsController);
+
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
-		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->plugin, _pluginContext->opaqueId);
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
 		_subscriber->init();
 		_subscriber->setRoomApi(_videoRoomApi);
+	}
+
+	void VideoRoomClient::destroy()
+	{
+
 	}
 
 	void VideoRoomClient::registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
@@ -56,25 +71,54 @@ namespace vi {
 		_subscriber->unregisterEventHandler(handler);
 	}
 
-	std::shared_ptr<Participant> VideoRoomClient::getParticipant(int64_t pid)
+	//std::shared_ptr<Participant> VideoRoomClient::getParticipant(int64_t pid)
+	//{
+	//	return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
+	//}
+
+	//void VideoRoomClient::setRoomId(int64_t roomId)
+	//{
+	//	_roomId = roomId;
+	//	_subscriber->setRoomId(_roomId);
+	//}
+
+	//int64_t VideoRoomClient::getRoomId() const
+	//{
+	//	return _roomId;
+	//}
+
+	//std::shared_ptr<IVideoRoomApi> VideoRoomClient::getVideoRoomApi()
+	//{
+	//	return _videoRoomApi;
+	//}
+
+
+	void VideoRoomClient::create(std::shared_ptr<vr::CreateRoomRequest> request)
 	{
-		return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
+
 	}
 
-	void VideoRoomClient::setRoomId(int64_t roomId)
+	void VideoRoomClient::join(std::shared_ptr<vr::PublisherJoinRequest> request)
 	{
-		_roomId = roomId;
-		_subscriber->setRoomId(_roomId);
+		_roomId = request->room.value();
+		if (_videoRoomApi) {
+			_videoRoomApi->join(request, nullptr);
+		}
 	}
 
-	int64_t VideoRoomClient::getRoomId() const
+	void VideoRoomClient::leave(std::shared_ptr<vr::LeaveRequest> request)
 	{
-		return _roomId;
+
 	}
 
-	std::shared_ptr<IVideoRoomApi> VideoRoomClient::getVideoRoomApi()
+	std::shared_ptr<ParticipantsContrllerInterface> VideoRoomClient::participantsController()
 	{
-		return _videoRoomApi;
+		return _participantsControllerProxy;
+	}
+
+	std::shared_ptr<MediaControllerInterface> VideoRoomClient::mediaContrller()
+	{
+		return _mediaControllerProxy;
 	}
 
 	void VideoRoomClient::onAttached(bool success)
@@ -115,9 +159,9 @@ namespace vi {
 				});
 			}
 
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([isActive, reason](const auto& observer) {
-				observer->onMediaStatus(isActive, reason);
-			});
+			if (_mediaController) {
+				_mediaController->onWebrtcStatus(isActive, reason);
+			}
 		}
 		// TODO:-----------------------
 		//unmuteVideo("");
@@ -178,8 +222,8 @@ namespace vi {
         				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {}", pub.id.value(), pub.display.value_or(""));
 
-					ParticipantSt info{ pub.id.value(), pub.display.value_or("")};
-					createParticipant(info);
+					auto participant = std::make_shared<Participant>(pub.id.value(), pub.display.value_or(""));
+					createParticipant(participant);
 				}
 				_subscriber->subscribeTo(publishers);
 			}
@@ -194,8 +238,8 @@ namespace vi {
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {})", pub.id.value(), pub.display.value_or(""));
-					ParticipantSt info{ pub.id.value(), pub.display.value_or("") };
-					createParticipant(info);
+					auto participant = std::make_shared<Participant>(pub.id.value(), pub.display.value_or(""));
+					createParticipant(participant);
 				}
 				_subscriber->subscribeTo(publishers);
 			}
@@ -204,12 +248,8 @@ namespace vi {
 				const auto& leaving = pluginData->data->leaving.value();
 
 				// Figure out the participant and detach it
-				for (const auto& pair : _participantsMap) {
-					if (pair.first == leaving) {
-						removeParticipant(leaving);
-						break;
-					}
-				}
+				removeParticipant(leaving);
+
 				//_subscriber->unsubscribeFrom(leaving);
 			}
 			else if (pluginData->data->unpublished) {
@@ -224,12 +264,8 @@ namespace vi {
 				}
 
 				// Figure out the participant and detach it
-				for (const auto& pair : _participantsMap) {
-					if (pair.first == unpublished) {
-						removeParticipant(unpublished);
-						break;
-					}
-				}
+				removeParticipant(unpublished);
+
 				//_subscriber->unsubscribeFrom(unpublished);
 			}
 			else if (pluginData->data->error) {
@@ -294,53 +330,7 @@ namespace vi {
 
 	void VideoRoomClient::onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on)
 	{
-		if (on) {
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
-				auto self = wself.lock();
-				if (!self) {
-					return;
-				}
-				if (!track) {
-					return;
-				}
-
-				auto vrc = std::dynamic_pointer_cast<VideoRoomClient>(self);
-
-				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					vrc->_localStreams[track->id()] = webrtc::MediaStream::Create(track->id());
-					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					vrc->_localStreams[track->id()]->AddTrack(vt);
-					auto t = vrc->_localStreams[track->id()]->GetVideoTracks()[0];
-					//auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					observer->onCreateVideoTrack(pid, vt);
-				}
-			}); 
-
-		}
-		else {
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = _id, track](const auto& observer) {
-				auto self = wself.lock();
-				if (!self) {
-					return;
-				}
-				if (!track) {
-					return;
-				}
-
-				auto vrc = std::dynamic_pointer_cast<VideoRoomClient>(self);
-				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					if (vrc->_localStreams.find(track->id()) != vrc->_localStreams.end()) {
-						auto vt = vrc->_localStreams[track->id()]->GetVideoTracks()[0];
-						//auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-						observer->onRemoveVideoTrack(pid, vt);
-
-						vrc->_localStreams[track->id()]->RemoveTrack(vt.get());
-						auto it = vrc->_localStreams.find(track->id());
-						vrc->_localStreams.erase(it);
-					}
-				}
-			});
-		}
+		_mediaController->onLocalTrack(track, _id, on);
 	}
 
 	void VideoRoomClient::onCleanup()
@@ -406,22 +396,17 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomClient::createParticipant(const ParticipantSt& info)
+	void VideoRoomClient::createParticipant(std::shared_ptr<Participant> participant)
 	{
-		auto participant = std::make_shared<Participant>(info.id, info.displayName);
-
-		_participantsMap[info.id] = participant;
-		UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), participant](const auto& observer) {
-			observer->onCreateParticipant(participant);
-		});
+		if (_participantsController) {
+			_participantsController->createParticipant(participant);
+		}
 	}
 
 	void VideoRoomClient::removeParticipant(int64_t id)
 	{
-		if (_participantsMap.find(id) != _participantsMap.end()) {
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), participant = _participantsMap[id]](const auto& observer) {
-				observer->onRemoveParticipant(participant);
-			});
+		if (_participantsController) {
+			_participantsController->removeParticipant(id);
 		}
 	}
 

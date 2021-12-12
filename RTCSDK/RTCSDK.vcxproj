@@ -18,7 +18,7 @@
     <ClInclude Include="audio_device_manager.h" />
     <ClInclude Include="helper_utils.h" />
     <ClInclude Include="i_audio_device_manager.h" />
-    <ClInclude Include="i_media_controller.h" />
+    <ClInclude Include="i_media_control_event_handler.h" />
     <ClInclude Include="i_message_transport.h" />
     <ClInclude Include="i_message_transport_listener.h" />
     <ClInclude Include="i_sfu_api_client.h" />
@@ -38,9 +38,15 @@
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\rtc_log_sink.h" />
     <ClInclude Include="media_controller.h" />
+    <ClInclude Include="media_controller_interface.h" />
+    <ClInclude Include="media_controller_proxy.h" />
     <ClInclude Include="message_models.h" />
     <ClInclude Include="message_transport.h" />
     <ClInclude Include="participant.h" />
+    <ClInclude Include="participants_controller.h" />
+    <ClInclude Include="participants_controller_interface.h" />
+    <ClInclude Include="participants_controller_proxy.h" />
+    <ClInclude Include="i_participants_control_event_handler.h" />
     <ClInclude Include="plugin_client.h" />
     <ClInclude Include="plugin_context.h" />
     <ClInclude Include="rtcsdk_global.h" />
@@ -99,6 +105,7 @@
     <ClCompile Include="media_controller.cpp" />
     <ClCompile Include="message_transport.cpp" />
     <ClCompile Include="participant.cpp" />
+    <ClCompile Include="participants_controller.cpp" />
     <ClCompile Include="plugin_client.cpp" />
     <ClCompile Include="rtc_sdk.cpp" />
     <ClCompile Include="sdp_utils.cpp" />

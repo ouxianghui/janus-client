@@ -8,11 +8,13 @@
 #include "pc/media_stream.h"
 #include "pc/media_stream_proxy.h"
 #include "pc/media_stream_track_proxy.h"
+#include "media_controller.h"
 
 namespace vi {
 
-	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& plugin, const std::string& opaqueId)
+	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
 		: PluginClient(ss)
+		, _mediaController(mediaController)
 	{
 		_pluginContext->plugin = plugin;
 		_pluginContext->opaqueId = opaqueId;
@@ -346,51 +348,8 @@ namespace vi {
 
 	void VideoRoomSubscriber::onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on)
 	{
-		if (on) {
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
-				auto self = wself.lock();
-				if (!self) {
-					return;
-				}
-				if (!track) {
-					return;
-				}
-
-				auto vrs = std::dynamic_pointer_cast<VideoRoomSubscriber>(self);
-
-				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					vrs->_remoteStreams[track->id()] = webrtc::MediaStream::Create(track->id());
-					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					vrs->_remoteStreams[track->id()]->AddTrack(vt);
-					auto t = vrs->_remoteStreams[track->id()]->GetVideoTracks()[0];
-					observer->onCreateVideoTrack(pid, t);
-				}
-			});
-		}
-		else {
-			UniversalObservable<IVideoRoomEventHandler>::notifyObservers([wself = weak_from_this(), pid = stoul(mid.c_str()), track](const auto& observer) {
-				auto self = wself.lock();
-				if (!self) {
-					return;
-				}
-				if (!track) {
-					return;
-				}
-
-				auto vrs = std::dynamic_pointer_cast<VideoRoomSubscriber>(self);
-
-				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					if (vrs->_remoteStreams.find(track->id()) != vrs->_remoteStreams.end()) {
-						auto vt = vrs->_remoteStreams[track->id()]->GetVideoTracks()[0];
-
-						observer->onRemoveVideoTrack(pid, vt);
-
-						vrs->_remoteStreams[track->id()]->RemoveTrack(vt.get());
-						auto it = vrs->_remoteStreams.find(track->id());
-						vrs->_remoteStreams.erase(it);
-					}
-				}
-			});
+		if (auto mc = _mediaController.lock()) {
+			mc->onRemoteTrack(track, mid, on);
 		}
 	}
 }
