@@ -561,7 +561,7 @@ namespace vi {
 		return _pluginClientMap[handleId];
 	}
 
-	void SignalingService::sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEventEvent> event)
+	void SignalingService::sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event)
 	{
 		auto lambda = [wself = weak_from_this(), event](const std::string& json) {
 			if (auto self = wself.lock()) {

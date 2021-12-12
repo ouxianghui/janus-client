@@ -38,7 +38,7 @@ namespace vi {
 
 		virtual void sendMessage(int64_t handleId, std::shared_ptr<MessageEvent> event) = 0;
 
-		virtual void sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEventEvent> event) = 0;
+		virtual void sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event) = 0;
 
 		virtual void hangup(int64_t handleId, bool sendRequest) = 0;
 

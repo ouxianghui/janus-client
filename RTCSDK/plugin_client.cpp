@@ -1534,7 +1534,7 @@ namespace vi {
 				std::string candidateStr;
 				candidate->ToString(&candidateStr);
 
-				auto event = std::make_shared<TrickleCandidateEventEvent>();
+				auto event = std::make_shared<TrickleCandidateEvent>();
 				event->candidate.candidate = candidateStr;
 				event->candidate.sdpMid = candidate->sdp_mid();
 				event->candidate.sdpMLineIndex = (int)candidate->sdp_mline_index();
@@ -1551,7 +1551,7 @@ namespace vi {
 			DLOG("End of candidates.");
 			_pluginContext->iceDone = true;
 			if (_pluginContext->trickle) {
-				auto event = std::make_shared<TrickleCandidateEventEvent>();
+				auto event = std::make_shared<TrickleCandidateEvent>();
 				event->candidate.completed = true;
 				if (auto ss = _pluginContext->signalingService.lock()) {
 					if (ss->sessionStatus() == SessionStatus::CONNECTED) {

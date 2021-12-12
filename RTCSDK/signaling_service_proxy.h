@@ -20,7 +20,7 @@ namespace vi {
 		WEAK_PROXY_METHOD3(void, attach, const std::string&, const std::string&, std::shared_ptr<PluginClient>)
 		WEAK_PROXY_METHOD1(void, destroy, std::shared_ptr<DestroySessionEvent>)
 		WEAK_PROXY_METHOD2(void, sendMessage, int64_t, std::shared_ptr<MessageEvent>)
-		WEAK_PROXY_METHOD2(void, sendTrickleCandidate, int64_t, std::shared_ptr<TrickleCandidateEventEvent>)
+		WEAK_PROXY_METHOD2(void, sendTrickleCandidate, int64_t, std::shared_ptr<TrickleCandidateEvent>)
 		WEAK_PROXY_METHOD2(void, hangup, int64_t, bool)
 		WEAK_PROXY_METHOD2(void, detach, int64_t, std::shared_ptr<DetachEvent>)
 	END_WEAK_PROXY_MAP()

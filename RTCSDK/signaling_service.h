@@ -59,7 +59,7 @@ namespace vi {
 
 		void sendMessage(int64_t handleId, std::shared_ptr<MessageEvent> event) override;
 
-		void sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEventEvent> event) override;
+		void sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event) override;
 
 		void hangup(int64_t handleId, bool sendRequest) override;
 

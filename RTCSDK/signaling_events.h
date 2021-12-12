@@ -31,7 +31,7 @@ namespace vi {
 		std::string jsep;
 	};
 
-	class TrickleCandidateEventEvent : public EventBase {
+	class TrickleCandidateEvent : public EventBase {
 	public:
 		CandidateData candidate;
 	};
