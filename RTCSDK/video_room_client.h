@@ -32,23 +32,6 @@ namespace vi {
 
 		~VideoRoomClient();
 
-		//void init();
-
-		//void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
-
-		//void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
-
-		//std::shared_ptr<Participant> getParticipant(int64_t pid);
-
-		//std::shared_ptr<IVideoRoomApi> getVideoRoomApi();
-
-		//uint64_t getId() { return PluginClient::getId(); }
-
-		//void setRoomId(int64_t roomId);
-
-		//int64_t getRoomId() const;
-
-
 		void init() override;
 
 		void destroy() override;

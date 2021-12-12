@@ -33,7 +33,7 @@ namespace vi {
 
     std::shared_ptr<Participant> ParticipantsContrller::participant(int64_t pid)
     {
-        return nullptr;
+        return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
     }
 
     std::vector<std::shared_ptr<Participant>> ParticipantsContrller::participantList()
