@@ -23,7 +23,7 @@
 * voice mail
 
 ## Arch
-<img src="https://github.com/ouxianghui/janus_client/blob/main/arch.svg" height="500" /><br>
+<img src="https://github.com/ouxianghui/janus-client/blob/multistream/arch.svg" height="500" /><br>
 
 ## Compile
 Get the code:
