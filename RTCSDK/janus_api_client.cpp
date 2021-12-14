@@ -291,7 +291,7 @@ namespace vi {
 		auto lambda = [wself = weak_from_this(), callback](const std::string& json) {
 			if (auto self = wself.lock()) {
 				if (callback) {
-					self->UniversalObservable<ISfuApiClientListener>::notifyObservers([wself, callback, json](const auto& observer) {
+					TMgr->thread(self->_callbackThreadName)->PostTask(RTC_FROM_HERE, [wself, callback, json]() {
 						if (auto self = wself.lock()) {
 							if (callback) {
 								(*callback)(json);

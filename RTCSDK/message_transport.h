@@ -12,19 +12,23 @@
 #include <unordered_map>
 #include "websocket/i_connection_listener.h"
 #include "websocket/websocket_endpoint.h"
-#include "utils/observable.h"
+#include "utils/universal_observable.hpp"
 
 namespace vi {
 	class MessageTransport
 		: public IMessageTransport
 		, public IConnectionListener
-		, public Observable
+		, public UniversalObservable<IMessageTransportListener>
 		, public std::enable_shared_from_this<MessageTransport>
 	{
 	public:
 		MessageTransport();
 
 		~MessageTransport() override;
+
+		void init() override;
+
+		void destroy() override;
 
 		// IMessageTransportor
 	    void addListener(std::shared_ptr<IMessageTransportListener> listener) override;
@@ -70,8 +74,7 @@ namespace vi {
 		std::shared_ptr<WebsocketEndpoint> _websocket;
 
 		std::mutex _callbackMutex;
-		std::unordered_map<std::string, std::shared_ptr<JCCallback>> _callbacksMap;
 
-		std::vector<std::weak_ptr<IMessageTransportListener>> _listeners;
+		std::unordered_map<std::string, std::shared_ptr<JCCallback>> _callbacksMap;
 	};
 }

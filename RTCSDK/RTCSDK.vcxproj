@@ -34,7 +34,7 @@
     <ClInclude Include="json\serialization_json.hpp" />
     <ClInclude Include="json\stringable.hpp" />
     <ClInclude Include="json\string_algo.hpp" />
-    <ClInclude Include="local_video_capture.h" />
+    <ClInclude Include="video_capture.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\rtc_log_sink.h" />
     <ClInclude Include="media_controller.h" />
@@ -99,7 +99,7 @@
     <ClCompile Include="helper_utils.cpp" />
     <ClCompile Include="i_audio_device_manager.cpp" />
     <ClCompile Include="janus_api_client.cpp" />
-    <ClCompile Include="local_video_capture.cpp" />
+    <ClCompile Include="video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />
     <ClCompile Include="media_controller.cpp" />

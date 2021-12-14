@@ -27,7 +27,7 @@
 #include "modules/audio_processing/include/audio_processing.h"
 #include "modules/video_capture/video_capture_factory.h"
 #include "pc/video_track_source.h"
-#include "local_video_capture.h"
+#include "video_capture.h"
 #include "service/app_instance.h"
 #include "rtc_base/thread.h"
 #include "logger/logger.h"

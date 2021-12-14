@@ -39,22 +39,17 @@ namespace vi {
 		cricket::VideoAdapter _videoAdapter;
 	};
 
-	class LocalVideoCapture : public VideoCapturerBase, public rtc::VideoSinkInterface<webrtc::VideoFrame> {
+	class VideoCapture : public VideoCapturerBase, public rtc::VideoSinkInterface<webrtc::VideoFrame> {
 	public:
-		static LocalVideoCapture* Create(size_t width,
-			size_t height,
-			size_t target_fps,
-			size_t captureDeviceIndex);
-		virtual ~LocalVideoCapture();
+		static VideoCapture* Create(size_t width, size_t height, size_t targetFps, size_t captureDeviceIndex);
+
+		virtual ~VideoCapture();
 
 		void OnFrame(const webrtc::VideoFrame& frame) override;
 
 	private:
-		LocalVideoCapture();
-		bool Init(size_t width,
-			size_t height,
-			size_t targetFps,
-			size_t captureDeviceIndex);
+		VideoCapture();
+		bool Init(size_t width, size_t height, size_t targetFps, size_t captureDeviceIndex);
 		void Destroy();
 
 		rtc::scoped_refptr<webrtc::VideoCaptureModule> _vcm;
@@ -64,19 +59,15 @@ namespace vi {
 
 	class CapturerTrackSource : public webrtc::VideoTrackSource {
 	public:
-		static rtc::scoped_refptr<CapturerTrackSource> Create() {
-			const size_t kWidth = 640;
-			const size_t kHeight = 480;
-			const size_t kFps = 30;
-			std::unique_ptr<vi::LocalVideoCapture> capturer;
+		static rtc::scoped_refptr<CapturerTrackSource> Create(size_t width, size_t height, size_t targetFps) {
+			std::unique_ptr<vi::VideoCapture> capturer;
 			std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> info(webrtc::VideoCaptureFactory::CreateDeviceInfo());
 			if (!info) {
 				return nullptr;
 			}
 			int num_devices = info->NumberOfDevices();
 			for (int i = 0; i < num_devices; ++i) {
-				capturer = absl::WrapUnique(
-					LocalVideoCapture::Create(kWidth, kHeight, kFps, i));
+				capturer = absl::WrapUnique(VideoCapture::Create(width, height, targetFps, i));
 				if (capturer) {
 					return new rtc::RefCountedObject<CapturerTrackSource>(std::move(capturer));
 				}
@@ -85,16 +76,18 @@ namespace vi {
 			return nullptr;
 		}
 
+		std::unique_ptr<VideoCapture>& capturer() { return _capturer; }
+
 	protected:
 		explicit CapturerTrackSource(
-			std::unique_ptr<LocalVideoCapture> capturer)
+			std::unique_ptr<VideoCapture> capturer)
 			: VideoTrackSource(/*remote=*/false), _capturer(std::move(capturer)) {}
 
 	private:
 		rtc::VideoSourceInterface<webrtc::VideoFrame>* source() override {
 			return _capturer.get();
 		}
-		std::unique_ptr<LocalVideoCapture> _capturer;
+		std::unique_ptr<VideoCapture> _capturer;
 	};
 }
 

@@ -4,7 +4,7 @@
  * Created:   2020-10-01
  **/
 
-#include "local_video_capture.h"
+#include "video_capture.h"
 #include <stdint.h>
 #include <memory>
 #include "rtc_base/checks.h"
@@ -16,14 +16,13 @@
 
 namespace vi {
 
-	LocalVideoCapture::LocalVideoCapture() : _vcm(nullptr) {}
+	VideoCapture::VideoCapture() : _vcm(nullptr) {}
 
-	bool LocalVideoCapture::Init(size_t width,
+	bool VideoCapture::Init(size_t width,
 		size_t height,
 		size_t targetFps,
 		size_t captureDeviceIndex) {
-		std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> deviceInfo(
-			webrtc::VideoCaptureFactory::CreateDeviceInfo());
+		std::unique_ptr<webrtc::VideoCaptureModule::DeviceInfo> deviceInfo(webrtc::VideoCaptureFactory::CreateDeviceInfo());
 
 		char deviceName[256];
 		char uniqueName[256];
@@ -57,23 +56,22 @@ namespace vi {
 		return true;
 	}
 
-	LocalVideoCapture* LocalVideoCapture::Create(size_t width,
+	VideoCapture* VideoCapture::Create(size_t width,
 		size_t height,
-		size_t target_fps,
-		size_t capture_device_index) {
-		std::unique_ptr<LocalVideoCapture> vcm_capturer(new LocalVideoCapture());
-		if (!vcm_capturer->Init(width, height, target_fps, capture_device_index)) {
-			RTC_LOG(LS_WARNING) << "Failed to create VcmCapturer(w = " << width
-				<< ", h = " << height << ", fps = " << target_fps
-				<< ")";
+		size_t targetFps,
+		size_t captureDeviceIndex) {
+		std::unique_ptr<VideoCapture> vcm_capturer(new VideoCapture());
+		if (!vcm_capturer->Init(width, height, targetFps, captureDeviceIndex)) {
+			RTC_LOG(LS_WARNING) << "Failed to create VcmCapturer(w = " << width << ", h = " << height << ", fps = " << targetFps << ")";
 			return nullptr;
 		}
 		return vcm_capturer.release();
 	}
 
-	void LocalVideoCapture::Destroy() {
-		if (!_vcm)
+	void VideoCapture::Destroy() {
+		if (!_vcm) {
 			return;
+		}
 
 		_vcm->StopCapture();
 		_vcm->DeRegisterCaptureDataCallback();
@@ -81,11 +79,11 @@ namespace vi {
 		_vcm = nullptr;
 	}
 
-	LocalVideoCapture::~LocalVideoCapture() {
+	VideoCapture::~VideoCapture() {
 		Destroy();
 	}
 
-	void LocalVideoCapture::OnFrame(const webrtc::VideoFrame& frame) {
+	void VideoCapture::OnFrame(const webrtc::VideoFrame& frame) {
 		VideoCapturerBase::OnFrame(frame);
 	}
 

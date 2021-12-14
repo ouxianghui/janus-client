@@ -21,6 +21,16 @@ namespace vi {
 
 	MessageTransport::~MessageTransport()
 	{
+		DLOG("~MessageTransport()");
+	}
+
+	void MessageTransport::init()
+	{
+
+	}
+
+	void MessageTransport::destroy()
+	{
 
 	}
 
@@ -35,12 +45,12 @@ namespace vi {
 	// IMessageTransportor
 	void MessageTransport::addListener(std::shared_ptr<IMessageTransportListener> listener)
 	{
-		addBizObserver<IMessageTransportListener>(_listeners, listener);
+		UniversalObservable<IMessageTransportListener>::addWeakObserver(listener, "worker");
 	}
 
 	void MessageTransport::removeListener(std::shared_ptr<IMessageTransportListener> listener)
 	{
-		removeBizObserver<IMessageTransportListener>(_listeners, listener);
+		UniversalObservable<IMessageTransportListener>::removeObserver(listener);
 	}
 
 	void MessageTransport::connect(const std::string& url)
@@ -85,24 +95,33 @@ namespace vi {
 	void MessageTransport::onOpen()
 	{
 		DLOG("opened");
-		notifyObserver4Change<IMessageTransportListener>(_listeners, [](const auto& observer) {
-			observer->onOpened();
+
+		UniversalObservable<IMessageTransportListener>::notifyObservers([wself = weak_from_this()](const auto& observer) {
+			if (auto self = wself.lock()) {
+				observer->onOpened();
+			}
 		});
 	}
 
 	void MessageTransport::onFail(int errorCode, const std::string& reason)
 	{
 		DLOG("errorCode = {}, reason = {}", errorCode, reason.c_str());
-		notifyObserver4Change<IMessageTransportListener>(_listeners, [errorCode, reason](const auto& observer) {
-			observer->onFailed(errorCode, reason);
+
+		UniversalObservable<IMessageTransportListener>::notifyObservers([wself = weak_from_this(), errorCode, reason](const auto& observer) {
+			if (auto self = wself.lock()) {
+				observer->onFailed(errorCode, reason);
+			}
 		});
 	}
 
 	void MessageTransport::onClose(int closeCode, const std::string& reason)
 	{
 		DLOG("errorCode = {}, reaseon = {}", closeCode, reason.c_str());
-		notifyObserver4Change<IMessageTransportListener>(_listeners, [](const auto& observer) {
-			observer->onClosed();
+
+		UniversalObservable<IMessageTransportListener>::notifyObservers([wself = weak_from_this()](const auto& observer) {
+			if (auto self = wself.lock()) {
+				observer->onClosed();
+			}
 		});
 	}
 
@@ -154,14 +173,20 @@ namespace vi {
 			if (_callbacksMap.find(transaction) != _callbacksMap.end()) {
 				std::shared_ptr<JCCallback> callback = _callbacksMap[transaction];
 				_callbacksMap.erase(transaction);
-				if (callback) {
-					(*callback)(data);
-				}
+				TMgr->thread("worker")->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), callback, data]() {
+					if (auto self = wself.lock()) {
+						if (callback) {
+							(*callback)(data);
+						}
+					}
+				});
 			}
 		}
 		else {
-			notifyObserver4Change<IMessageTransportListener>(_listeners, [data](const auto& observer) {
-				observer->onMessage(data);;
+			UniversalObservable<IMessageTransportListener>::notifyObservers([wself = weak_from_this(), data](const auto& observer) {
+				if (auto self = wself.lock()) {
+					observer->onMessage(data);
+				}
 			});
 		}
 	}

@@ -34,6 +34,10 @@ namespace vi {
 	public:
 		virtual ~IMessageTransport() {}
 
+		virtual void init() = 0;
+
+		virtual void destroy() = 0;
+
 		virtual void addListener(std::shared_ptr<IMessageTransportListener> listener) = 0;
 
 		virtual void removeListener(std::shared_ptr<IMessageTransportListener> listener) = 0;

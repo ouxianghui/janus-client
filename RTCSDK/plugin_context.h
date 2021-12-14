@@ -19,7 +19,7 @@
 #include "webrtc_utils.h"
 #include "signaling_events.h"
 #include "signaling_service_interface.h"
-#include "local_video_capture.h"
+#include "video_capture.h"
 
 namespace vi {
 

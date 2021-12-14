@@ -27,7 +27,7 @@
 #include "modules/audio_processing/include/audio_processing.h"
 #include "modules/video_capture/video_capture_factory.h"
 #include "pc/video_track_source.h"
-#include "local_video_capture.h"
+#include "video_capture.h"
 #include "service/app_instance.h"
 #include "rtc_base/thread.h"
 #include "logger/logger.h"
@@ -50,6 +50,10 @@ namespace vi {
 	{
 		DLOG("~PluginClient()");
 		stopStatsMonitor();
+
+		if (_pluginContext->videoDevice) {
+			_pluginContext->videoDevice->capturer();
+		}
 
 		_pluginContext->pcf = nullptr;
 
@@ -877,7 +881,7 @@ namespace vi {
 			}
 
 			// TODO: hold the videoDevice
-			_pluginContext->videoDevice = CapturerTrackSource::Create();
+			_pluginContext->videoDevice = CapturerTrackSource::Create(640, 480, 30);
 			if (_pluginContext->videoDevice) {
 				rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack(_pluginContext->pcf->CreateVideoTrack("video_label", _pluginContext->videoDevice));
 
