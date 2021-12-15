@@ -14,12 +14,12 @@
 #include "gl_video_renderer.h"
 #include "participant.h"
 #include "logger/logger.h"
-#include "video_room_event_proxy.h"
+#include "video_room_event_adapter.h"
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
 #include "room_info_dialog.h"
-#include "media_event_proxy.h"
-#include "participants_event_proxy.h"
+#include "media_event_adapter.h"
+#include "participants_event_adapter.h"
 #include "media_controller.h"
 #include "participants_controller.h"
 
@@ -30,25 +30,25 @@ UI::UI(QWidget *parent)
     //ui.mainToolBar->setFixedHeight(64);
     this->setWindowState(Qt::WindowMaximized);
 
-	_videoRoomEventProxy = std::make_shared<VideoRoomEventProxy>(this);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::create, this, &UI::onCreate, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::join, this, &UI::onJoin, Qt::QueuedConnection);
-	connect(_videoRoomEventProxy.get(), &VideoRoomEventProxy::leave, this, &UI::onLeave, Qt::QueuedConnection);
+	_videoRoomEventAdapter = std::make_shared<VideoRoomEventAdapter>(this);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::create, this, &UI::onCreate, Qt::QueuedConnection);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::join, this, &UI::onJoin, Qt::QueuedConnection);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::leave, this, &UI::onLeave, Qt::QueuedConnection);
 
-	_mediaEventProxy = std::make_shared<MediaEventProxy>(this);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::mediaStatus, this, &UI::onMediaStatus, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::localAudioMuted, this, &UI::onLocalAudioMuted, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::localVideoMuted, this, &UI::onLocalVideoMuted, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::remoteAudioMuted, this, &UI::onRemoteAudioMuted, Qt::QueuedConnection);
-	connect(_mediaEventProxy.get(), &MediaEventProxy::remoteVideoMuted, this, &UI::onRemoteVideoMuted, Qt::QueuedConnection);
+	_mediaEventAdapter = std::make_shared<MediaEventAdapter>(this);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::mediaStatus, this, &UI::onMediaStatus, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::createVideoTrack, this, &UI::onCreateVideoTrack, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::removeVideoTrack, this, &UI::onRemoveVideoTrack, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::localAudioMuted, this, &UI::onLocalAudioMuted, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::localVideoMuted, this, &UI::onLocalVideoMuted, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::remoteAudioMuted, this, &UI::onRemoteAudioMuted, Qt::QueuedConnection);
+	connect(_mediaEventAdapter.get(), &MediaEventAdapter::remoteVideoMuted, this, &UI::onRemoteVideoMuted, Qt::QueuedConnection);
 
 
-	_participantsEventProxy = std::make_shared<ParticipantsEventProxy>(this);
-	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
-	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
-	connect(_participantsEventProxy.get(), &ParticipantsEventProxy::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
+	_participantsEventAdapter = std::make_shared<ParticipantsEventAdapter>(this);
+	connect(_participantsEventAdapter.get(), &ParticipantsEventAdapter::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
+	connect(_participantsEventAdapter.get(), &ParticipantsEventAdapter::updateParticipant, this, &UI::onUpdateParticipant, Qt::QueuedConnection);
+	connect(_participantsEventAdapter.get(), &ParticipantsEventAdapter::removeParticipant, this, &UI::onRemoveParticipant, Qt::QueuedConnection);
 
     ui.actionAudio->setEnabled(false);
     ui.actionVideo->setEnabled(false);
@@ -60,9 +60,9 @@ UI::~UI()
 		_galleryView->removeAll();
 	}
 
-	if (_selfContentView) {
-		_selfContentView->cleanup();
-	}
+	//if (_selfContentView) {
+	//	_selfContentView->cleanup();
+	//}
 }
 
 void UI::init()
@@ -72,9 +72,9 @@ void UI::init()
 	_vrc = std::make_shared<vi::VideoRoomClient>(ss);
 	_vrc->init();
 
-	_vrc->registerEventHandler(_videoRoomEventProxy);
-	_vrc->mediaContrller()->registerEventHandler(_mediaEventProxy);
-	_vrc->participantsController()->registerEventHandler(_participantsEventProxy);
+	_vrc->registerEventHandler(_videoRoomEventAdapter);
+	_vrc->mediaContrller()->registerEventHandler(_mediaEventAdapter);
+	_vrc->participantsController()->registerEventHandler(_participantsEventAdapter);
 
 
 	_galleryView = new GalleryView(this);
@@ -85,10 +85,10 @@ void UI::init()
     QVBoxLayout* dockContentViewLayout = new QVBoxLayout(dockContentView);
     dockContentView->setLayout(dockContentViewLayout);
 
-    _selfView = new QWidget(this);
-    QGridLayout* selfViewLayout = new QGridLayout(_selfView);
-    _selfView->setLayout(selfViewLayout);
-    dockContentViewLayout->addWidget(_selfView, 100);
+    //_selfView = new QWidget(this);
+    //QGridLayout* selfViewLayout = new QGridLayout(_selfView);
+    //_selfView->setLayout(selfViewLayout);
+    //dockContentViewLayout->addWidget(_selfView, 100);
 
     QToolButton* audioButton = new QToolButton(this);
     audioButton->setDefaultAction(ui.actionAudio);

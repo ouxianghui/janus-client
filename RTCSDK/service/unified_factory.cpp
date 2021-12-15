@@ -33,12 +33,10 @@ void UnifiedFactory::destroy()
 {
 	if (_webrtcService) {
 		_webrtcService->cleanup();
-		_webrtcService = nullptr;
 	}
 
 	if (_serviceFactory) {
 		_serviceFactory->destroy();
-		_serviceFactory = nullptr;
 	}
 }
 

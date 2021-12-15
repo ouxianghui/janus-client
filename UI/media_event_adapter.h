@@ -5,17 +5,17 @@
 #include "i_media_control_event_handler.h"
 #include "api/media_stream_interface.h"
 
-class MediaEventProxy
+class MediaEventAdapter
 	: public QObject
 	, public vi::IMediaControlEventHandler
-	, public std::enable_shared_from_this<MediaEventProxy>
+	, public std::enable_shared_from_this<MediaEventAdapter>
 {
 	Q_OBJECT
 
 public:
-	MediaEventProxy(QObject* parent);
+	MediaEventAdapter(QObject* parent);
 
-	~MediaEventProxy();
+	~MediaEventAdapter();
 
 	void onMediaStatus(bool isActive, const std::string& reason) override;
 

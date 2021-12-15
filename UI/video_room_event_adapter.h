@@ -12,17 +12,17 @@
 #include "i_video_room_event_handler.h"
 
 
-class VideoRoomEventProxy 
+class VideoRoomEventAdapter 
 	: public QObject
 	, public vi::IVideoRoomEventHandler
-	, public std::enable_shared_from_this<VideoRoomEventProxy>
+	, public std::enable_shared_from_this<VideoRoomEventAdapter>
 {
 	Q_OBJECT
 
 public:
-	VideoRoomEventProxy(QObject *parent);
+	VideoRoomEventAdapter(QObject *parent);
 
-	~VideoRoomEventProxy();
+	~VideoRoomEventAdapter();
 
 private:
 	// IVideoRoomEventHandler

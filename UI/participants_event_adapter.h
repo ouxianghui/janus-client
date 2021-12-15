@@ -4,17 +4,17 @@
 #include <memory>
 #include "i_participants_control_event_handler.h"
 
-class ParticipantsEventProxy
+class ParticipantsEventAdapter
 	: public QObject
 	, public vi::IParticipantsControlEventHandler
-	, public std::enable_shared_from_this<ParticipantsEventProxy>
+	, public std::enable_shared_from_this<ParticipantsEventAdapter>
 {
 	Q_OBJECT
 
 public:
-	ParticipantsEventProxy(QObject* parent);
+	ParticipantsEventAdapter(QObject* parent);
 
-	~ParticipantsEventProxy();
+	~ParticipantsEventAdapter();
 
 	void onCreateParticipant(std::shared_ptr<vi::Participant> participant) override;
 

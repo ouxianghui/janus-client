@@ -15,9 +15,9 @@ namespace vi {
 	class Participant;
 }
 
-class MediaEventProxy;
-class VideoRoomEventProxy;
-class ParticipantsEventProxy;
+class MediaEventAdapter;
+class VideoRoomEventAdapter;
+class ParticipantsEventAdapter;
 
 class UI
 	: public QMainWindow
@@ -106,15 +106,15 @@ private:
 
 	std::shared_ptr<vi::VideoRoomClient> _vrc;
 
-    std::shared_ptr<IContentView> _selfContentView;
+    //std::shared_ptr<IContentView> _selfContentView;
 
-    QWidget* _selfView;
+    //QWidget* _selfView;
 
 	GalleryView* _galleryView;
 
-	std::shared_ptr<MediaEventProxy> _mediaEventProxy;
-	std::shared_ptr<VideoRoomEventProxy> _videoRoomEventProxy;
-	std::shared_ptr<ParticipantsEventProxy> _participantsEventProxy;
+	std::shared_ptr<MediaEventAdapter> _mediaEventAdapter;
+	std::shared_ptr<VideoRoomEventAdapter> _videoRoomEventAdapter;
+	std::shared_ptr<ParticipantsEventAdapter> _participantsEventAdapter;
 
 	std::shared_ptr<ParticipantsListView> _participantsListView;
 };

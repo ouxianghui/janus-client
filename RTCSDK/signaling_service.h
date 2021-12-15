@@ -11,7 +11,6 @@
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
-#include "api/peer_connection_interface.h"
 #include "i_sfu_api_client.h"
 #include "i_sfu_api_client_listener.h"
 #include "signaling_events.h"
