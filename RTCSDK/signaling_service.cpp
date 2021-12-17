@@ -35,10 +35,10 @@ namespace vi {
 
 	void SignalingService::init()
 	{
-		_eventHandlerThread = rtc::Thread::Current();
+		_eventHandlerThread = TMgr->thread("plugin-client");
 		
 		//std::string url = "ws://192.168.0.108:8188/ws";
-		_client = std::make_shared<vi::JanusApiClient>("service");
+		_client = std::make_shared<vi::JanusApiClient>("signaling-service");
 		_client->addListener(shared_from_this());
 		_client->init();
 
@@ -223,7 +223,15 @@ namespace vi {
 			return;
 		}
 
-		pluginClient->onCleanup();
+		_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), handleId]() {
+			auto self = wself.lock();
+			if (!self) {
+				return;
+			}
+			if (auto& pluginClient = self->getHandler(handleId)) {
+				pluginClient->onCleanup();
+			}
+		});
 
 		if (!event) {
 			return;
@@ -242,7 +250,7 @@ namespace vi {
 			return;
 		}
 
-		auto lambda = [wself = weak_from_this(), handleId, event](const std::string& json) {
+		auto lambda = [wself = weak_from_this(), handleId](const std::string& json) {
 			DLOG("janus = {}", json);
 			auto self = wself.lock();
 			if (!self) {
@@ -536,7 +544,7 @@ namespace vi {
 			ELOG("This handle is not attached to this session");
 			return nullptr;
 		}
-		return _pluginClientMap[handleId];
+		return _pluginClientMap[handleId].lock();
 	}
 
 	void SignalingService::sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event)

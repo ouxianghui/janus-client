@@ -33,6 +33,7 @@
 #include "janus_connection_dialog.h"
 #include "rtc_base/win32_socket_init.h"
 #include "rtc_base/physical_socket_server.h"
+#include "logger/logger.h"
 
 static void registerMetaTypes()
 {
@@ -53,17 +54,10 @@ static void initOpenGL() {
 	format.setProfile(QSurfaceFormat::CoreProfile);
 	QSurfaceFormat::setDefaultFormat(format);
 }
-bool g_showCrashDialog = false;
 
-LONG WINAPI OurCrashHandler(EXCEPTION_POINTERS* exceptionInfo)
-{
-	std::cout << "Gotcha: " << exceptionInfo->ExceptionRecord->ExceptionInformation << std::endl;
-
-	return g_showCrashDialog ? EXCEPTION_CONTINUE_SEARCH : EXCEPTION_EXECUTE_HANDLER;
-}
 int main(int argc, char *argv[])
 {
-	::SetUnhandledExceptionFilter(OurCrashHandler);
+	vi::Logger::init();
 
 	rtc::WinsockInitializer winsockInit;
 	rtc::Win32SocketServer w32ss;
@@ -100,8 +94,6 @@ int main(int argc, char *argv[])
 	rtcApp->destroy();
 
 	rtc::CleanupSSL();
-
-	TMgr->stopAll();
 
 	return ret; 
 }

@@ -99,6 +99,7 @@
     <ClCompile Include="helper_utils.cpp" />
     <ClCompile Include="i_audio_device_manager.cpp" />
     <ClCompile Include="janus_api_client.cpp" />
+    <ClCompile Include="plugin_context.cpp" />
     <ClCompile Include="video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />

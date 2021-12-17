@@ -10,6 +10,8 @@ namespace vi {
 		WEAK_PROXY_METHOD0(void, destroy)
 		WEAK_PROXY_METHOD1(void, registerEventHandler, std::shared_ptr<IVideoRoomEventHandler>)
 		WEAK_PROXY_METHOD1(void, unregisterEventHandler, std::shared_ptr<IVideoRoomEventHandler>)
+		WEAK_PROXY_METHOD0(void, attach)
+		WEAK_PROXY_METHOD0(void, detach)
 		WEAK_PROXY_METHOD1(void, create, std::shared_ptr<vr::CreateRoomRequest>)
 		WEAK_PROXY_METHOD1(void, join, std::shared_ptr<vr::PublisherJoinRequest>)
 		WEAK_PROXY_METHOD1(void, leave, std::shared_ptr<vr::LeaveRequest>)

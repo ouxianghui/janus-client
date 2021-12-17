@@ -51,6 +51,7 @@ void GalleryView::removeView(int64_t id)
         return e->id() == id;
     });
     if (it != _views.end()) {
+        (*it)->cleanup();
         _views.erase(it);
         permuteViews();
     }

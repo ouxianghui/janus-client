@@ -103,7 +103,7 @@ namespace vi {
 
 		bool _connected = false;
 
-		std::unordered_map<int64_t, std::shared_ptr<PluginClient>> _pluginClientMap;
+		std::unordered_map<int64_t, std::weak_ptr<PluginClient>> _pluginClientMap;
 
 		std::shared_ptr<ISfuApiClient> _client;
 

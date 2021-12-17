@@ -24,11 +24,12 @@ namespace vi {
 
 	Logger::Logger()
 	{
+
 	}
 
 	Logger::~Logger()
 	{
-
+		destroy();
 	}
 
 	void Logger::init()

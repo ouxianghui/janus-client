@@ -32,25 +32,29 @@ namespace vi {
 		std::string handleToken;
 		std::atomic_bool detached = false;
 		std::weak_ptr<SignalingServiceInterface> signalingService;
-		
+
 
 		bool unifiedPlan = true;
 
 		std::vector<std::string> iceServers;
 
-		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf;
+		static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf;
+		static std::unique_ptr<rtc::Thread> signaling;
+		static std::unique_ptr<rtc::Thread> worker;
+		static std::unique_ptr<rtc::Thread> network;
 
-		std::unique_ptr<rtc::Thread> signaling;
-		std::unique_ptr<rtc::Thread> worker;
-		std::unique_ptr<rtc::Thread> network;
+		rtc::scoped_refptr<CapturerTrackSource> captureSource;
 
-		rtc::scoped_refptr<CapturerTrackSource> videoDevice;
+		rtc::scoped_refptr<VideoTrackInterface> captureTrack;
 
 		std::shared_ptr<CreateOfferAnswerCallback> offerAnswerCallback;
 
-		rtc::scoped_refptr<webrtc::MediaStreamInterface> myStream;
+		absl::optional<bool> trickle = true;
+		std::atomic_bool iceDone = false;
+		std::atomic_bool sdpSent = false;
 		std::atomic_bool streamExternal = false;
-		absl::optional<JsepConfig> mySdp;
+
+		absl::optional<JsepConfig> localSdp;
 		absl::optional<JsepConfig> remoteSdp;
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 		rtc::scoped_refptr<webrtc::PeerConnectionInterface> pc;
@@ -58,13 +62,16 @@ namespace vi {
 		std::map<std::string, std::shared_ptr<DCObserver>> dataChannelObservers;
 		rtc::scoped_refptr<webrtc::DtmfSenderInterface> dtmfSender;
 		std::unique_ptr<DtmfObserver> dtmfObserver;
-		absl::optional<bool> trickle = true;
-		std::atomic_bool iceDone = false;
-		std::atomic_bool sdpSent = false;
 		std::vector<std::shared_ptr<webrtc::IceCandidateInterface>> candidates;
 		rtc::scoped_refptr<StatsObserver> statsObserver;
 
-		PluginContext(std::weak_ptr<SignalingServiceInterface> ss) : signalingService(ss) {
+		rtc::scoped_refptr<webrtc::MediaStreamInterface> localStream;
+		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
+
+		PluginContext(std::weak_ptr<SignalingServiceInterface> ss) : signalingService(ss) {}
+
+		~PluginContext() {
+			pcf = nullptr; 
 		}
 	};
 }

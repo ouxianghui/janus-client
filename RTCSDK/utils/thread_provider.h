@@ -5,20 +5,22 @@
  **/
 
 #pragma once
-
-#include "rtc_base/thread.h"
+#include <memory>
 #include <unordered_map>
 #include <mutex>
 #include <atomic>
 #include <string>
 #include <list>
-#include "singleton.h"
+#include "rtc_base/thread.h"
+#include "service/app_instance.h"
 
 namespace vi {
 
-	class ThreadProvider : public Singleton<ThreadProvider>
+	class ThreadProvider
 	{
 	public:
+		ThreadProvider();
+
 		~ThreadProvider();
 
 		void init();
@@ -30,8 +32,6 @@ namespace vi {
 		rtc::Thread* thread(const std::string& name);
 
 	private:
-		ThreadProvider();
-
 		ThreadProvider(const ThreadProvider&) = delete;
 
 		ThreadProvider(ThreadProvider&&) = delete;
@@ -51,9 +51,7 @@ namespace vi {
 		std::atomic_bool _inited;
 
 		std::atomic_bool _destroy;
-
-		friend class Singleton<ThreadProvider>;
 	};
 }
 
-#define TMgr vi::ThreadProvider::instance()
+#define TMgr UFactory->getThreadProvider()

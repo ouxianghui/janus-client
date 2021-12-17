@@ -13,6 +13,8 @@
 
 namespace vi {
 	class Participant;
+	class ParticipantsListView;
+	class VideoRoomClientInterface;
 }
 
 class MediaEventAdapter;
@@ -104,7 +106,7 @@ private slots:
 private:
 	Ui::UIClass ui;
 
-	std::shared_ptr<vi::VideoRoomClient> _vrc;
+	std::shared_ptr<vi::VideoRoomClientInterface> _vrc;
 
     //std::shared_ptr<IContentView> _selfContentView;
 

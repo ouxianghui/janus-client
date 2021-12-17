@@ -25,15 +25,6 @@ public:
 
 	std::shared_ptr<vi::SignalingServiceInterface> getSignalingService() override;
 
-protected:
-	void initThreadProvider();
-
-	void initTaskQueueProvider();
-
-	void registerServices();
-
-	void unregisterServices();
-
 private:
     AppInstance();
     AppInstance(const AppInstance&) = delete;
@@ -41,6 +32,7 @@ private:
 
 private:
     friend class vi::Singleton<AppInstance>;
+
     std::shared_ptr<IUnifiedFactory> _unifiedFactory;
 };
 

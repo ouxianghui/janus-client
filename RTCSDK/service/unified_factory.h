@@ -20,13 +20,17 @@ public:
 
 	void destroy() override;
 
+    std::unique_ptr<vi::ThreadProvider>& getThreadProvider() override;
+
     std::shared_ptr<vi::IServiceFactory> getServiceFactory() override;  
 
 	std::shared_ptr<vi::SignalingServiceInterface> getSignalingService() override;
 
 private:
+    std::unique_ptr<vi::ThreadProvider> _threadProvider;
+
     std::shared_ptr<vi::IServiceFactory> _serviceFactory;
 
-	std::shared_ptr<vi::SignalingServiceInterface> _webrtcService;
+	std::shared_ptr<vi::SignalingServiceInterface> _signalingService;
 };
 

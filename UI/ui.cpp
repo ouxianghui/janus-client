@@ -22,6 +22,7 @@
 #include "participants_event_adapter.h"
 #include "media_controller.h"
 #include "participants_controller.h"
+#include "video_room_client_proxy.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -69,7 +70,8 @@ void UI::init()
 {
 	auto ss = rtcApp->getSignalingService();
 
-	_vrc = std::make_shared<vi::VideoRoomClient>(ss);
+	auto vrc = std::make_shared<vi::VideoRoomClient>(ss);
+	_vrc = vi::VideoRoomClientProxy::Create(TMgr->thread("plugin-client"), vrc);
 	_vrc->init();
 
 	_vrc->registerEventHandler(_videoRoomEventAdapter);
@@ -233,7 +235,7 @@ void UI::onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
 
 void UI::closeEvent(QCloseEvent* event)
 {
-	//_vrc->hangup(true);
+	_vrc->detach();
 	if (_galleryView) {
 		_galleryView->removeAll();
 	}

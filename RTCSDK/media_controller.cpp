@@ -1,6 +1,7 @@
 #include "media_controller.h"
 #include "api/media_stream_interface.h"
 #include "pc/media_stream.h"
+#include "pc/media_stream_proxy.h"
 
 namespace vi {
 	MediaController::MediaController()
@@ -103,10 +104,10 @@ namespace vi {
 				}
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					self->_localStreams[track->id()] = webrtc::MediaStream::Create(track->id());
+					//self->_localStreams[track->id()] = webrtc::MediaStream::Create(track->id());// webrtc::MediaStreamProxy::Create(TMgr->thread("plugin-client"), webrtc::MediaStream::Create(track->id()));
 					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					self->_localStreams[track->id()]->AddTrack(vt);
-					auto t = self->_localStreams[track->id()]->GetVideoTracks()[0];
+					//self->_localStreams[track->id()]->AddTrack(vt);
+					//auto t = self->_localStreams[track->id()]->GetVideoTracks()[0];
 					observer->onCreateVideoTrack(mid, vt);
 				}
 			});
@@ -123,14 +124,15 @@ namespace vi {
 				}
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					if (self->_localStreams.find(track->id()) != self->_localStreams.end()) {
-						auto vt = self->_localStreams[track->id()]->GetVideoTracks()[0];
-						observer->onRemoveVideoTrack(mid, vt);
+					//if (self->_localStreams.find(track->id()) != self->_localStreams.end()) {
+					//	auto vt = self->_localStreams[track->id()]->GetVideoTracks()[0];
+					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
+					observer->onRemoveVideoTrack(mid, vt);
 
-						self->_localStreams[track->id()]->RemoveTrack(vt.get());
-						auto it = self->_localStreams.find(track->id());
-						self->_localStreams.erase(it);
-					}
+						//self->_localStreams[track->id()]->RemoveTrack(vt.get());
+						//auto it = self->_localStreams.find(track->id());
+						//self->_localStreams.erase(it);
+					//}
 				}
 			});
 		}

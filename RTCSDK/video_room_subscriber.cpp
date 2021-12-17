@@ -24,9 +24,6 @@ namespace vi {
 	VideoRoomSubscriber::~VideoRoomSubscriber()
 	{
 		DLOG("~VideoRoomSubscriber()");
-		if (_pluginContext->pc) {
-			_pluginContext->pc->Close();
-		}
 	}
 
 	void VideoRoomSubscriber::init()

@@ -50,24 +50,9 @@ namespace vi {
 	{
 		DLOG("~PluginClient()");
 		stopStatsMonitor();
+		//TMgr->thread("")->PostTask(RTC_FROM_HERE, []() {
 
-		if (_pluginContext->videoDevice) {
-			_pluginContext->videoDevice->capturer();
-		}
-
-		_pluginContext->pcf = nullptr;
-
-		if (_pluginContext->signaling) {
-			_pluginContext->signaling->Stop();
-		}
-
-		if (_pluginContext->worker) {
-			_pluginContext->worker->Stop();
-		}
-
-		if (_pluginContext->network) {
-			_pluginContext->network->Stop();
-		}
+		//});
 	}
 
 	void PluginClient::init()
@@ -173,7 +158,7 @@ namespace vi {
 						return;
 					}
 
-					auto eventHandlerThread = TMgr->thread("worker");
+					auto eventHandlerThread = TMgr->thread("message-transport");
 					eventHandlerThread->PostTask(RTC_FROM_HERE, [wself, report]() {
 						if (auto self = wself.lock()) {
 							self->onStatsDelivered(report);
@@ -198,7 +183,7 @@ namespace vi {
 		if (!context) {
 			return;
 		}
-		if (!context->mySdp) {
+		if (!context->localSdp) {
 			WLOG("Local SDP instance is invalid, not sending anything...");
 			return;
 		}
@@ -211,7 +196,7 @@ namespace vi {
 		if (auto ld = context->pc->local_description()) {
 			std::string sdp;
 			ld->ToString(&sdp);
-			context->mySdp = { ld->type(), sdp, context->trickle.value_or(false) };
+			context->localSdp = { ld->type(), sdp, context->trickle.value_or(false) };
 			context->sdpSent = true;
 			_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = context->offerAnswerCallback, wself = weak_from_this()]() {
 				auto self = wself.lock();
@@ -222,7 +207,7 @@ namespace vi {
 				if (!context) {
 					return;
 				}
-				(*cb)(true, "", context->mySdp.value());
+				(*cb)(true, "", context->localSdp.value());
 			});
 		}
 	}
@@ -346,11 +331,13 @@ namespace vi {
 			for (const auto& track : stream->GetAudioTracks()) {
 				if (track) {
 					track->set_enabled(false);
+					stream->RemoveTrack(track);
 				}
 			}
 			for (const auto& track : stream->GetVideoTracks()) {
 				if (track) {
 					track->set_enabled(false);
+					stream->RemoveTrack(track);
 				}
 			}
 		}
@@ -380,8 +367,8 @@ namespace vi {
 
 		// We're now capturing the new stream: check if we're updating or if it's a new thing
 		bool addTracks = false;
-		if (!context->myStream || !event->media->update || context->streamExternal) {
-			context->myStream = stream;
+		if (!context->localStream || !event->media->update || context->streamExternal) {
+			context->localStream = stream;
 			addTracks = true;
 		}
 		else {
@@ -389,7 +376,7 @@ namespace vi {
 			if (((!event->media->update && HelperUtils::isAudioSendEnabled(event->media)) ||
 				(event->media->update && (event->media->addAudio || event->media->replaceAudio))) &&
 				stream->GetAudioTracks().size() > 0) {
-				context->myStream->AddTrack(stream->GetAudioTracks()[0]);
+				context->localStream->AddTrack(stream->GetAudioTracks()[0]);
 				if (_pluginContext->unifiedPlan) {
 					// Use Transceivers
 					DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
@@ -420,7 +407,7 @@ namespace vi {
 			if (((!event->media->update && HelperUtils::isVideoSendEnabled(event->media)) ||
 				(event->media->update && (event->media->addVideo || event->media->replaceVideo))) &&
 				stream->GetVideoTracks().size() > 0) {
-				context->myStream->AddTrack(stream->GetVideoTracks()[0]);
+				context->localStream->AddTrack(stream->GetVideoTracks()[0]);
 				if (_pluginContext->unifiedPlan) {
 					// Use Transceivers
 					DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
@@ -527,7 +514,7 @@ namespace vi {
 				DLOG("Data channel created by Janus.");
 				if (auto self = wself.lock()) {
 					// should be called in SERVICE thread
-					TMgr->thread("service")->PostTask(RTC_FROM_HERE, [wself, dataChannel]() {
+					TMgr->thread("plugin-client")->PostTask(RTC_FROM_HERE, [wself, dataChannel]() {
 						if (auto self = wself.lock()) {
 							self->createDataChannel(dataChannel->label(), dataChannel);
 						}
@@ -537,7 +524,7 @@ namespace vi {
 			//context->pcObserver->setDataChannelCallback(dccb);
 		}
 
-		if (context->myStream) {
+		if (context->localStream) {
 			_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself]() {
 				auto self = wself.lock();
 				if (!self) {
@@ -548,8 +535,8 @@ namespace vi {
 				if (!context) {
 					return;
 				}
-				if (context->myStream->GetVideoTracks().size() > 0) {
-					auto track = context->myStream->GetVideoTracks()[0];
+				if (context->localStream->GetVideoTracks().size() > 0) {
+					auto track = context->localStream->GetVideoTracks()[0];
 					self->onLocalTrack(track, true);
 				}
 			});
@@ -589,7 +576,7 @@ namespace vi {
 				context->candidates.clear();
 				if (auto self = wself.lock()) {
 					// should be called in SERVICE thread
-					TMgr->thread("service")->PostTask(RTC_FROM_HERE, [wself, event]() {
+					TMgr->thread("plugin-client")->PostTask(RTC_FROM_HERE, [wself, event]() {
 						if (auto self = wself.lock()) {
 							self->_createAnswer(event);
 						}
@@ -649,7 +636,7 @@ namespace vi {
 			// can go directly to preparing the new SDP offer or answer
 			if (event->stream) {
 				// External stream: is this the same as the one we were using before?
-				if (event->stream != context->myStream) {
+				if (event->stream != context->localStream) {
 					DLOG("Renegotiation involves a new external stream");
 				}
 			}
@@ -660,7 +647,7 @@ namespace vi {
 					media.replaceAudio = false;
 					media.removeAudio = false;
 					media.audioSend = true;
-					if (context->myStream && context->myStream->GetAudioTracks().size() > 0) {
+					if (context->localStream && context->localStream->GetAudioTracks().size() > 0) {
 						ELOG("Can't add audio stream, there already is one");
 						if (event->callback) {
 							_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -682,7 +669,7 @@ namespace vi {
 					media.removeAudio = false;
 					media.audioSend = true;
 				}
-				if (!context->myStream) {
+				if (!context->localStream) {
 					// No media stream: if we were asked to replace, it's actually an "add"
 					if (media.replaceAudio) {
 						media.keepAudio = false;
@@ -696,7 +683,7 @@ namespace vi {
 					}
 				}
 				else {
-					if (context->myStream->GetAudioTracks().size() == 0) {
+					if (context->localStream->GetAudioTracks().size() == 0) {
 						// No audio track: if we were asked to replace, it's actually an "add"
 						if (media.replaceAudio) {
 							media.keepAudio = false;
@@ -723,7 +710,7 @@ namespace vi {
 					media.replaceVideo = false;
 					media.removeVideo = false;
 					media.videoSend = true;
-					if (context->myStream && context->myStream->GetVideoTracks().size() > 0) {
+					if (context->localStream && context->localStream->GetVideoTracks().size() > 0) {
 						ELOG("Can't add video stream, there already is one");
 						if (event->callback) {
 							_eventHandlerThread->PostTask(RTC_FROM_HERE, [cb = event->callback]() {
@@ -745,7 +732,7 @@ namespace vi {
 					media.removeVideo = false;
 					media.videoSend = true;
 				}
-				if (!context->myStream) {
+				if (!context->localStream) {
 					// No media stream: if we were asked to replace, it's actually an "add"
 					if (media.replaceVideo) {
 						media.keepVideo = false;
@@ -759,7 +746,7 @@ namespace vi {
 					}
 				}
 				else {
-					if (context->myStream->GetVideoTracks().size() == 0) {
+					if (context->localStream->GetVideoTracks().size() == 0) {
 						// No video track: if we were asked to replace, it's actually an "add"
 						if (media.replaceVideo) {
 							media.keepVideo = false;
@@ -789,17 +776,17 @@ namespace vi {
 				(HelperUtils::isVideoSendEnabled(media) && media.keepVideo)) {
 				// TODO: notify ?
 				//streams done
-				prepareStreams(event, context->myStream);
+				prepareStreams(event, context->localStream);
 				return;
 			}
 		}
 		// If we're updating, check if we need to remove/replace one of the tracks
 		if (media.update && !context->streamExternal) {
 			if (media.removeAudio || media.replaceAudio) {
-				if (context->myStream && context->myStream->GetAudioTracks().size() > 0) {
-					rtc::scoped_refptr<webrtc::AudioTrackInterface> at = context->myStream->GetAudioTracks()[0];
+				if (context->localStream && context->localStream->GetAudioTracks().size() > 0) {
+					rtc::scoped_refptr<webrtc::AudioTrackInterface> at = context->localStream->GetAudioTracks()[0];
 					DLOG("Removing audio track, id = {}", at->id());
-					context->myStream->RemoveTrack(at);
+					context->localStream->RemoveTrack(at);
 					try {
 						onLocalTrack(at, false);
 						at->set_enabled(false);
@@ -824,10 +811,10 @@ namespace vi {
 				}
 			}
 			if (media.removeVideo || media.replaceVideo) {
-				if (context->myStream && context->myStream->GetVideoTracks().size() > 0) {
-					rtc::scoped_refptr<webrtc::VideoTrackInterface> vt = context->myStream->GetVideoTracks()[0];
+				if (context->localStream && context->localStream->GetVideoTracks().size() > 0) {
+					rtc::scoped_refptr<webrtc::VideoTrackInterface> vt = context->localStream->GetVideoTracks()[0];
 					DLOG("Removing video track, id = {}", vt->id());
-					context->myStream->RemoveTrack(vt);
+					context->localStream->RemoveTrack(vt);
 					try {
 						onLocalTrack(vt, false);
 						vt->set_enabled(false);
@@ -859,10 +846,10 @@ namespace vi {
 
 			// If this is an update, let's check if we need to release the previous stream
 			if (media.update) {
-				if (context->myStream && context->myStream != stream && !context->streamExternal) {
+				if (context->localStream && context->localStream != stream && !context->streamExternal) {
 					// We're replacing a stream we captured ourselves with an external one
-					stopAllTracks(context->myStream);
-					context->myStream = nullptr;
+					stopAllTracks(context->localStream);
+					context->localStream = nullptr;
 				}
 			}
 			// Skip the getUserMedia part
@@ -880,17 +867,16 @@ namespace vi {
 				DLOG("Add audio track failed.");
 			}
 
-			// TODO: hold the videoDevice
-			_pluginContext->videoDevice = CapturerTrackSource::Create(640, 480, 30);
-			if (_pluginContext->videoDevice) {
-				rtc::scoped_refptr<webrtc::VideoTrackInterface> videoTrack(_pluginContext->pcf->CreateVideoTrack("video_label", _pluginContext->videoDevice));
+			_pluginContext->captureSource = CapturerTrackSource::Create();
+			DLOG("create capture source");
+			if (_pluginContext->captureSource) {
+				_pluginContext->captureTrack = _pluginContext->pcf->CreateVideoTrack("video_label", _pluginContext->captureSource);
 
-				if (!mstream->AddTrack(videoTrack)) {
+				if (!mstream->AddTrack(_pluginContext->captureTrack)) {
 					DLOG("Add video track failed.");
 				}
 			}
 
-			//context->pc->AddStream(mstream);
 			prepareStreams(event, mstream);
 		}
 		else {
@@ -1290,7 +1276,7 @@ namespace vi {
 
 			JsepConfig jsep{ desc->type(), sdp, false };
 
-			context->mySdp = jsep;
+			context->localSdp = jsep;
 			context->pc->SetLocalDescription(ssdo, desc);
 			context->options = options;
 			if (!context->iceDone && !context->trickle.value_or(false)) {
@@ -1436,7 +1422,7 @@ namespace vi {
 
 			JsepConfig jsep{ desc->type(), sdp, false };
 
-			context->mySdp = jsep;
+			context->localSdp = jsep;
 			context->pc->SetLocalDescription(ssdo, desc);
 			context->options = options;
 			if (!context->iceDone && !context->trickle.value_or(false)) {
@@ -1476,48 +1462,34 @@ namespace vi {
 
 		const auto& context = _pluginContext;
 
-		try {
-			// Try a MediaStreamTrack.stop() for each track
-			if (!context->streamExternal && context->myStream) {
-				DLOG("Stopping local stream tracks");
-				stopAllTracks(context->myStream);
-			}
+		if (!context->streamExternal && context->localStream) {
+			DLOG("Stopping local stream tracks");
+			stopAllTracks(context->localStream);
 		}
-		catch (...) {
-			// Do nothing if this fails
-		}
+
 		context->streamExternal = false;
-		context->myStream = nullptr;
+		context->localStream = nullptr;
+
 		// Close PeerConnection
-		try {
-			if (context->pc) {
-				context->pc->Close();
-			}
+		if (context->pc) {
+			context->pc->Close();
+			context->pc = nullptr;
 		}
-		catch (...) {
-			// Do nothing
-		}
-		context->pc = nullptr;
+
 		context->candidates.clear();
-		context->mySdp = absl::nullopt;
+		context->localSdp = absl::nullopt;
 		context->remoteSdp = absl::nullopt;
 		context->iceDone = false;
 		context->dataChannels.clear();
-		context->dtmfSender = nullptr;;
+		context->dtmfSender = nullptr;
+		//context->captureTrack = nullptr;
+		//context->captureSource = nullptr;
 	}
 
 
 	void PluginClient::OnStandardizedIceConnectionChange(webrtc::PeerConnectionInterface::IceConnectionState newState)
 	{
-		_eventHandlerThread->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), newState]() {
-			auto self = wself.lock();
-			if (!self) {
-				return;
-			}
 
-			//self->onIceState(newState);
-
-		});
 	}
 
 	void PluginClient::OnConnectionChange(webrtc::PeerConnectionInterface::PeerConnectionState new_state)
@@ -1532,7 +1504,6 @@ namespace vi {
 
 	void PluginClient::OnIceCandidate(const webrtc::IceCandidateInterface* candidate)
 	{
-		auto handleId = _pluginContext->handleId;
 		if (candidate) {
 			if (_pluginContext->trickle) {
 				std::string candidateStr;
@@ -1566,7 +1537,7 @@ namespace vi {
 			else {
 				// should be called in SERVICE thread
 				DLOG("send candidates.");
-				TMgr->thread("service")->PostTask(RTC_FROM_HERE, [wself = weak_from_this()]() {
+				TMgr->thread("plugin-client")->PostTask(RTC_FROM_HERE, [wself = weak_from_this()]() {
 					if (auto self = wself.lock()) {
 						self->sendSdp();
 					}

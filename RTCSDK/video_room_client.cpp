@@ -30,9 +30,6 @@ namespace vi {
 	VideoRoomClient::~VideoRoomClient()
 	{
 		DLOG("~VideoRoomClient()");
-		if (_pluginContext->pc) {
-			_pluginContext->pc->Close();
-		}
 	}
 
 	void VideoRoomClient::init()
@@ -40,10 +37,10 @@ namespace vi {
 		PluginClient::init();
 
 		_mediaController = std::make_shared<MediaController>();
-		_mediaControllerProxy = MediaControllerProxy::Create(TMgr->thread("service"), _mediaController);
+		_mediaControllerProxy = MediaControllerProxy::Create(TMgr->thread("plugin-client"), _mediaController);
 
 		_participantsController = std::make_shared<ParticipantsContrller>();
-		_participantsControllerProxy = ParticipantsContrllerProxy::Create(TMgr->thread("service"), _participantsController);
+		_participantsControllerProxy = ParticipantsContrllerProxy::Create(TMgr->thread("plugin-client"), _participantsController);
 
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
@@ -71,6 +68,18 @@ namespace vi {
 		_subscriber->unregisterEventHandler(handler);
 	}
 
+	void VideoRoomClient::attach()
+	{
+		PluginClient::attach();
+	}
+
+	void VideoRoomClient::detach()
+	{
+		auto event = std::make_shared<DetachEvent>();
+		PluginClient::detach(event);
+		_subscriber->detach(event);
+	}
+	
 	//std::shared_ptr<Participant> VideoRoomClient::getParticipant(int64_t pid)
 	//{
 	//	return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
@@ -306,15 +315,15 @@ namespace vi {
 				return;
 			}
 
-			const auto& audio = pluginData->data->audio_codec.value_or("");
-			if (_pluginContext->myStream && _pluginContext->myStream->GetAudioTracks().size() > 0 && audio.empty()) {
-				WLOG("Our audio stream has been rejected, viewers won't hear us");
-			}
+			//const auto& audio = pluginData->data->audio_codec.value_or("");
+			//if (_pluginContext->localStream && _pluginContext->localStream->GetAudioTracks().size() > 0 && audio.empty()) {
+			//	WLOG("Our audio stream has been rejected, viewers won't hear us");
+			//}
 
-			const auto& video = pluginData->data->video_codec.value_or("");
-			if (_pluginContext->myStream && _pluginContext->myStream->GetVideoTracks().size() > 0 && video.empty()) {
-				WLOG("Our video stream has been rejected, viewers won't see us");
-			}
+			//const auto& video = pluginData->data->video_codec.value_or("");
+			//if (_pluginContext->localStream && _pluginContext->localStream->GetVideoTracks().size() > 0 && video.empty()) {
+			//	WLOG("Our video stream has been rejected, viewers won't see us");
+			//}
 		}
 	}
 
@@ -336,7 +345,6 @@ namespace vi {
 	void VideoRoomClient::onCleanup()
 	{
 		PluginClient::onCleanup();
-		_pluginContext->myStream = nullptr;
 	}
 
 	void VideoRoomClient::onDetached() {}
@@ -458,13 +466,13 @@ namespace vi {
 //		DLOG("Invalid PeerConnection");
 //		return true;
 //	}
-//	if (!context->myStream) {
+//	if (!context->localStream) {
 //		DLOG("Invalid local MediaStream");
 //		return true;
 //	}
 //	if (isVideo) {
 //		// Check video track
-//		if (context->myStream->GetVideoTracks().size() == 0) {
+//		if (context->localStream->GetVideoTracks().size() == 0) {
 //			DLOG("No video track");
 //			return true;
 //		}
@@ -486,12 +494,12 @@ namespace vi {
 //			return (*it)->sender()->track()->enabled();
 //		}
 //		else {
-//			return !context->myStream->GetVideoTracks()[0]->enabled();
+//			return !context->localStream->GetVideoTracks()[0]->enabled();
 //		}
 //	}
 //	else {
 //		// Check audio track
-//		if (context->myStream->GetAudioTracks().size() == 0) {
+//		if (context->localStream->GetAudioTracks().size() == 0) {
 //			DLOG("No audio track");
 //			return true;
 //		}
@@ -513,7 +521,7 @@ namespace vi {
 //			return (*it)->sender()->track()->enabled();
 //		}
 //		else {
-//			return !context->myStream->GetAudioTracks()[0]->enabled();
+//			return !context->localStream->GetAudioTracks()[0]->enabled();
 //		}
 //	}
 //	return true;
@@ -555,7 +563,7 @@ namespace vi {
 //		DLOG("Invalid PeerConnection");
 //		return false;
 //	}
-//	if (!context->myStream) {
+//	if (!context->localStream) {
 //		DLOG("Invalid local MediaStream");
 //		return false;
 //	}
@@ -564,7 +572,7 @@ namespace vi {
 
 //	if (isVideo) {
 //		// Mute/unmute video track
-//		if (context->myStream->GetVideoTracks().size() == 0) {
+//		if (context->localStream->GetVideoTracks().size() == 0) {
 //			DLOG("No video track");
 //			return false;
 //		}
@@ -585,12 +593,12 @@ namespace vi {
 //			return (*it)->sender()->track()->set_enabled(enabled);
 //		}
 //		else {
-//			return context->myStream->GetVideoTracks()[0]->set_enabled(enabled);
+//			return context->localStream->GetVideoTracks()[0]->set_enabled(enabled);
 //		}
 //	}
 //	else {
 //		// Mute/unmute audio track
-//		if (context->myStream->GetAudioTracks().size() == 0) {
+//		if (context->localStream->GetAudioTracks().size() == 0) {
 //			DLOG("No audio track");
 //			return false;
 //		}
@@ -611,7 +619,7 @@ namespace vi {
 //			return (*it)->sender()->track()->set_enabled(enabled);
 //		}
 //		else {
-//			return context->myStream->GetAudioTracks()[0]->set_enabled(enabled);
+//			return context->localStream->GetAudioTracks()[0]->set_enabled(enabled);
 //		}
 //	}
 //	return false;

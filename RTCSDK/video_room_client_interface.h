@@ -24,6 +24,10 @@ namespace vi {
 
 		virtual void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler) = 0;
 
+		virtual void attach() = 0;
+
+		virtual void detach() = 0;
+
 		virtual void create(std::shared_ptr<vr::CreateRoomRequest> request) = 0;
 
 		virtual void join(std::shared_ptr<vr::PublisherJoinRequest> request) = 0;

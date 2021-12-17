@@ -23,7 +23,7 @@ namespace vi {
 	JanusApiClient::~JanusApiClient()
 	{
 		DLOG("~JanusApiClient()");
-		_transport->disconnect();
+		//_transport->disconnect();
 	}
 
 	void JanusApiClient::setToken(const std::string& token)

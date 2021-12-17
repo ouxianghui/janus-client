@@ -7,7 +7,7 @@
 
 
 
-ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoomClient> vrc, QWidget *parent)
+ParticipantsListView::ParticipantsListView(std::shared_ptr<vi::VideoRoomClientInterface> vrc, QWidget *parent)
 	: QWidget(parent)
 	, _vrc(vrc)
 {

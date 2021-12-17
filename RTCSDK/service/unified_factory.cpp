@@ -18,26 +18,42 @@ UnifiedFactory::UnifiedFactory()
 
 void UnifiedFactory::init()
 {
+	if (!_threadProvider) {
+		_threadProvider = std::make_unique<vi::ThreadProvider>();
+		_threadProvider->init();
+		_threadProvider->create({ "signaling-service", "plugin-client", "message-transport", "vcm-capture"});
+	}
+
 	if (!_serviceFactory) {
 		_serviceFactory = std::make_shared<vi::ServiceFactory>();
 		_serviceFactory->init();
 	}
 
-	if (!_webrtcService) {
-		_webrtcService = vi::SignalingServiceProxy::Create(TMgr->thread("service"), std::make_shared<vi::SignalingService>());
-		_webrtcService->init();
+	if (!_signalingService) {
+		_signalingService = vi::SignalingServiceProxy::Create(_threadProvider->thread("signaling-service"), std::make_shared<vi::SignalingService>());
+		_signalingService->init();
 	}
 }
 
+
 void UnifiedFactory::destroy()
 {
-	if (_webrtcService) {
-		_webrtcService->cleanup();
+	if (_signalingService) {
+		_signalingService->cleanup();
 	}
 
 	if (_serviceFactory) {
 		_serviceFactory->destroy();
 	}
+
+	if (_threadProvider) {
+		_threadProvider->destroy();
+	}
+}
+
+std::unique_ptr<vi::ThreadProvider>& UnifiedFactory::getThreadProvider()
+{
+	return _threadProvider;
 }
 
 std::shared_ptr<vi::IServiceFactory> UnifiedFactory::getServiceFactory()
@@ -47,5 +63,5 @@ std::shared_ptr<vi::IServiceFactory> UnifiedFactory::getServiceFactory()
 
 std::shared_ptr<vi::SignalingServiceInterface> UnifiedFactory::getSignalingService()
 {
-	return _webrtcService;
+	return _signalingService;
 }

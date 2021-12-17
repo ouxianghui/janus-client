@@ -45,7 +45,7 @@ namespace vi {
 	// IMessageTransportor
 	void MessageTransport::addListener(std::shared_ptr<IMessageTransportListener> listener)
 	{
-		UniversalObservable<IMessageTransportListener>::addWeakObserver(listener, "worker");
+		UniversalObservable<IMessageTransportListener>::addWeakObserver(listener, "message-transport");
 	}
 
 	void MessageTransport::removeListener(std::shared_ptr<IMessageTransportListener> listener)
@@ -152,35 +152,38 @@ namespace vi {
 		}
 
 		std::string err;
-		auto respone = fromJsonString<JanusResponse>(data, err);
+		auto response = fromJsonString<JanusResponse>(data, err);
 
 		if (!err.empty()) {
 			DLOG("parse JanusResponse failed");
 			return;
 		}
 
-		if (!respone->janus) {
+		if (!response->janus) {
 			DLOG("could not find 'janus' in response");
 			return;
 		}
 
-		if (respone->transaction && (respone->janus.value_or("") == "ack"
-			|| respone->janus.value_or("") == "success"
-			|| respone->janus.value_or("") == "error"
-			|| respone->janus.value_or("") == "server_info")) {
-			std::lock_guard<std::mutex> locker(_callbackMutex);
-			const std::string& transaction = respone->transaction.value();
-			if (_callbacksMap.find(transaction) != _callbacksMap.end()) {
-				std::shared_ptr<JCCallback> callback = _callbacksMap[transaction];
-				_callbacksMap.erase(transaction);
-				TMgr->thread("worker")->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), callback, data]() {
+		if (response->transaction && (response->janus.value_or("") == "ack"
+			|| response->janus.value_or("") == "success"
+			|| response->janus.value_or("") == "error"
+			|| response->janus.value_or("") == "server_info")) {
+			if (auto thread = TMgr->thread("message-transport")) {
+				TMgr->thread("message-transport")->PostTask(RTC_FROM_HERE, [wself = weak_from_this(), response, data]() {
 					if (auto self = wself.lock()) {
-						if (callback) {
-							(*callback)(data);
+						std::lock_guard<std::mutex> locker(self->_callbackMutex);
+						const std::string& transaction = response->transaction.value();
+						if (self->_callbacksMap.find(transaction) != self->_callbacksMap.end()) {
+							std::shared_ptr<JCCallback> callback = self->_callbacksMap[transaction];
+							if (callback) {
+								(*callback)(data);
+							}
+							self->_callbacksMap.erase(transaction);
 						}
 					}
 				});
 			}
+
 		}
 		else {
 			UniversalObservable<IMessageTransportListener>::notifyObservers([wself = weak_from_this(), data](const auto& observer) {
