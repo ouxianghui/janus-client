@@ -90,6 +90,8 @@ namespace vi {
 
 	class CapturerTrackSource : public webrtc::VideoTrackSource {
 	public:
+		~CapturerTrackSource() {}
+
 		static rtc::scoped_refptr<CapturerTrackSource> Create() {
 			const size_t kWidth = 640;
 			const size_t kHeight = 480;

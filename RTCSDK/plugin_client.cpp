@@ -867,12 +867,12 @@ namespace vi {
 				DLOG("Add audio track failed.");
 			}
 
-			_pluginContext->captureSource = CapturerTrackSource::Create();
+			rtc::scoped_refptr<CapturerTrackSource> capturerSource = CapturerTrackSource::Create();
 			DLOG("create capture source");
-			if (_pluginContext->captureSource) {
-				_pluginContext->captureTrack = _pluginContext->pcf->CreateVideoTrack("video_label", _pluginContext->captureSource);
+			if (capturerSource) {
+				rtc::scoped_refptr<VideoTrackInterface> captureTrack = _pluginContext->pcf->CreateVideoTrack("video_label", capturerSource);
 
-				if (!mstream->AddTrack(_pluginContext->captureTrack)) {
+				if (!mstream->AddTrack(captureTrack.release())) {
 					DLOG("Add video track failed.");
 				}
 			}
@@ -1452,7 +1452,7 @@ namespace vi {
 
 		createAnswerObserver->setSuccessCallback(success);
 		createAnswerObserver->setFailureCallback(failure);
-
+		
 		context->pc->CreateAnswer(createAnswerObserver.release(), options);
 	}
 
@@ -1482,8 +1482,6 @@ namespace vi {
 		context->iceDone = false;
 		context->dataChannels.clear();
 		context->dtmfSender = nullptr;
-		//context->captureTrack = nullptr;
-		//context->captureSource = nullptr;
 	}
 
 

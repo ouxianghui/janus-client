@@ -14,6 +14,7 @@
 #include "api/video/video_rotation.h"
 #include "rtc_base/async_invoker.h"
 #include "logger/logger.h"
+#include "utils/thread_provider.h"
 
 namespace vi {
 
@@ -96,9 +97,9 @@ namespace vi {
 
 	VcmCapturer::VcmCapturer() 
 		: vcm_(nullptr)
-		, thread_(rtc::Thread::CreateWithSocketServer())
+		, thread_(TMgr->thread("capture-session"))
 	{
-		thread_->Start();
+
 	}
 
 	bool VcmCapturer::Init(size_t width,
@@ -167,7 +168,6 @@ namespace vi {
 
 	VcmCapturer::~VcmCapturer() {
 		Destroy();
-		thread_->Stop();
 	}
 
 	void VcmCapturer::OnFrame(const VideoFrame& frame) {

@@ -21,7 +21,7 @@ void UnifiedFactory::init()
 	if (!_threadProvider) {
 		_threadProvider = std::make_unique<vi::ThreadProvider>();
 		_threadProvider->init();
-		_threadProvider->create({ "signaling-service", "plugin-client", "message-transport", "vcm-capture"});
+		_threadProvider->create({ "signaling-service", "plugin-client", "message-transport", "capture-session"});
 	}
 
 	if (!_serviceFactory) {

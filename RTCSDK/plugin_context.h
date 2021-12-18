@@ -43,10 +43,6 @@ namespace vi {
 		static std::unique_ptr<rtc::Thread> worker;
 		static std::unique_ptr<rtc::Thread> network;
 
-		rtc::scoped_refptr<CapturerTrackSource> captureSource;
-
-		rtc::scoped_refptr<VideoTrackInterface> captureTrack;
-
 		std::shared_ptr<CreateOfferAnswerCallback> offerAnswerCallback;
 
 		absl::optional<bool> trickle = true;
