@@ -151,11 +151,11 @@ namespace vi {
 				}
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					self->_remoteStreams[track->id()] = webrtc::MediaStream::Create(track->id());
+					//self->_remoteStreams[track->id()] = webrtc::MediaStream::Create(track->id());
 					auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
-					self->_remoteStreams[track->id()]->AddTrack(vt);
-					auto t = self->_remoteStreams[track->id()]->GetVideoTracks()[0];
-					observer->onCreateVideoTrack(pid, t);
+					//self->_remoteStreams[track->id()]->AddTrack(vt);
+					//auto t = self->_remoteStreams[track->id()]->GetVideoTracks()[0];
+					observer->onCreateVideoTrack(pid, vt);
 				}
 			});
 		}
@@ -170,15 +170,15 @@ namespace vi {
 				}
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
-					if (self->_remoteStreams.find(track->id()) != self->_remoteStreams.end()) {
+					//if (self->_remoteStreams.find(track->id()) != self->_remoteStreams.end()) {
 						auto vt = self->_remoteStreams[track->id()]->GetVideoTracks()[0];
 
 						observer->onRemoveVideoTrack(pid, vt);
 
-						self->_remoteStreams[track->id()]->RemoveTrack(vt.get());
-						auto it = self->_remoteStreams.find(track->id());
-						self->_remoteStreams.erase(it);
-					}
+					//	self->_remoteStreams[track->id()]->RemoveTrack(vt.get());
+					//	auto it = self->_remoteStreams.find(track->id());
+					//	self->_remoteStreams.erase(it);
+					//}
 				}
 			});
 		}

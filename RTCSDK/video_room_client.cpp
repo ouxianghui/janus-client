@@ -110,6 +110,7 @@ namespace vi {
 	void VideoRoomClient::join(std::shared_ptr<vr::PublisherJoinRequest> request)
 	{
 		_roomId = request->room.value();
+		_subscriber->setRoomId(_roomId);
 		if (_videoRoomApi) {
 			_videoRoomApi->join(request, nullptr);
 		}

@@ -1568,7 +1568,6 @@ namespace vi {
 
 	void PluginClient::OnRemoveTrack(rtc::scoped_refptr<webrtc::RtpReceiverInterface> receiver)
 	{
-		std::string idd = receiver->id();
 		_eventHandlerThread->PostTask(RTC_FROM_HERE, [receiver, wself = weak_from_this()]() {
 			auto self = wself.lock();
 			if (!self) {
