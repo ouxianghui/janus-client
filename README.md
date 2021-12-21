@@ -23,7 +23,21 @@
 * voice mail
 
 ## Arch
-<img src="https://github.com/ouxianghui/janus-client/blob/multistream/arch.svg" height="500" /><br>
+* Interface
+<img src="https://github.com/ouxianghui/janus-client/blob/multistream/interface.svg" height="500" /><br>
+
+* Signaling/Plugin Client
+* <img src="https://github.com/ouxianghui/janus-client/blob/multistream/plugin-client.svg" height="500" /><br>
+
+* Video Room Client
+<img src="https://github.com/ouxianghui/janus-client/blob/multistream/video-room-client.svg" height="500" /><br>
+
+* Streaming Client
+<img src="https://github.com/ouxianghui/janus-client/blob/multistream/streaming-client.svg" height="500" /><br>
+
+* Text Room Client
+<img src="https://github.com/ouxianghui/janus-client/blob/multistream/text-room-client.svg" height="500" /><br>
+
 
 ## Compile
 Get the code:
