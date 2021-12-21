@@ -1,7 +1,9 @@
 #include "janus_connection_dialog.h"
-#include "service/app_instance.h"
-#include "signaling_service_interface.h"
+#include "service/rtc_engine.h"
+#include "signaling_client_interface.h"
 #include "utils/thread_provider.h"
+#include "service/i_unified_factory.h"
+#include "app_delegate.h"
 
 JanusConnectionDialog::JanusConnectionDialog(QWidget *parent)
 	: QDialog(parent)
@@ -11,25 +13,25 @@ JanusConnectionDialog::JanusConnectionDialog(QWidget *parent)
 
 JanusConnectionDialog::~JanusConnectionDialog()
 {
+
 }
 
 void JanusConnectionDialog::init()
 {
-	auto ss = rtcApp->getSignalingService();
-	ss->registerObserver(shared_from_this());
+	AppDelegate::instance()->getRtcEngine()->registerEventHandler(shared_from_this());
 }
 
 void JanusConnectionDialog::cleanup()
 {
-	auto ss = rtcApp->getSignalingService();
-	ss->unregisterObserver(shared_from_this());
+	AppDelegate::instance()->getRtcEngine()->unregisterEventHandler(shared_from_this());
 }
 
 void JanusConnectionDialog::on_connectJanusPushButton_clicked()
 {
-    auto url = ui.serverUrlLineEdit->text().toStdString();
-	auto ss = rtcApp->getSignalingService();
-	ss->connect(url);
+	vi::Options opts;
+	opts.serverUrl = ui.serverUrlLineEdit->text().toStdString();
+	AppDelegate::instance()->getRtcEngine()->setOptions(opts);
+	AppDelegate::instance()->getRtcEngine()->startup();
 }
 
 void JanusConnectionDialog::on_cancelConnectPushButton_clicked()
@@ -37,13 +39,14 @@ void JanusConnectionDialog::on_cancelConnectPushButton_clicked()
     reject();
 }
 
-void JanusConnectionDialog::onSessionStatus(vi::SessionStatus status)
+void JanusConnectionDialog::onStatus(vi::EngineStatus status)
 {
-	if (vi::SessionStatus::CONNECTED == status) {
-		TMgr->thread("main")->PostTask(RTC_FROM_HERE, [wself = weak_from_this()]() {
-			if (auto self = wself.lock()) {
-				self->accept();
-			}
-		});
+	if (vi::EngineStatus::CONNECTED == status) {
+		accept();
 	}
+}
+
+void JanusConnectionDialog::onError(int32_t code)
+{
+
 }

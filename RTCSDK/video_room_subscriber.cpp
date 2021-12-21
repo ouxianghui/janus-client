@@ -3,7 +3,7 @@
 #include "logger/logger.h"
 #include "participant.h"
 #include "utils/thread_provider.h"
-#include "Service/app_instance.h"
+#include "Service/rtc_engine.h"
 #include "video_room_api.h"
 #include "pc/media_stream.h"
 #include "pc/media_stream_proxy.h"
@@ -12,7 +12,7 @@
 
 namespace vi {
 
-	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
+	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
 		: PluginClient(ss)
 		, _mediaController(mediaController)
 	{

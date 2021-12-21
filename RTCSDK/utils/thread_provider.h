@@ -12,7 +12,7 @@
 #include <string>
 #include <list>
 #include "rtc_base/thread.h"
-#include "service/app_instance.h"
+#include "service/rtc_engine.h"
 
 namespace vi {
 
@@ -54,4 +54,4 @@ namespace vi {
 	};
 }
 
-#define TMgr UFactory->getThreadProvider()
+#define TMgr uFactory->getThreadProvider()

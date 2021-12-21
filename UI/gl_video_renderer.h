@@ -30,6 +30,7 @@ class GLVideoRenderer
 
 public:
 	GLVideoRenderer(QWidget *parent);
+
 	~GLVideoRenderer();
 
 	void init();
@@ -49,8 +50,12 @@ private slots:
 
 private:
 	std::shared_ptr<GLVideoShader> _videoShader;
+
 	std::shared_ptr<I420TextureCache> _i420TextureCache;
+
 	std::shared_ptr<webrtc::VideoFrame> _cacheFrame;
+
 	QTimer* _renderingTimer;
+
 	moodycamel::BlockingConcurrentQueue<std::shared_ptr<webrtc::VideoFrame>> _frameQ;
 };

@@ -16,6 +16,7 @@ class GLVideoShader
 {
 public:
 	GLVideoShader();
+
 	~GLVideoShader();
 
 	bool createAndSetupI420Program();
@@ -39,18 +40,25 @@ public:
 
 protected:
 	GLuint createShader(GLenum type, const GLchar* source);
+
 	GLuint createProgram(GLuint vertexShader, GLuint fragmentShader);
+
 	GLuint createProgramFromFragmentSource(const char fragmentShaderSource[]);
+
 	bool createVertexBuffer(GLuint* vertexBuffer, GLuint* vertexArray);
+
 	void setVertexData(webrtc::VideoRotation rotation);
 
 private:
 	GLuint _vertexBuffer = 0;
+
 	GLuint _vertexArray = 0;
+
 	// Store current rotation and only upload new vertex data when rotation changes.
 	absl::optional<webrtc::VideoRotation> _currentRotation;
 
 	GLuint _i420Program = 0;
+
 	GLuint _nv12Program = 0;
 };
 

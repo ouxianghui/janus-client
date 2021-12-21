@@ -8,8 +8,7 @@
 #include "gallery_view.h"
 #include <QCloseEvent>
 #include "participants_list_view.h"
-#include "i_signaling_service_observer.h"
-#include "signaling_service_status.h"
+#include "i_engine_event_handler.h"
 
 namespace vi {
 	class Participant;
@@ -23,7 +22,7 @@ class ParticipantsEventAdapter;
 
 class UI
 	: public QMainWindow
-	, public vi::ISignalingServiceObserver
+	, public vi::IEngineEventHandler
 	, public std::enable_shared_from_this<UI>
 {
 	Q_OBJECT
@@ -39,9 +38,11 @@ public:
 
 private slots:
 
-	// ISignalingServiceObserver
+	// IEngineEventHandler
 
-	void onSessionStatus(vi::SessionStatus status) override;
+	void onStatus(vi::EngineStatus status) override;
+
+	void onError(int32_t code) override;
 
 	// IVideoRoomEventHandler
 

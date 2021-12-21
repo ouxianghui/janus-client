@@ -13,6 +13,7 @@ class RoomInfoDialog : public QDialog
 
 public:
     explicit RoomInfoDialog(QWidget *parent = nullptr);
+
     ~RoomInfoDialog();
 
     int64_t getRoomId() const;

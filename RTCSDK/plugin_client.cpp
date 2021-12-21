@@ -28,10 +28,10 @@
 #include "modules/video_capture/video_capture_factory.h"
 #include "pc/video_track_source.h"
 #include "video_capture.h"
-#include "service/app_instance.h"
+#include "service/rtc_engine.h"
 #include "rtc_base/thread.h"
 #include "logger/logger.h"
-#include "service/app_instance.h"
+#include "service/rtc_engine.h"
 #include "utils/thread_provider.h"
 #include "utils/task_scheduler.h"
 #include "message_models.h"
@@ -39,7 +39,7 @@
 #include "absl/types/optional.h"
 
 namespace vi {
-	PluginClient::PluginClient(std::shared_ptr<SignalingServiceInterface> ss)
+	PluginClient::PluginClient(std::shared_ptr<SignalingClientInterface> ss)
 	{
 		_pluginContext = std::make_shared<PluginContext>(ss);
 

@@ -25,6 +25,7 @@ class I420TextureCache
 {
 public:
 	I420TextureCache();
+
 	~I420TextureCache();
 
 public:
@@ -46,8 +47,10 @@ protected:
 private:
 	bool _hasUnpackRowLength;
 	GLint _currentTextureSet = 0;
+
 	// Handles for OpenGL constructs.
 	GLuint _textures[kNumTextures];
+
 	// Used to create a non-padded plane for GPU upload when we receive padded frames.
 	std::vector<uint8_t> _planeBuffer;
 };

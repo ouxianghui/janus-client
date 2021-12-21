@@ -10,23 +10,23 @@
 #include <functional>
 #include "signaling_events.h"
 #include "service/i_unified_factory.h"
-#include "signaling_service_status.h"
+#include "signaling_client_status.h"
 
 namespace vi {
 	class PluginClient;
-	class ISignalingServiceObserver;
-	class SignalingServiceInterface
+	class ISignalingClientObserver;
+	class SignalingClientInterface
 	{
 	public:
-		virtual ~SignalingServiceInterface() {}
+		virtual ~SignalingClientInterface() {}
 
 		virtual void init() = 0;
 
 		virtual void cleanup() = 0;
 
-		virtual void registerObserver(std::shared_ptr<ISignalingServiceObserver> observer) = 0;
+		virtual void registerObserver(std::shared_ptr<ISignalingClientObserver> observer) = 0;
 
-		virtual void unregisterObserver(std::shared_ptr<ISignalingServiceObserver> observer) = 0;
+		virtual void unregisterObserver(std::shared_ptr<ISignalingClientObserver> observer) = 0;
 
 		virtual SessionStatus sessionStatus() = 0;
 

@@ -3,15 +3,15 @@
 #include <QDialog>
 #include "ui_janus_connection_dialog.h"
 #include <memory>
-#include "i_signaling_service_observer.h"
-#include "signaling_service_status.h"
+#include "i_engine_event_handler.h"
 
-class JanusConnectionDialog : public QDialog, public vi::ISignalingServiceObserver, public std::enable_shared_from_this<JanusConnectionDialog>
+class JanusConnectionDialog : public QDialog, public vi::IEngineEventHandler, public std::enable_shared_from_this<JanusConnectionDialog>
 {
 	Q_OBJECT
 
 public:
 	JanusConnectionDialog(QWidget *parent = Q_NULLPTR);
+
 	~JanusConnectionDialog();
 
     void init();
@@ -25,9 +25,11 @@ private slots:
 
 private:
 
-	// ISignalingServiceObserver
+	// IEngineEventHandler
 
-	void onSessionStatus(vi::SessionStatus status) override;
+	void onStatus(vi::EngineStatus status) override;
+
+	void onError(int32_t code) override;
 
 private:
 	Ui::JanusConnectionDialog ui;

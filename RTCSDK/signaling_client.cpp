@@ -4,13 +4,13 @@
  * Created:   2020-10-01
  **/
 
-#include "signaling_service.h"
+#include "signaling_client.h"
 #include "Service/unified_factory.h"
 #include "janus_api_client.h"
 #include "plugin_client.h"
 #include "rtc_base/thread.h"
 #include "logger/logger.h"
-#include "service/app_instance.h"
+#include "service/rtc_engine.h"
 #include "utils/thread_provider.h"
 #include "utils/task_scheduler.h"
 #include "message_models.h"
@@ -18,22 +18,22 @@
 
 namespace vi {
 
-	SignalingService::SignalingService()
+	SignalingClient::SignalingClient()
 		: _eventHandlerThread(nullptr)
 	{
 	}
 
-	SignalingService::~SignalingService()
+	SignalingClient::~SignalingClient()
 	{
-		DLOG("~SignalingService");
+		DLOG("~SignalingClient");
 
 		if (_heartbeatTaskScheduler) {
 			_heartbeatTaskScheduler->cancelAll();
 		}
-		DLOG("~SignalingService");
+		DLOG("~SignalingClient");
 	}
 
-	void SignalingService::init()
+	void SignalingClient::init()
 	{
 		_eventHandlerThread = TMgr->thread("plugin-client");
 		
@@ -45,7 +45,7 @@ namespace vi {
 		_heartbeatTaskScheduler = TaskScheduler::create();
 	}
 
-	void SignalingService::cleanup()
+	void SignalingClient::cleanup()
 	{
 		auto event = std::make_shared<DestroySessionEvent>();
 		event->notifyDestroyed = true;
@@ -56,17 +56,17 @@ namespace vi {
 		this->destroy(event);
 	}
 
-	void SignalingService::registerObserver(std::shared_ptr<ISignalingServiceObserver> observer)
+	void SignalingClient::registerObserver(std::shared_ptr<ISignalingClientObserver> observer)
 	{
-		UniversalObservable<ISignalingServiceObserver>::addWeakObserver(observer, "main");
+		UniversalObservable<ISignalingClientObserver>::addWeakObserver(observer, "main");
 	}
 
-	void SignalingService::unregisterObserver(std::shared_ptr<ISignalingServiceObserver> observer)
+	void SignalingClient::unregisterObserver(std::shared_ptr<ISignalingClientObserver> observer)
 	{
-		UniversalObservable<ISignalingServiceObserver>::removeObserver(observer);
+		UniversalObservable<ISignalingClientObserver>::removeObserver(observer);
 	}
 
-	void SignalingService::connect(const std::string& url)
+	void SignalingClient::connect(const std::string& url)
 	{
 		if (!_client) {
 			DLOG("_client == nullptr");
@@ -76,12 +76,12 @@ namespace vi {
 		_client->connect(url);
 	}
 
-	SessionStatus SignalingService::sessionStatus()
+	SessionStatus SignalingClient::sessionStatus()
 	{
 		return _sessionStatus;
 	}
 
-	void SignalingService::attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient)
+	void SignalingClient::attach(const std::string& plugin, const std::string& opaqueId, std::shared_ptr<PluginClient> pluginClient)
 	{
 		if (!pluginClient) {
 			return;
@@ -124,12 +124,12 @@ namespace vi {
 		_client->attach(_sessionId, plugin, opaqueId, callback);
 	}
 
-	void SignalingService::destroy(std::shared_ptr<DestroySessionEvent> event)
+	void SignalingClient::destroy(std::shared_ptr<DestroySessionEvent> event)
 	{
 		destroySession(event);
 	}
 
-	void SignalingService::reconnectSession()
+	void SignalingClient::reconnectSession()
 	{
 		// TODO: ?
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
@@ -141,7 +141,7 @@ namespace vi {
 		createSession(event);
 	}
 
-	void SignalingService::sendMessage(int64_t handleId, std::shared_ptr<MessageEvent> event)
+	void SignalingClient::sendMessage(int64_t handleId, std::shared_ptr<MessageEvent> event)
 	{
 		if (_sessionStatus == SessionStatus::CONNECTED) {
 			if (const auto& pluginClient = getHandler(handleId)) {
@@ -190,7 +190,7 @@ namespace vi {
 		}
 	}
 
-	void SignalingService::hangup(int64_t handleId, bool hangupRequest)
+	void SignalingClient::hangup(int64_t handleId, bool hangupRequest)
 	{
 		const auto& pluginClient = getHandler(handleId);
 		if (!pluginClient) {
@@ -208,7 +208,7 @@ namespace vi {
 		}
 	}
 
-	void SignalingService::destroyHandle(int64_t handleId, std::shared_ptr<DetachEvent> event) 
+	void SignalingClient::destroyHandle(int64_t handleId, std::shared_ptr<DetachEvent> event) 
 	{
 		DLOG("destroyHandle()");
 
@@ -263,14 +263,14 @@ namespace vi {
 		_client->detach(_sessionId, handleId, callback);
 	}
 
-	void SignalingService::detach(int64_t handleId, std::shared_ptr<DetachEvent> event) 
+	void SignalingClient::detach(int64_t handleId, std::shared_ptr<DetachEvent> event) 
 	{
 		destroyHandle(handleId, event);
 	}
 
 	// ISfuApiClientListener
 
-	void SignalingService::onOpened()
+	void SignalingClient::onOpened()
 	{
 		std::shared_ptr<CreateSessionEvent> event = std::make_shared<CreateSessionEvent>();
 		event->reconnect = false;
@@ -283,17 +283,17 @@ namespace vi {
 		createSession(event);
 	}
 
-	void SignalingService::onClosed()
+	void SignalingClient::onClosed()
 	{
 		_connected = false;
 	}	
 	
-	void SignalingService::onFailed(int errorCode, const std::string& reason)
+	void SignalingClient::onFailed(int errorCode, const std::string& reason)
 	{
 		_connected = false;
 	}
 
-	void SignalingService::onMessage(const std::string& json)
+	void SignalingClient::onMessage(const std::string& json)
 	{
 		std::string err;
 		std::shared_ptr<JanusResponse> response = fromJsonString<JanusResponse>(json, err);
@@ -484,7 +484,7 @@ namespace vi {
 		}
 	}
 
-	void SignalingService::createSession(std::shared_ptr<CreateSessionEvent> event)
+	void SignalingClient::createSession(std::shared_ptr<CreateSessionEvent> event)
 	{
 		auto lambda = [wself = weak_from_this(), event](const std::string& json) {
 			std::string err;
@@ -500,7 +500,7 @@ namespace vi {
 				self->startHeartbeat();
 				self->_sessionStatus =SessionStatus::CONNECTED;
 
-				self->UniversalObservable<ISignalingServiceObserver>::notifyObservers([](const auto& observer) {
+				self->UniversalObservable<ISignalingClientObserver>::notifyObservers([](const auto& observer) {
 					observer->onSessionStatus(SessionStatus::CONNECTED);
 				});
 
@@ -520,7 +520,7 @@ namespace vi {
 		}
 	}
 
-	void SignalingService::startHeartbeat()
+	void SignalingClient::startHeartbeat()
 	{
 		_heartbeatTaskId = _heartbeatTaskScheduler->schedule([wself = weak_from_this()]() {
 			if (auto self = wself.lock()) {
@@ -534,7 +534,7 @@ namespace vi {
 		}, 5000, true);
 	}
 
-	std::shared_ptr<PluginClient> SignalingService::getHandler(int64_t handleId)
+	std::shared_ptr<PluginClient> SignalingClient::getHandler(int64_t handleId)
 	{
 		if (handleId == -1) {
 			ELOG("Missing sender...");
@@ -547,7 +547,7 @@ namespace vi {
 		return _pluginClientMap[handleId].lock();
 	}
 
-	void SignalingService::sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event)
+	void SignalingClient::sendTrickleCandidate(int64_t handleId, std::shared_ptr<TrickleCandidateEvent> event)
 	{
 		auto lambda = [wself = weak_from_this(), event](const std::string& json) {
 			if (auto self = wself.lock()) {
@@ -562,7 +562,7 @@ namespace vi {
 		_client->sendTrickleCandidate(handleId, _sessionId, event->candidate, callback);
 	}
 
-	void SignalingService::destroySession(std::shared_ptr<DestroySessionEvent> event)
+	void SignalingClient::destroySession(std::shared_ptr<DestroySessionEvent> event)
 	{
 		DLOG("Destroying session: {}", _sessionId);
 		if (_sessionId == -1) {

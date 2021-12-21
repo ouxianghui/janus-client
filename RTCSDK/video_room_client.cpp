@@ -8,7 +8,7 @@
 #include "string_utils.h"
 #include "logger/logger.h"
 #include "participant.h"
-#include "Service/app_instance.h"
+#include "Service/rtc_engine.h"
 #include "video_room_api.h"
 #include "video_room_subscriber.h"
 #include "pc/media_stream.h"
@@ -20,7 +20,7 @@
 #include "participants_controller_proxy.h"
 
 namespace vi {
-	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss)
+	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss)
 		: PluginClient(ss)
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
@@ -419,7 +419,7 @@ namespace vi {
 		}
 	}
 
-	//int32_t SignalingService::getVolume(int64_t handleId, bool isRemote, const std::string& mid)
+	//int32_t SignalingClient::getVolume(int64_t handleId, bool isRemote, const std::string& mid)
 //{
 //	const auto& pluginClient = getHandler(handleId);
 //	if (!pluginClient) {
@@ -431,27 +431,27 @@ namespace vi {
 //	return 0;
 //}
 
-//int32_t SignalingService::remoteVolume(int64_t handleId, const std::string& mid)
+//int32_t SignalingClient::remoteVolume(int64_t handleId, const std::string& mid)
 //{
 //	return getVolume(handleId, true, mid);
 //}
 
-//int32_t SignalingService::localVolume(int64_t handleId, const std::string& mid)
+//int32_t SignalingClient::localVolume(int64_t handleId, const std::string& mid)
 //{
 //	return getVolume(handleId, false, mid);
 //}
 
-//bool SignalingService::isAudioMuted(int64_t handleId, const std::string& mid)
+//bool SignalingClient::isAudioMuted(int64_t handleId, const std::string& mid)
 //{
 //	return isMuted(handleId, true, mid);
 //}
 
-//bool SignalingService::isVideoMuted(int64_t handleId, const std::string& mid)
+//bool SignalingClient::isVideoMuted(int64_t handleId, const std::string& mid)
 //{
 //	return isMuted(handleId, false, mid);
 //}
 
-//bool SignalingService::isMuted(int64_t handleId, bool isVideo, const std::string& mid)
+//bool SignalingClient::isMuted(int64_t handleId, bool isVideo, const std::string& mid)
 //{
 //	const auto& pluginClient = getHandler(handleId);
 //	if (!pluginClient) {
@@ -528,27 +528,27 @@ namespace vi {
 //	return true;
 //}
 
-//bool SignalingService::muteAudio(int64_t handleId, const std::string& mid)
+//bool SignalingClient::muteAudio(int64_t handleId, const std::string& mid)
 //{
 //	return mute(handleId, false, true, mid);
 //}
 
-//bool SignalingService::muteVideo(int64_t handleId, const std::string& mid)
+//bool SignalingClient::muteVideo(int64_t handleId, const std::string& mid)
 //{
 //	return mute(handleId, true, true, mid);
 //}
 
-//bool SignalingService::unmuteAudio(int64_t handleId, const std::string& mid)
+//bool SignalingClient::unmuteAudio(int64_t handleId, const std::string& mid)
 //{
 //	return mute(handleId, false, false, mid);
 //}
 
-//bool SignalingService::unmuteVideo(int64_t handleId, const std::string& mid)
+//bool SignalingClient::unmuteVideo(int64_t handleId, const std::string& mid)
 //{
 //	return mute(handleId, true, false, mid);
 //}
 
-//bool SignalingService::mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid)
+//bool SignalingClient::mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid)
 //{
 //	const auto& pluginClient = getHandler(handleId);
 //	if (!pluginClient) {
@@ -626,7 +626,7 @@ namespace vi {
 //	return false;
 //}
 
-//std::string SignalingService::getBitrate(int64_t handleId, const std::string& mid)
+//std::string SignalingClient::getBitrate(int64_t handleId, const std::string& mid)
 //{
 //	return "";
 //}

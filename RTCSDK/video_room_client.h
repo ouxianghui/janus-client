@@ -28,7 +28,7 @@ namespace vi {
 	class VideoRoomClient : public PluginClient, public VideoRoomClientInterface, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomClient(std::shared_ptr<SignalingServiceInterface> ss);
+		VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss);
 
 		~VideoRoomClient();
 

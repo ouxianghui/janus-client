@@ -4,8 +4,8 @@
 #include <QHBoxLayout>
 #include <QGridLayout>
 #include <QToolButton>
-#include "Service/app_instance.h"
-#include "signaling_service_interface.h"
+#include "Service/rtc_engine.h"
+#include "signaling_client_interface.h"
 #include "video_room_client.h"
 #include "message_models.h"
 #include "string_utils.h"
@@ -23,6 +23,7 @@
 #include "media_controller.h"
 #include "participants_controller.h"
 #include "video_room_client_proxy.h"
+#include "app_delegate.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -68,10 +69,7 @@ UI::~UI()
 
 void UI::init()
 {
-	auto ss = rtcApp->getSignalingService();
-
-	auto vrc = std::make_shared<vi::VideoRoomClient>(ss);
-	_vrc = vi::VideoRoomClientProxy::Create(TMgr->thread("plugin-client"), vrc);
+	_vrc = AppDelegate::instance()->getRtcEngine()->createVideoRoomClient();
 	_vrc->init();
 
 	_vrc->registerEventHandler(_videoRoomEventAdapter);
@@ -116,11 +114,14 @@ void UI::init()
 	this->addDockWidget(Qt::RightDockWidgetArea, dockWidget);
 }
 
-void UI::onSessionStatus(vi::SessionStatus status)
+void UI::onStatus(vi::EngineStatus status)
 {
-	if (vi::SessionStatus::CONNECTED == status) {
 
-	}
+}
+
+void UI::onError(int32_t code)
+{
+
 }
 
 void UI::onCreate()
@@ -137,7 +138,6 @@ void UI::onLeave()
 {
 
 }
-
 
 void UI::onLocalAudioMuted(bool muted)
 {

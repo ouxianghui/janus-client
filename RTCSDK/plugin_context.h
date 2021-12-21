@@ -10,7 +10,7 @@
 #include <string>
 #include <atomic>
 #include <map>
-#include "signaling_service.h"
+#include "signaling_client.h"
 #include "api/media_stream_interface.h"
 #include "api/peer_connection_interface.h"
 #include "api/dtmf_sender_interface.h"
@@ -18,7 +18,7 @@
 #include "absl/types/optional.h"
 #include "webrtc_utils.h"
 #include "signaling_events.h"
-#include "signaling_service_interface.h"
+#include "signaling_client_interface.h"
 #include "video_capture.h"
 
 namespace vi {
@@ -31,7 +31,7 @@ namespace vi {
 		int64_t handleId = -1;
 		std::string handleToken;
 		std::atomic_bool detached = false;
-		std::weak_ptr<SignalingServiceInterface> signalingService;
+		std::weak_ptr<SignalingClientInterface> signalingService;
 
 
 		bool unifiedPlan = true;
@@ -64,7 +64,7 @@ namespace vi {
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> localStream;
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
 
-		PluginContext(std::weak_ptr<SignalingServiceInterface> ss) : signalingService(ss) {}
+		PluginContext(std::weak_ptr<SignalingClientInterface> ss) : signalingService(ss) {}
 
 		~PluginContext() {
 			pcf = nullptr; 

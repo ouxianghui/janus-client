@@ -9,12 +9,12 @@
 #include "weak_proxy.h"
 
 namespace vi {
-	BEGIN_WEAK_PROXY_MAP(SignalingService)
+	BEGIN_WEAK_PROXY_MAP(SignalingClient)
 		WEAK_PROXY_THREAD_DESTRUCTOR()
 		WEAK_PROXY_METHOD0(void, init)
 		WEAK_PROXY_METHOD0(void, cleanup)
-		WEAK_PROXY_METHOD1(void, registerObserver, std::shared_ptr<ISignalingServiceObserver>)
-		WEAK_PROXY_METHOD1(void, unregisterObserver, std::shared_ptr<ISignalingServiceObserver>)
+		WEAK_PROXY_METHOD1(void, registerObserver, std::shared_ptr<ISignalingClientObserver>)
+		WEAK_PROXY_METHOD1(void, unregisterObserver, std::shared_ptr<ISignalingClientObserver>)
 		WEAK_PROXY_METHOD1(void, connect, const std::string&)
 		WEAK_PROXY_METHOD0(SessionStatus, sessionStatus)
 		WEAK_PROXY_METHOD3(void, attach, const std::string&, const std::string&, std::shared_ptr<PluginClient>)

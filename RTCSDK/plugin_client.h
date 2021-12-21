@@ -10,10 +10,10 @@
 #include <string>
 #include "i_webrtc_event_handler.h"
 #include "i_signaling_event_handler.h"
-#include "signaling_service_status.h"
+#include "signaling_client_status.h"
 
 namespace vi {
-	class SignalingServiceInterface;
+	class SignalingClientInterface;
 	class TaskScheduler;
 
 	class PluginClient
@@ -22,7 +22,7 @@ namespace vi {
 		, public std::enable_shared_from_this<PluginClient>
 	{
 	public:
-		PluginClient(std::shared_ptr<SignalingServiceInterface> ss);
+		PluginClient(std::shared_ptr<SignalingClientInterface> ss);
 
 		~PluginClient();
 

@@ -14,10 +14,10 @@
 #include "i_sfu_api_client.h"
 #include "i_sfu_api_client_listener.h"
 #include "signaling_events.h"
-#include "signaling_service_interface.h"
+#include "signaling_client_interface.h"
 #include "utils/universal_observable.hpp"
-#include "signaling_service_status.h"
-#include "i_signaling_service_observer.h"
+#include "signaling_client_status.h"
+#include "i_signaling_client_observer.h"
 
 namespace rtc {
 	class Thread;
@@ -27,24 +27,24 @@ namespace vi {
 	class TaskScheduler;
 	class CapturerTrackSource;
 	class PluginClient;
-	class SignalingService
-		: public SignalingServiceInterface
+	class SignalingClient
+		: public SignalingClientInterface
 		, public ISfuApiClientListener
-		, public UniversalObservable<ISignalingServiceObserver>
-		, public std::enable_shared_from_this<SignalingService>
+		, public UniversalObservable<ISignalingClientObserver>
+		, public std::enable_shared_from_this<SignalingClient>
 	{
 	public:
-		SignalingService();
+		SignalingClient();
 
-		~SignalingService() override;
+		~SignalingClient() override;
 
 		void init() override;
 
 		void cleanup() override;
 
-		void registerObserver(std::shared_ptr<ISignalingServiceObserver> observer) override;
+		void registerObserver(std::shared_ptr<ISignalingClientObserver> observer) override;
 
-		void unregisterObserver(std::shared_ptr<ISignalingServiceObserver> observer) override;
+		void unregisterObserver(std::shared_ptr<ISignalingClientObserver> observer) override;
 
 		SessionStatus sessionStatus() override;
 

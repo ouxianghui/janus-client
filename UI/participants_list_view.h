@@ -15,6 +15,7 @@ class ParticipantsListView : public QWidget, public std::enable_shared_from_this
 
 public:
 	ParticipantsListView(std::shared_ptr<vi::VideoRoomClientInterface> vrc, QWidget *parent = Q_NULLPTR);
+
 	~ParticipantsListView();
 
 	void addParticipant(std::shared_ptr<vi::Participant> participant);
@@ -25,5 +26,6 @@ public:
 
 private:
 	Ui::ParticipantsListView ui;
+
 	std::weak_ptr<vi::VideoRoomClientInterface> _vrc;
 };

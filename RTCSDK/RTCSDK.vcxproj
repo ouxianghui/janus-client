@@ -18,12 +18,13 @@
     <ClInclude Include="audio_device_manager.h" />
     <ClInclude Include="helper_utils.h" />
     <ClInclude Include="i_audio_device_manager.h" />
+    <ClInclude Include="i_engine_event_handler.h" />
     <ClInclude Include="i_media_control_event_handler.h" />
     <ClInclude Include="i_message_transport.h" />
     <ClInclude Include="i_message_transport_listener.h" />
     <ClInclude Include="i_sfu_api_client.h" />
     <ClInclude Include="i_sfu_api_client_listener.h" />
-    <ClInclude Include="i_signaling_service_observer.h" />
+    <ClInclude Include="i_signaling_client_observer.h" />
     <ClInclude Include="i_text_room_listener.h" />
     <ClInclude Include="i_video_room_api.h" />
     <ClInclude Include="i_video_room_event_handler.h" />
@@ -34,6 +35,7 @@
     <ClInclude Include="json\serialization_json.hpp" />
     <ClInclude Include="json\stringable.hpp" />
     <ClInclude Include="json\string_algo.hpp" />
+    <ClInclude Include="rtc_engine_factory.h" />
     <ClInclude Include="video_capture.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\rtc_log_sink.h" />
@@ -52,11 +54,11 @@
     <ClInclude Include="rtcsdk_global.h" />
     <ClInclude Include="rtc_sdk.h" />
     <ClInclude Include="sdp_utils.h" />
-    <ClInclude Include="service\app_instance.h" />
-    <ClInclude Include="service\i_app_instance.h" />
+    <ClInclude Include="service\rtc_engine.h" />
+    <ClInclude Include="service\i_rtc_engine.h" />
     <ClInclude Include="service\i_unified_factory.h" />
     <ClInclude Include="service\unified_factory.h" />
-    <ClInclude Include="signaling_service_status.h" />
+    <ClInclude Include="signaling_client_status.h" />
     <ClInclude Include="string_utils.h" />
     <ClInclude Include="text_room_client.h" />
     <ClInclude Include="utils\interface_proxy.hpp" />
@@ -83,10 +85,10 @@
     <ClInclude Include="video_room_models.h" />
     <ClInclude Include="video_room_subscriber.h" />
     <ClInclude Include="weak_proxy.h" />
-    <ClInclude Include="signaling_service.h" />
+    <ClInclude Include="signaling_client.h" />
     <ClInclude Include="signaling_events.h" />
-    <ClInclude Include="signaling_service_interface.h" />
-    <ClInclude Include="signaling_service_proxy.h" />
+    <ClInclude Include="signaling_client_interface.h" />
+    <ClInclude Include="signaling_client_proxy.h" />
     <ClInclude Include="webrtc_utils.h" />
     <ClInclude Include="websocket\connection_metadata.h" />
     <ClInclude Include="websocket\i_connection_listener.h" />
@@ -100,6 +102,7 @@
     <ClCompile Include="i_audio_device_manager.cpp" />
     <ClCompile Include="janus_api_client.cpp" />
     <ClCompile Include="plugin_context.cpp" />
+    <ClCompile Include="rtc_engine_factory.cpp" />
     <ClCompile Include="video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />
@@ -110,7 +113,7 @@
     <ClCompile Include="plugin_client.cpp" />
     <ClCompile Include="rtc_sdk.cpp" />
     <ClCompile Include="sdp_utils.cpp" />
-    <ClCompile Include="service\app_instance.cpp" />
+    <ClCompile Include="service\rtc_engine.cpp" />
     <ClCompile Include="service\unified_factory.cpp" />
     <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="text_room_client.cpp" />
@@ -124,7 +127,7 @@
     <ClCompile Include="video_room_api.cpp" />
     <ClCompile Include="video_room_subscriber.cpp" />
     <ClCompile Include="weak_proxy.cpp" />
-    <ClCompile Include="signaling_service.cpp" />
+    <ClCompile Include="signaling_client.cpp" />
     <ClCompile Include="websocket\connection_metadata.cpp" />
     <ClCompile Include="websocket\websocket_endpoint.cpp" />
   </ItemGroup>

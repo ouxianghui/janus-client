@@ -12,8 +12,8 @@
 #include "rtc_base/win32_socket_server.h"
 #include <QObject>
 #include <memory>
-#include "Service/app_instance.h"
-#include "signaling_service_interface.h"
+#include "Service/rtc_engine.h"
+#include "signaling_client_interface.h"
 #include <QSurfaceFormat>
 
 #include "api/media_stream_interface.h"
@@ -34,6 +34,7 @@
 #include "rtc_base/win32_socket_init.h"
 #include "rtc_base/physical_socket_server.h"
 #include "logger/logger.h"
+#include "app_delegate.h"
 
 static void registerMetaTypes()
 {
@@ -64,7 +65,7 @@ int main(int argc, char *argv[])
 	rtc::Win32Thread w32Thread(&w32ss);
 	rtc::ThreadManager::Instance()->SetCurrentThread(&w32Thread);
 
-	rtcApp->init(); 
+	AppDelegate::instance()->init(); 
 
 	registerMetaTypes();
 
@@ -81,9 +82,9 @@ int main(int argc, char *argv[])
 	if (QDialog::Accepted == jcDialog->exec()) {
 		jcDialog->cleanup();
 
-		auto ss = rtcApp->getSignalingService();
 		std::shared_ptr<UI> w = std::make_shared<UI>();
-		ss->registerObserver(w);
+		AppDelegate::instance()->getRtcEngine()->registerEventHandler(w);
+
 		w->show();
 
 		w->init();
@@ -91,7 +92,7 @@ int main(int argc, char *argv[])
 		ret = a.exec();
 	}
 
-	rtcApp->destroy();
+	AppDelegate::instance()->destroy();
 
 	rtc::CleanupSSL();
 

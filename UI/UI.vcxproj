@@ -123,6 +123,7 @@
     </QtRcc>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="app_delegate.cpp" />
     <ClCompile Include="gallery_view.cpp" />
     <ClCompile Include="gl_video_renderer.cpp" />
     <ClCompile Include="gl_video_shader.cpp" />
@@ -172,6 +173,7 @@
     <QtMoc Include="gallery_view.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="app_delegate.h" />
     <ClInclude Include="gl_defines.h" />
     <ClInclude Include="gl_video_shader.h" />
     <ClInclude Include="i420_texture_cache.h" />

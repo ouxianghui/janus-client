@@ -15,15 +15,19 @@ class ParticipantItemView : public QWidget
 
 public:
     ParticipantItemView(std::shared_ptr<vi::Participant> participant, QWidget *parent = Q_NULLPTR);
+
 	~ParticipantItemView();
 
     void setDisplayName(const std::string& name);
+
     std::string getDisplayName();
 
     void setAudioStatus(bool mute);
+
     bool getAudioStatus() const;
 
     void setVideoStatus(bool mute);
+
     bool getVideoStatus() const;
 
 private slots:

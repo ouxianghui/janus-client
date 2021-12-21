@@ -15,7 +15,7 @@ namespace vi {
 	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomSubscriber(std::shared_ptr<SignalingServiceInterface> ss, const std::string& pluginName, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController);
+		VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, const std::string& pluginName, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController);
 
 		~VideoRoomSubscriber();
 

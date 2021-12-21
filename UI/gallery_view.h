@@ -49,20 +49,26 @@ public:
 		}
 		return false;
 	}
+
 	void cleanup() override {
 		if (_renderer && _track) {
 			_track->RemoveSink(_renderer);
 		}
 	}
+
 	int64_t id() override {
 		return _id;
 	}
+
 	QWidget* view() override {
 		return static_cast<QWidget*>(_renderer);
 	}
+
 private:
     int64_t _id = -1;
+
 	rtc::scoped_refptr<webrtc::VideoTrackInterface> _track;
+
 	GLVideoRenderer* _renderer = nullptr;
 };
 
