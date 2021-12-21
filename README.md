@@ -26,7 +26,7 @@
 * Interface
 <img src="https://github.com/ouxianghui/janus-client/blob/multistream/interface.svg" height="500" /><br>
 
-* Signaline/Plugin Client
+* Signaling/Plugin Client
 * <img src="https://github.com/ouxianghui/janus-client/blob/multistream/plugin-client.svg" height="500" /><br>
 
 * Video Room Client
