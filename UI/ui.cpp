@@ -69,7 +69,7 @@ UI::~UI()
 
 void UI::init()
 {
-	_vrc = AppDelegate::instance()->getRtcEngine()->createVideoRoomClient();
+	_vrc = appDelegate->getRtcEngine()->createVideoRoomClient();
 	_vrc->init();
 
 	_vrc->registerEventHandler(_videoRoomEventAdapter);

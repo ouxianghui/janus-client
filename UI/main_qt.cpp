@@ -65,7 +65,7 @@ int main(int argc, char *argv[])
 	rtc::Win32Thread w32Thread(&w32ss);
 	rtc::ThreadManager::Instance()->SetCurrentThread(&w32Thread);
 
-	AppDelegate::instance()->init(); 
+	appDelegate->init(); 
 
 	registerMetaTypes();
 
@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
 		jcDialog->cleanup();
 
 		std::shared_ptr<UI> w = std::make_shared<UI>();
-		AppDelegate::instance()->getRtcEngine()->registerEventHandler(w);
+		appDelegate->getRtcEngine()->registerEventHandler(w);
 
 		w->show();
 
@@ -92,7 +92,7 @@ int main(int argc, char *argv[])
 		ret = a.exec();
 	}
 
-	AppDelegate::instance()->destroy();
+	appDelegate->destroy();
 
 	rtc::CleanupSSL();
 

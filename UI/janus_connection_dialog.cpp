@@ -18,20 +18,20 @@ JanusConnectionDialog::~JanusConnectionDialog()
 
 void JanusConnectionDialog::init()
 {
-	AppDelegate::instance()->getRtcEngine()->registerEventHandler(shared_from_this());
+	appDelegate->getRtcEngine()->registerEventHandler(shared_from_this());
 }
 
 void JanusConnectionDialog::cleanup()
 {
-	AppDelegate::instance()->getRtcEngine()->unregisterEventHandler(shared_from_this());
+	appDelegate->getRtcEngine()->unregisterEventHandler(shared_from_this());
 }
 
 void JanusConnectionDialog::on_connectJanusPushButton_clicked()
 {
 	vi::Options opts;
 	opts.serverUrl = ui.serverUrlLineEdit->text().toStdString();
-	AppDelegate::instance()->getRtcEngine()->setOptions(opts);
-	AppDelegate::instance()->getRtcEngine()->startup();
+	appDelegate->getRtcEngine()->setOptions(opts);
+	appDelegate->getRtcEngine()->startup();
 }
 
 void JanusConnectionDialog::on_cancelConnectPushButton_clicked()

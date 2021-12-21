@@ -31,3 +31,5 @@ private:
 
     std::shared_ptr<vi::IRTCEngine> _rtcEngine;
 };
+
+#define appDelegate AppDelegate::instance()
