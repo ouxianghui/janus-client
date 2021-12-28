@@ -8,7 +8,7 @@
 #include <iostream>
 #include "message_transport.h"
 #include "message_models.h"
-#include "string_utils.h"
+#include "utils/string_utils.h"
 #include "logger/logger.h"
 #include "rtc_base/thread.h"
 #include "logger/logger.h"

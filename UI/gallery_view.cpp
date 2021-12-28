@@ -47,7 +47,7 @@ void GalleryView::insertView(std::shared_ptr<ContentView> view)
 
 void GalleryView::removeView(int64_t id)
 {
-    auto it = std::remove_if(_views.begin(), _views.end(), [id](const auto& e) {
+    auto it = std::find_if(_views.begin(), _views.end(), [id](const auto& e) {
         return e->id() == id;
     });
     if (it != _views.end()) {

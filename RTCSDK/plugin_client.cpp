@@ -35,7 +35,7 @@
 #include "utils/thread_provider.h"
 #include "utils/task_scheduler.h"
 #include "message_models.h"
-#include "sdp_utils.h"
+#include "utils/sdp_utils.h"
 #include "absl/types/optional.h"
 
 namespace vi {
@@ -377,30 +377,25 @@ namespace vi {
 				(event->media->update && (event->media->addAudio || event->media->replaceAudio))) &&
 				stream->GetAudioTracks().size() > 0) {
 				context->localStream->AddTrack(stream->GetAudioTracks()[0]);
-				if (_pluginContext->unifiedPlan) {
-					// Use Transceivers
-					DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
-					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> audioTransceiver = nullptr;
-					auto transceivers = context->pc->GetTransceivers();
-					for (const auto& t : transceivers) {
-						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) ||
-							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind)) {
-							audioTransceiver = t;
-							break;
-						}
-					}
-					if (audioTransceiver && audioTransceiver->sender()) {
-						// TODO:
-						DLOG("Replacing audio track");
-						audioTransceiver->sender()->SetTrack(stream->GetAudioTracks()[0]);
-					}
-					else {
-						DLOG("Adding audio track");
-						context->pc->AddTrack(stream->GetAudioTracks()[0], { stream->id() });
+
+				// Use Transceivers
+				DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
+				rtc::scoped_refptr<webrtc::RtpTransceiverInterface> audioTransceiver = nullptr;
+				auto transceivers = context->pc->GetTransceivers();
+				for (const auto& t : transceivers) {
+					if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind) ||
+						(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kAudioKind)) {
+						audioTransceiver = t;
+						break;
 					}
 				}
+				if (audioTransceiver && audioTransceiver->sender()) {
+					// TODO:
+					DLOG("Replacing audio track");
+					audioTransceiver->sender()->SetTrack(stream->GetAudioTracks()[0]);
+				}
 				else {
-					DLOG("{} audio track", (event->media->replaceAudio ? "Replacing" : "Adding"));
+					DLOG("Adding audio track");
 					context->pc->AddTrack(stream->GetAudioTracks()[0], { stream->id() });
 				}
 			}
@@ -408,30 +403,25 @@ namespace vi {
 				(event->media->update && (event->media->addVideo || event->media->replaceVideo))) &&
 				stream->GetVideoTracks().size() > 0) {
 				context->localStream->AddTrack(stream->GetVideoTracks()[0]);
-				if (_pluginContext->unifiedPlan) {
-					// Use Transceivers
-					DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
-					rtc::scoped_refptr<webrtc::RtpTransceiverInterface> videoTransceiver = nullptr;
-					auto transceivers = context->pc->GetTransceivers();
-					for (const auto& t : transceivers) {
-						if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) ||
-							(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind)) {
-							videoTransceiver = t;
-							break;
-						}
-					}
-					if (videoTransceiver && videoTransceiver->sender()) {
-						// TODO:
-						DLOG("Replacing video track");
-						videoTransceiver->sender()->SetTrack(stream->GetVideoTracks()[0]);
-					}
-					else {
-						DLOG("Adding video track");
-						context->pc->AddTrack(stream->GetVideoTracks()[0], { stream->id() });
+				
+				// Use Transceivers
+				DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
+				rtc::scoped_refptr<webrtc::RtpTransceiverInterface> videoTransceiver = nullptr;
+				auto transceivers = context->pc->GetTransceivers();
+				for (const auto& t : transceivers) {
+					if ((t->sender() && t->sender()->track() && t->sender()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) ||
+						(t->receiver() && t->receiver()->track() && t->receiver()->track()->kind() == webrtc::MediaStreamTrackInterface::kVideoKind)) {
+						videoTransceiver = t;
+						break;
 					}
 				}
+				if (videoTransceiver && videoTransceiver->sender()) {
+					// TODO:
+					DLOG("Replacing video track");
+					videoTransceiver->sender()->SetTrack(stream->GetVideoTracks()[0]);
+				}
 				else {
-					DLOG("{} video track", (event->media->replaceVideo ? "Replacing" : "Adding"));
+					DLOG("Adding video track");
 					context->pc->AddTrack(stream->GetVideoTracks()[0], { stream->id() });
 				}
 			}
@@ -796,7 +786,7 @@ namespace vi {
 				}
 				if (context->pc->GetSenders().size() > 0) {
 					bool ra = true;
-					if (media.replaceAudio && _pluginContext->unifiedPlan) {
+					if (media.replaceAudio) {
 						// We can use replaceTrack
 						ra = false;
 					}
@@ -824,7 +814,7 @@ namespace vi {
 				}
 				if (context->pc->GetSenders().size() > 0) {
 					bool ra = true;
-					if (media.replaceVideo && _pluginContext->unifiedPlan) {
+					if (media.replaceVideo) {
 						// We can use replaceTrack
 						ra = false;
 					}
@@ -1184,13 +1174,8 @@ namespace vi {
 
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 		auto& media = event->media.value();
-		if (_pluginContext->unifiedPlan) {
-			configTracks(media, context->pc);
-		}
-		else {
-			options.offer_to_receive_audio = HelperUtils::isAudioRecvEnabled(media);
-			options.offer_to_receive_video = HelperUtils::isVideoRecvEnabled(media);
-		}
+		
+		configTracks(media, context->pc);
 
 		options.ice_restart = event->iceRestart.value_or(false);
 
@@ -1329,13 +1314,8 @@ namespace vi {
 
 		webrtc::PeerConnectionInterface::RTCOfferAnswerOptions options;
 		auto& media = event->media.value();
-		if (_pluginContext->unifiedPlan) {
-			configTracks(media, context->pc);
-		}
-		else {
-			options.offer_to_receive_audio = HelperUtils::isAudioRecvEnabled(media);
-			options.offer_to_receive_video = HelperUtils::isVideoRecvEnabled(media);
-		}
+
+		configTracks(media, context->pc);
 
 		options.offer_to_receive_audio = HelperUtils::isAudioRecvEnabled(media);
 		options.offer_to_receive_video = HelperUtils::isVideoRecvEnabled(media);

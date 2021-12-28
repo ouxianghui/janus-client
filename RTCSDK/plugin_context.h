@@ -33,9 +33,6 @@ namespace vi {
 		std::atomic_bool detached = false;
 		std::weak_ptr<SignalingClientInterface> signalingService;
 
-
-		bool unifiedPlan = true;
-
 		std::vector<std::string> iceServers;
 
 		static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf;

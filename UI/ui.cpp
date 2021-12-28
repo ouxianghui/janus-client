@@ -8,7 +8,7 @@
 #include "signaling_client_interface.h"
 #include "video_room_client.h"
 #include "message_models.h"
-#include "string_utils.h"
+#include "utils/string_utils.h"
 #include "signaling_events.h"
 #include "api/media_stream_interface.h"
 #include "gl_video_renderer.h"
@@ -195,7 +195,6 @@ void UI::onUpdateParticipant(std::shared_ptr<vi::Participant> participant)
 void UI::onRemoveParticipant(std::shared_ptr<vi::Participant> participant)
 {
 	if (participant) {
-		_galleryView->removeView(participant->getId());
 		_participantsListView->removeParticipant(participant);
 	}
 }

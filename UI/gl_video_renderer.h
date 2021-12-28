@@ -46,6 +46,7 @@ protected:
 
 private slots:
 	void cleanup();
+
 	void onRendering();
 
 private:

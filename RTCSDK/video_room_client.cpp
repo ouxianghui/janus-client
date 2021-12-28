@@ -5,7 +5,7 @@
  **/
 
 #include "video_room_client.h"
-#include "string_utils.h"
+#include "utils/string_utils.h"
 #include "logger/logger.h"
 #include "participant.h"
 #include "Service/rtc_engine.h"

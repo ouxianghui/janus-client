@@ -1,5 +1,5 @@
 #include "video_room_subscriber.h"
-#include "string_utils.h"
+#include "utils/string_utils.h"
 #include "logger/logger.h"
 #include "participant.h"
 #include "utils/thread_provider.h"

@@ -171,8 +171,8 @@ namespace vi {
 
 				if (track->kind() == webrtc::MediaStreamTrackInterface::kVideoKind) {
 					//if (self->_remoteStreams.find(track->id()) != self->_remoteStreams.end()) {
-						auto vt = self->_remoteStreams[track->id()]->GetVideoTracks()[0];
-
+						//auto vt = self->_remoteStreams[track->id()]->GetVideoTracks()[0];
+						auto vt = dynamic_cast<webrtc::VideoTrackInterface*>(track.get());
 						observer->onRemoveVideoTrack(pid, vt);
 
 					//	self->_remoteStreams[track->id()]->RemoveTrack(vt.get());

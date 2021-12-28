@@ -36,6 +36,8 @@
     <ClInclude Include="json\stringable.hpp" />
     <ClInclude Include="json\string_algo.hpp" />
     <ClInclude Include="rtc_engine_factory.h" />
+    <ClInclude Include="utils\sdp_utils.h" />
+    <ClInclude Include="utils\string_utils.h" />
     <ClInclude Include="video_capture.h" />
     <ClInclude Include="logger\logger.h" />
     <ClInclude Include="logger\rtc_log_sink.h" />
@@ -53,13 +55,11 @@
     <ClInclude Include="plugin_context.h" />
     <ClInclude Include="rtcsdk_global.h" />
     <ClInclude Include="rtc_sdk.h" />
-    <ClInclude Include="sdp_utils.h" />
     <ClInclude Include="service\rtc_engine.h" />
     <ClInclude Include="service\i_rtc_engine.h" />
     <ClInclude Include="service\i_unified_factory.h" />
     <ClInclude Include="service\unified_factory.h" />
     <ClInclude Include="signaling_client_status.h" />
-    <ClInclude Include="string_utils.h" />
     <ClInclude Include="text_room_client.h" />
     <ClInclude Include="utils\interface_proxy.hpp" />
     <ClInclude Include="utils\i_notification.h" />
@@ -103,6 +103,8 @@
     <ClCompile Include="janus_api_client.cpp" />
     <ClCompile Include="plugin_context.cpp" />
     <ClCompile Include="rtc_engine_factory.cpp" />
+    <ClCompile Include="utils\sdp_utils.cpp" />
+    <ClCompile Include="utils\string_utils.cpp" />
     <ClCompile Include="video_capture.cpp" />
     <ClCompile Include="logger\logger.cpp" />
     <ClCompile Include="logger\rtc_log_sink.cpp" />
@@ -112,10 +114,8 @@
     <ClCompile Include="participants_controller.cpp" />
     <ClCompile Include="plugin_client.cpp" />
     <ClCompile Include="rtc_sdk.cpp" />
-    <ClCompile Include="sdp_utils.cpp" />
     <ClCompile Include="service\rtc_engine.cpp" />
     <ClCompile Include="service\unified_factory.cpp" />
-    <ClCompile Include="string_utils.cpp" />
     <ClCompile Include="text_room_client.cpp" />
     <ClCompile Include="utils\notification_center.cpp" />
     <ClCompile Include="utils\notification_keys.cpp" />
