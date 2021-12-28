@@ -46,11 +46,11 @@ private slots:
 
 	// IVideoRoomEventHandler
 
-	void onCreate();
+	void onCreateRoom(int32_t errorCode);
 
-	void onJoin();
+	void onJoinRoom(int32_t errorCode);
 
-	void onLeave();
+	void onLeaveRoom(int32_t errorCode);
 
 
 	// IMediaControlEventHandler
@@ -103,6 +103,8 @@ private slots:
     void on_actionAudio_triggered(bool checked);
 
     void on_actionVideo_triggered(bool checked);
+
+	void on_actionLeaveRoom_triggered();
 
 private:
 	Ui::UIClass ui;

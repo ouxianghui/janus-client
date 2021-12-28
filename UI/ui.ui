@@ -30,7 +30,7 @@
      <x>0</x>
      <y>0</y>
      <width>1280</width>
-     <height>21</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuSettings">
@@ -49,6 +49,7 @@
     <addaction name="actionJoinRoom"/>
     <addaction name="actionCreateRoom"/>
     <addaction name="actionPublishStream"/>
+    <addaction name="actionLeaveRoom"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
     <property name="title">
@@ -180,6 +181,11 @@
    </property>
    <property name="text">
     <string>&amp;Video</string>
+   </property>
+  </action>
+  <action name="actionLeaveRoom">
+   <property name="text">
+    <string>Leave Room</string>
    </property>
   </action>
  </widget>

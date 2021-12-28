@@ -20,11 +20,11 @@ namespace vi {
 	public:
 		virtual ~IVideoRoomEventHandler() {}
 
-		virtual void onCreate() = 0;
+		virtual void onCreateRoom(int32_t errorCode) = 0;
 
-		virtual void onJoin() = 0;
+		virtual void onJoinRoom(int32_t errorCode) = 0;
 
-		virtual void onLeave() = 0;
+		virtual void onLeaveRoom(int32_t errorCode) = 0;
 
 	};
 }

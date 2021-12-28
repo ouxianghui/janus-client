@@ -12,8 +12,8 @@
 
 namespace vi {
 
-	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
-		: PluginClient(ss)
+	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
+		: PluginClient(ss, pcf)
 		, _mediaController(mediaController)
 	{
 		_pluginContext->plugin = plugin;
@@ -209,7 +209,10 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomSubscriber::onHangup() {}
+	void VideoRoomSubscriber::onHangup() 
+	{
+		hangup(false);
+	}
 
 	void VideoRoomSubscriber::onMediaStatus(const std::string& media, bool on, const std::string& mid) {}
 

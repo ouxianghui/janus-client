@@ -35,10 +35,7 @@ namespace vi {
 
 		std::vector<std::string> iceServers;
 
-		static rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf;
-		static std::unique_ptr<rtc::Thread> signaling;
-		static std::unique_ptr<rtc::Thread> worker;
-		static std::unique_ptr<rtc::Thread> network;
+		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf;
 
 		std::shared_ptr<CreateOfferAnswerCallback> offerAnswerCallback;
 
@@ -61,10 +58,12 @@ namespace vi {
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> localStream;
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
 
-		PluginContext(std::weak_ptr<SignalingClientInterface> ss) : signalingService(ss) {}
+		PluginContext(std::weak_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf_)
+			: signalingService(ss)
+			, pcf(pcf_){}
 
 		~PluginContext() {
-			pcf = nullptr; 
+			
 		}
 	};
 }

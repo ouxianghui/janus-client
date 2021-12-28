@@ -14,6 +14,9 @@
 #include "utils/observable.h"
 #include "i_engine_event_handler.h"
 #include "i_signaling_client_observer.h"
+#include "api/scoped_refptr.h"
+#include "api/create_peerconnection_factory.h"
+
 
 namespace vi {
     class RTCEngine 
@@ -71,6 +74,11 @@ namespace vi {
         std::vector<std::weak_ptr<IEngineEventHandler>> _observers;
 
         Options _options;
+
+        rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> _pcf;
+        std::unique_ptr<rtc::Thread> _signaling;
+        std::unique_ptr<rtc::Thread> _worker;
+        std::unique_ptr<rtc::Thread> _network;
     };
 
 }

@@ -16,15 +16,15 @@
 #include "api/rtp_sender_interface.h"
 #include "api/rtp_receiver_interface.h"
 #include "api/media_stream_interface.h"
-#include "api/create_peerconnection_factory.h"
-#include "api/video_codecs/builtin_video_decoder_factory.h"
-#include "api/video_codecs/builtin_video_encoder_factory.h"
-#include "api/audio_codecs/builtin_audio_decoder_factory.h"
-#include "api/audio_codecs/builtin_audio_encoder_factory.h"
+//#include "api/create_peerconnection_factory.h"
+//#include "api/video_codecs/builtin_video_decoder_factory.h"
+//#include "api/video_codecs/builtin_video_encoder_factory.h"
+//#include "api/audio_codecs/builtin_audio_decoder_factory.h"
+//#include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/media_types.h"
 #include "api/rtp_transceiver_interface.h"
-#include "modules/audio_device/include/audio_device.h"
-#include "modules/audio_processing/include/audio_processing.h"
+//#include "modules/audio_device/include/audio_device.h"
+//#include "modules/audio_processing/include/audio_processing.h"
 #include "modules/video_capture/video_capture_factory.h"
 #include "pc/video_track_source.h"
 #include "video_capture.h"
@@ -39,9 +39,9 @@
 #include "absl/types/optional.h"
 
 namespace vi {
-	PluginClient::PluginClient(std::shared_ptr<SignalingClientInterface> ss)
+	PluginClient::PluginClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
 	{
-		_pluginContext = std::make_shared<PluginContext>(ss);
+		_pluginContext = std::make_shared<PluginContext>(ss, pcf);
 
 		_rtcStatsTaskScheduler = TaskScheduler::create();
 	}
@@ -50,9 +50,7 @@ namespace vi {
 	{
 		DLOG("~PluginClient()");
 		stopStatsMonitor();
-		//TMgr->thread("")->PostTask(RTC_FROM_HERE, []() {
 
-		//});
 	}
 
 	void PluginClient::init()
@@ -60,29 +58,6 @@ namespace vi {
 		_eventHandlerThread = rtc::Thread::Current();
 
 		_pluginContext->iceServers.emplace_back("stun:stun.l.google.com:19302");
-
-		if (!_pluginContext->pcf) {
-			_pluginContext->signaling = rtc::Thread::Create();
-			_pluginContext->signaling->SetName("pc_signaling_thread", nullptr);
-			_pluginContext->signaling->Start();
-			_pluginContext->worker = rtc::Thread::Create();
-			_pluginContext->worker->SetName("pc_worker_thread", nullptr);
-			_pluginContext->worker->Start();
-			_pluginContext->network = rtc::Thread::CreateWithSocketServer();
-			_pluginContext->network->SetName("pc_network_thread", nullptr);
-			_pluginContext->network->Start();
-			_pluginContext->pcf = webrtc::CreatePeerConnectionFactory(
-				_pluginContext->network.get() /* network_thread */,
-				_pluginContext->worker.get() /* worker_thread */,
-				_pluginContext->signaling.get() /* signaling_thread */,
-				nullptr /* default_adm */,
-				webrtc::CreateBuiltinAudioEncoderFactory(),
-				webrtc::CreateBuiltinAudioDecoderFactory(),
-				webrtc::CreateBuiltinVideoEncoderFactory(),
-				webrtc::CreateBuiltinVideoDecoderFactory(),
-				nullptr /* audio_mixer */,
-				nullptr /* audio_processing */);
-		}
 	}
 
 	void PluginClient::destroy()

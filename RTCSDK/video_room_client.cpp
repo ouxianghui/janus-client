@@ -20,8 +20,8 @@
 #include "participants_controller_proxy.h"
 
 namespace vi {
-	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss)
-		: PluginClient(ss)
+	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
+		: PluginClient(ss, pcf)
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
@@ -44,7 +44,7 @@ namespace vi {
 
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
-		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->pcf, _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
 		_subscriber->init();
 		_subscriber->setRoomApi(_videoRoomApi);
 	}
@@ -79,46 +79,66 @@ namespace vi {
 		PluginClient::detach(event);
 		_subscriber->detach(event);
 	}
-	
-	//std::shared_ptr<Participant> VideoRoomClient::getParticipant(int64_t pid)
-	//{
-	//	return _participantsMap.find(pid) == _participantsMap.end() ? nullptr : _participantsMap[pid];
-	//}
-
-	//void VideoRoomClient::setRoomId(int64_t roomId)
-	//{
-	//	_roomId = roomId;
-	//	_subscriber->setRoomId(_roomId);
-	//}
-
-	//int64_t VideoRoomClient::getRoomId() const
-	//{
-	//	return _roomId;
-	//}
-
-	//std::shared_ptr<IVideoRoomApi> VideoRoomClient::getVideoRoomApi()
-	//{
-	//	return _videoRoomApi;
-	//}
-
 
 	void VideoRoomClient::create(std::shared_ptr<vr::CreateRoomRequest> request)
 	{
-
+		if (_videoRoomApi) {
+			_videoRoomApi->create(request, [this](std::shared_ptr<vr::RoomCurdResponse> response) {
+				if (response->janus == "ack") {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						observer->onCreateRoom(0);
+					});
+				}
+				else {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						// TODO: replace it with enum, a global error code
+						observer->onCreateRoom(1);
+					});
+				}
+			});
+		}
 	}
 
 	void VideoRoomClient::join(std::shared_ptr<vr::PublisherJoinRequest> request)
 	{
 		_roomId = request->room.value();
+
 		_subscriber->setRoomId(_roomId);
+
 		if (_videoRoomApi) {
-			_videoRoomApi->join(request, nullptr);
+			_videoRoomApi->join(request, [this](std::shared_ptr<JanusResponse> response) {
+				if (response->janus == "ack") {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						observer->onJoinRoom(0);
+					});
+				}
+				else {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						// TODO: replace it with enum, a global error code
+						observer->onJoinRoom(2);
+					});
+				}
+			});
 		}
 	}
 
 	void VideoRoomClient::leave(std::shared_ptr<vr::LeaveRequest> request)
 	{
-
+		if (_videoRoomApi) {
+			_videoRoomApi->leave(request, [this](std::shared_ptr<JanusResponse> response) {
+				if (response->janus == "ack") {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						observer->onLeaveRoom(0);
+					});
+				}
+				else {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+						// TODO: replace it with enum, a global error code
+						observer->onLeaveRoom(3);
+					});
+				}
+			});
+		}
 	}
 
 	std::shared_ptr<ParticipantsContrllerInterface> VideoRoomClient::participantsController()
@@ -142,7 +162,10 @@ namespace vi {
 		}
 	}
 
-	void VideoRoomClient::onHangup() {}
+	void VideoRoomClient::onHangup() 
+	{
+		hangup(true);
+	}
 
 	void VideoRoomClient::onMediaStatus(const std::string& media, bool on, const std::string& mid)
 	{

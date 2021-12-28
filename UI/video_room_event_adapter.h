@@ -27,16 +27,16 @@ public:
 private:
 	// IVideoRoomEventHandler
 
-	void onCreate() override;
+	void onCreateRoom(int32_t errorCode) override;
 
-	void onJoin() override;
+	void onJoinRoom(int32_t errorCode) override;
 
-	void onLeave() override;
+	void onLeaveRoom(int32_t errorCode) override;
 
 signals:
-	void create();
+	void createRoom(int32_t errorCode);
 
-	void join();
+	void joinRoom(int32_t errorCode);
 
-	void leave();
+	void leaveRoom(int32_t errorCode);
 };

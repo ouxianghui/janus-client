@@ -22,7 +22,7 @@ namespace vi {
 		, public std::enable_shared_from_this<PluginClient>
 	{
 	public:
-		PluginClient(std::shared_ptr<SignalingClientInterface> ss);
+		PluginClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf);
 
 		~PluginClient();
 

@@ -33,9 +33,9 @@ UI::UI(QWidget *parent)
     this->setWindowState(Qt::WindowMaximized);
 
 	_videoRoomEventAdapter = std::make_shared<VideoRoomEventAdapter>(this);
-	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::create, this, &UI::onCreate, Qt::QueuedConnection);
-	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::join, this, &UI::onJoin, Qt::QueuedConnection);
-	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::leave, this, &UI::onLeave, Qt::QueuedConnection);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::createRoom, this, &UI::onCreateRoom, Qt::QueuedConnection);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::joinRoom, this, &UI::onJoinRoom, Qt::QueuedConnection);
+	connect(_videoRoomEventAdapter.get(), &VideoRoomEventAdapter::leaveRoom, this, &UI::onLeaveRoom, Qt::QueuedConnection);
 
 	_mediaEventAdapter = std::make_shared<MediaEventAdapter>(this);
 	connect(_mediaEventAdapter.get(), &MediaEventAdapter::mediaStatus, this, &UI::onMediaStatus, Qt::QueuedConnection);
@@ -45,7 +45,6 @@ UI::UI(QWidget *parent)
 	connect(_mediaEventAdapter.get(), &MediaEventAdapter::localVideoMuted, this, &UI::onLocalVideoMuted, Qt::QueuedConnection);
 	connect(_mediaEventAdapter.get(), &MediaEventAdapter::remoteAudioMuted, this, &UI::onRemoteAudioMuted, Qt::QueuedConnection);
 	connect(_mediaEventAdapter.get(), &MediaEventAdapter::remoteVideoMuted, this, &UI::onRemoteVideoMuted, Qt::QueuedConnection);
-
 
 	_participantsEventAdapter = std::make_shared<ParticipantsEventAdapter>(this);
 	connect(_participantsEventAdapter.get(), &ParticipantsEventAdapter::createParticipant, this, &UI::onCreateParticipant, Qt::QueuedConnection);
@@ -124,19 +123,25 @@ void UI::onError(int32_t code)
 
 }
 
-void UI::onCreate()
+void UI::onCreateRoom(int32_t errorCode)
 {
 
 }
 
-void UI::onJoin()
+void UI::onJoinRoom(int32_t errorCode)
 {
 
 }
 
-void UI::onLeave()
+void UI::onLeaveRoom(int32_t errorCode)
 {
+	if (_vrc) {
+		_vrc->detach();
+	}
 
+	if (_galleryView) {
+		_galleryView->removeAll();
+	}
 }
 
 void UI::onLocalAudioMuted(bool muted)
@@ -234,7 +239,10 @@ void UI::onRemoveVideoTrack(uint64_t pid, rtc::scoped_refptr<webrtc::VideoTrackI
 
 void UI::closeEvent(QCloseEvent* event)
 {
-	_vrc->detach();
+	if (_vrc) {
+		_vrc->detach();
+	}
+
 	if (_galleryView) {
 		_galleryView->removeAll();
 	}
@@ -246,9 +254,6 @@ void UI::on_actionAttachRoom_triggered(bool checked)
 		if (_vrc) {
 			_vrc->attach();
 		}
-	}
-	else {
-
 	}
 }
 
@@ -330,3 +335,13 @@ void UI::on_actionVideo_triggered(bool checked)
 	//	_vrc->muteVideo("");
 	//}
 }
+
+void UI::on_actionLeaveRoom_triggered()
+{
+	if (_vrc) {
+		auto req = std::make_shared<vi::vr::LeaveRequest>();
+		req->request = "leave";
+		_vrc->leave(req);
+	}
+}
+
