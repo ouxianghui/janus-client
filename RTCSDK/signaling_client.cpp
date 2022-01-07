@@ -559,7 +559,7 @@ namespace vi {
 			}
 		};
 		std::shared_ptr<JCCallback> callback = std::make_shared<JCCallback>(lambda);
-		_client->sendTrickleCandidate(handleId, _sessionId, event->candidate, callback);
+		_client->sendTrickleCandidate(_sessionId, handleId, event->candidate, callback);
 	}
 
 	void SignalingClient::destroySession(std::shared_ptr<DestroySessionEvent> event)

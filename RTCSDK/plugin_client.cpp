@@ -16,15 +16,8 @@
 #include "api/rtp_sender_interface.h"
 #include "api/rtp_receiver_interface.h"
 #include "api/media_stream_interface.h"
-//#include "api/create_peerconnection_factory.h"
-//#include "api/video_codecs/builtin_video_decoder_factory.h"
-//#include "api/video_codecs/builtin_video_encoder_factory.h"
-//#include "api/audio_codecs/builtin_audio_decoder_factory.h"
-//#include "api/audio_codecs/builtin_audio_encoder_factory.h"
 #include "api/media_types.h"
 #include "api/rtp_transceiver_interface.h"
-//#include "modules/audio_device/include/audio_device.h"
-//#include "modules/audio_processing/include/audio_processing.h"
 #include "modules/video_capture/video_capture_factory.h"
 #include "pc/video_track_source.h"
 #include "video_capture.h"
@@ -57,7 +50,18 @@ namespace vi {
 	{
 		_eventHandlerThread = rtc::Thread::Current();
 
-		_pluginContext->iceServers.emplace_back("stun:stun.l.google.com:19302");
+		//webrtc::PeerConnectionInterface::IceServer s1;
+		//s1.uri = "stun:stun.freeswitch.org";
+		//_pluginContext->iceServers.emplace_back(s1);
+
+		webrtc::PeerConnectionInterface::IceServer s2;
+		s2.uri = "stun:stun.l.google.com:19302";
+		_pluginContext->iceServers.emplace_back(s2);
+
+		//webrtc::PeerConnectionInterface::IceServer s2;
+		//s2.uri = "stun:stun01.sipphone.com";
+		//_pluginContext->iceServers.emplace_back(s2);
+
 	}
 
 	void PluginClient::destroy()
@@ -406,23 +410,25 @@ namespace vi {
 		if (!context->pc) {
 			webrtc::PeerConnectionInterface::RTCConfiguration pcConfig;
 			for (const auto& server : context->iceServers) {
-				webrtc::PeerConnectionInterface::IceServer stunServer;
-				stunServer.uri = server;
-				pcConfig.servers.emplace_back(stunServer);
+				pcConfig.servers.emplace_back(server);
 			}
 			// TODO:
-			//pcConfig.enable_rtp_data_channel = true;
-			//pcConfig.enable_dtls_srtp = true;
+			pcConfig.tcp_candidate_policy = webrtc::PeerConnectionInterface::TcpCandidatePolicy::kTcpCandidatePolicyDisabled;
+			pcConfig.continual_gathering_policy = webrtc::PeerConnectionInterface::ContinualGatheringPolicy::GATHER_CONTINUALLY;
+			//pcConfig.enable_rtp_data_channel = false;
+			pcConfig.enable_dtls_srtp = true;
 			pcConfig.sdp_semantics = webrtc::SdpSemantics::kUnifiedPlan;
-			//pcConfig.bundle_policy = webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
-			//pcConfig.type = webrtc::PeerConnectionInterface::kRelay;
+			pcConfig.bundle_policy = webrtc::PeerConnectionInterface::kBundlePolicyMaxBundle;
+			pcConfig.disable_ipv6 = true;
+			pcConfig.type = webrtc::PeerConnectionInterface::kAll;
 			//pcConfig.use_media_transport = true;
 
 			DLOG("Creating PeerConnection");
 
 			context->pc = _pluginContext->pcf->CreatePeerConnection(pcConfig, nullptr, nullptr, static_cast<webrtc::PeerConnectionObserver*>(this));
+			assert(context->pc != nullptr);
 		}
-		if (addTracks && stream) {
+		if (addTracks && stream && context->pc) {
 			DLOG("Adding local stream");
 			bool simulcast2 = event->simulcast2.value_or(false);
 			for (auto track : stream->GetAudioTracks()) {
@@ -1152,7 +1158,7 @@ namespace vi {
 		
 		configTracks(media, context->pc);
 
-		options.ice_restart = event->iceRestart.value_or(false);
+		options.ice_restart = event->iceRestart.value_or(true);
 
 		bool sendVideo = HelperUtils::isVideoSendEnabled(media);
 
@@ -1292,9 +1298,7 @@ namespace vi {
 
 		configTracks(media, context->pc);
 
-		options.offer_to_receive_audio = HelperUtils::isAudioRecvEnabled(media);
-		options.offer_to_receive_video = HelperUtils::isVideoRecvEnabled(media);
-		options.ice_restart = event->iceRestart.value_or(false);
+		options.ice_restart = event->iceRestart.value_or(true);
 
 		bool sendVideo = HelperUtils::isVideoSendEnabled(media);
 
