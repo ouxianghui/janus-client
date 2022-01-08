@@ -8,7 +8,6 @@
 #include "utils/service_factory.hpp"
 #include "signaling_client.h"
 #include "signaling_client_interface.h"
-#include "signaling_client_proxy.h"
 #include "utils/thread_provider.h"
 
 namespace vi {

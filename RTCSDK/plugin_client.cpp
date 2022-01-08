@@ -42,7 +42,7 @@ namespace vi {
 	PluginClient::~PluginClient()
 	{
 		DLOG("~PluginClient()");
-		stopStatsMonitor();
+		stopRtcStatsReport();
 
 	}
 
@@ -57,6 +57,12 @@ namespace vi {
 		webrtc::PeerConnectionInterface::IceServer s2;
 		s2.uri = "stun:stun.l.google.com:19302";
 		_pluginContext->iceServers.emplace_back(s2);
+
+		//webrtc::PeerConnectionInterface::IceServer turn;
+		//turn.uri = "turn:xxx.79.19.54:3478";
+		//turn.username = "root";
+		//turn.password = "xxx@123456...";
+		//_pluginContext->iceServers.emplace_back(turn);
 
 		//webrtc::PeerConnectionInterface::IceServer s2;
 		//s2.uri = "stun:stun01.sipphone.com";
@@ -109,7 +115,7 @@ namespace vi {
 		}
 	}
 
-	void PluginClient::startStatsMonitor()
+	void PluginClient::startRtcStatsReport()
 	{
 		_rtcStatsTaskId = _rtcStatsTaskScheduler->schedule([wself = weak_from_this()]() {
 			auto self = wself.lock();
@@ -144,11 +150,15 @@ namespace vi {
 						}
 					});
 				});
+				context->statsObserver->setCallback(socb);
+			}
+			if (context->pc) {
+				context->pc->GetStats(context->statsObserver.get());
 			}
 		}, 5000, true);
 	}
 
-	void PluginClient::stopStatsMonitor()
+	void PluginClient::stopRtcStatsReport()
 	{
 		if (_rtcStatsTaskScheduler) {
 			_rtcStatsTaskScheduler->cancelAll();

@@ -113,7 +113,7 @@ void GLVideoRenderer::paintGL()
 		_cacheFrame = frame;
 	}
 	else {
-		DLOG("try dequeue failed.");
+		//DLOG("try dequeue failed.");
 	}
 
 	if (_cacheFrame) {

@@ -82,7 +82,9 @@ namespace vi {
 
 		// webrtc events
 
-		virtual void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on);
+		void onLocalTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, bool on) override;
+
+		void onStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
 
 	protected:
 		void publishStream(bool audioOn);

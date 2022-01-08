@@ -219,6 +219,8 @@ namespace vi {
 	void VideoRoomSubscriber::onWebrtcStatus(bool isActive, const std::string& reason)
 	{
 		DLOG("Janus says this WebRTC PeerConnection (remote feed) is {} now", (isActive ? "up" : "down"));
+
+		startRtcStatsReport();
 	}
 
 	void VideoRoomSubscriber::onSlowLink(bool uplink, bool lost, const std::string& mid) 
@@ -351,5 +353,10 @@ namespace vi {
 		if (auto mc = _mediaController.lock()) {
 			mc->onRemoteTrack(track, mid, on);
 		}
+	}
+
+	void VideoRoomSubscriber::onStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
+	{
+		DLOG("RTC Stats Report: {}", report->ToJson());
 	}
 }

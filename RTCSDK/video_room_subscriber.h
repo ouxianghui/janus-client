@@ -67,6 +67,8 @@ namespace vi {
 
 		void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on) override;
 
+		void onStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report) override;
+
 	private:
 		void join(const std::vector<vr::Publisher>& publishers);
 

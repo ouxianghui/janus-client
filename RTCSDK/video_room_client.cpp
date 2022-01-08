@@ -15,9 +15,7 @@
 #include "pc/media_stream_proxy.h"
 #include "pc/media_stream_track_proxy.h"
 #include "media_controller.h"
-#include "media_controller_proxy.h"
 #include "participants_controller.h"
-#include "participants_controller_proxy.h"
 
 namespace vi {
 	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
@@ -198,7 +196,7 @@ namespace vi {
 		}
 		// TODO:-----------------------
 		//unmuteVideo("");
-		startStatsMonitor();
+		startRtcStatsReport();
 	}
 
 	void VideoRoomClient::onSlowLink(bool uplink, bool lost, const std::string& mid) {}
@@ -440,6 +438,11 @@ namespace vi {
 		if (_participantsController) {
 			_participantsController->removeParticipant(id);
 		}
+	}
+
+	void VideoRoomClient::onStatsDelivered(const rtc::scoped_refptr<const webrtc::RTCStatsReport>& report)
+	{
+		DLOG("RTC Stats Report: {}", report->ToJson());
 	}
 
 	//int32_t SignalingClient::getVolume(int64_t handleId, bool isRemote, const std::string& mid)

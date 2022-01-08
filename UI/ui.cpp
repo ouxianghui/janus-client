@@ -22,7 +22,7 @@
 #include "participants_event_adapter.h"
 #include "media_controller.h"
 #include "participants_controller.h"
-#include "video_room_client_proxy.h"
+#include "video_room_client_interface.h"
 #include "app_delegate.h"
 
 UI::UI(QWidget *parent)

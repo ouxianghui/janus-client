@@ -57,9 +57,9 @@ namespace vi {
 
 		void detach(std::shared_ptr<DetachEvent> event);
 
-		void startStatsMonitor();
+		void startRtcStatsReport();
 
-		void stopStatsMonitor();
+		void stopRtcStatsReport();
 
 
 	protected:
