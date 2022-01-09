@@ -30,6 +30,10 @@ namespace vi {
 
 		virtual void unpublish(std::shared_ptr<vr::UnpublishRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
 
+		virtual void subscribe(std::shared_ptr<vr::SubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
+
+		virtual void unsubscribe(std::shared_ptr<vr::UnsubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
+
 		virtual void startPeerConnection(std::shared_ptr<vr::StartPeerConnectionRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
 
 		virtual void pausePeerConnection(std::shared_ptr<vr::PausePeerConnectionRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) = 0;
@@ -42,6 +46,8 @@ namespace vi {
 		virtual void allowed(std::shared_ptr<vr::AllowedRequest> request, std::function<void(std::shared_ptr<vr::AllowedResponse>)> callback) = 0; 
 
 		virtual void kick(std::shared_ptr<vr::KickRequest> request, std::function<void(std::shared_ptr<vr::KickResponse>)> callback) = 0; 
+
+		virtual void moderate(std::shared_ptr<vr::ModerateRequest> request, std::function<void(std::shared_ptr<vr::ModerateResponse>)> callback) = 0;
 
 		virtual void fetchRoomsList(std::shared_ptr<vr::FetchRoomsListRequest> request, std::function<void(std::shared_ptr<vr::FetchRoomsListResponse>)> callback) = 0; 
 

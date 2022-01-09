@@ -42,7 +42,7 @@ namespace vi {
 
 		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
 
-		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingService.lock(), _pluginContext->pcf, _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingClient.lock(), _pluginContext->pcf, _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
 		_subscriber->init();
 		_subscriber->setRoomApi(_videoRoomApi);
 	}
@@ -174,22 +174,6 @@ namespace vi {
 	{
 		DLOG("Janus says our WebRTC PeerConnection is {} now", (isActive ? "up" : "down"));
 		if (isActive) {
-			if (auto webrtcService = _pluginContext->signalingService.lock()) {
-				auto request = std::make_shared<vr::PublishRequest>();
-				request->request = "configure";
-				request->bitrate = 256000;
-
-				/*
-				 * After debugging, the SFU does receive the display name set when we join,
-				 * but the subscriber is not displayed. It should be a SFU bug.
-				 * After setting once here, the subscriber of the later join will have the opportunity to display your display name.
-				 */
-				 //request.display = "input your display name here";
-				_videoRoomApi->publish(request, [](std::shared_ptr<JanusResponse> response) {
-					DLOG("response: {}", response->janus.value_or(""));
-				});
-			}
-
 			if (_mediaController) {
 				_mediaController->onWebrtcStatus(isActive, reason);
 			}
@@ -318,8 +302,7 @@ namespace vi {
 
 		if (jsep->type && jsep->sdp && !jsep->type.value().empty() && !jsep->sdp.value().empty()) {
 			DLOG("Handling SDP as well...");
-			// TODO:
-			//sfutest.handleRemoteJsep({ jsep: jsep });
+
 			std::shared_ptr<PrepareWebrtcPeerEvent> event = std::make_shared<PrepareWebrtcPeerEvent>();
 			auto lambda = [](bool success, const std::string& response) {
 				DLOG("response: {}", response.c_str());
@@ -381,8 +364,6 @@ namespace vi {
 			}
 			if (success) {
 				vr::PublisherConfigureRequest request;
-				request.audio = audioOn;
-				request.video = true;
 				auto event = std::make_shared<vi::MessageEvent>();
 				auto lambda = [](bool success, const std::string& response) {
 					DLOG("publishStream: {}", response.c_str());
@@ -401,8 +382,8 @@ namespace vi {
 			}
 		});
 		MediaConfig media;
-		media.audioRecv = true;
-		media.videoRecv = true;
+		media.audioRecv = false;
+		media.videoRecv = false;
 		media.audioSend = audioOn;
 		media.videoSend = true;
 		event->media = media;
@@ -414,7 +395,7 @@ namespace vi {
 	void VideoRoomClient::unpublishStream()
 	{
 		vr::UnpublishRequest request;
-		if (auto webrtcService = _pluginContext->signalingService.lock()) {
+		if (auto sc = _pluginContext->signalingClient.lock()) {
 			auto event = std::make_shared<vi::MessageEvent>();
 			auto lambda = [](bool success, const std::string& response) {
 				DLOG("response: {}", response.c_str());

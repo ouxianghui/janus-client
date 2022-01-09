@@ -18,15 +18,16 @@ namespace vi {
 			absl::optional<bool> talking;
 
 			/*{
-			 *	"type" : "<type of published stream #1 (audio|video|data)" > ,
-			 *	"mindex" : "<unique mindex of published stream #1>",
-			 *	"mid" : "<unique mid of of published stream #1>",
-			 *	"disabled" : <if true, it means this stream is currently inactive / disabled(and so codec, description, etc.will be missing)>,
-			 *	"codec" : "<codec used for published stream #1>",
-			 *	"description" : "<text description of published stream #1, if any>",
-			 *	"simulcast" : "<true if published stream #1 uses simulcast (VP8 and H.264 only)>",
-			 *	"svc" : "<true if published stream #1 uses SVC (VP9 only)>",
-			 *	"talking" : <true | false, whether the publisher stream has audio activity or not (only if audio levels are used)>,
+				"type" : "<type of published stream #1 (audio|video|data)">,
+				"mindex" : "<unique mindex of published stream #1>",
+				"mid" : "<unique mid of of published stream #1>",
+				"disabled" : <if true, it means this stream is currently inactive/disabled (and so codec, description, etc. will be missing)>,
+				"codec" : "<codec used for published stream #1>",
+				"description" : "<text description of published stream #1, if any>",
+				"moderated" : <true if this stream audio has been moderated for this participant>,
+				"simulcast" : "<true if published stream #1 uses simulcast (VP8 and H.264 only)>",
+				"svc" : "<true if published stream #1 uses SVC (VP9 only)>",
+				"talking" : <true|false, whether the publisher stream has audio activity or not (only if audio levels are used)>,
 			}*/
 			struct Stream {
 				absl::optional<std::string> type;
@@ -35,11 +36,12 @@ namespace vi {
 				absl::optional<bool> disabled;
 				absl::optional<std::string> codec;
 				absl::optional<std::string> description;
+				absl::optional<bool> moderated;
 				absl::optional<bool> simulcast;
 				absl::optional<bool> svc;
 				absl::optional<bool> talking;
 
-				FIELDS_MAP("type", type, "mindex", mindex, "mid", mid, "disabled", disabled, "codec", codec, "description", description, "simulcast", simulcast, "svc", svc, "talking", talking);
+				FIELDS_MAP("type", type, "mindex", mindex, "mid", mid, "disabled", disabled, "codec", codec, "description", description, "moderated", moderated, "simulcast", simulcast, "svc", svc, "talking", talking);
 			};
 
 			absl::optional<std::vector<Stream>> streams;
@@ -142,10 +144,12 @@ namespace vi {
 			absl::optional<std::string> request = "join";
 			absl::optional<std::string> ptype = "publisher";	
 			absl::optional<int64_t> room;
+			//absl::optional<int64_t> id;
 			absl::optional<std::string> display;
 			absl::optional<std::string> token;
+			absl::optional<std::string> pin;
 
-			FIELDS_MAP("request", request, "ptype", ptype, "room", room, "display", display, "token", token);
+			FIELDS_MAP("request", request, "ptype", ptype, "room", room, "display", display, "token", token, "pin", pin);
 		};
 
 		struct Attendee {
@@ -874,6 +878,31 @@ namespace vi {
 				"mute", mute);
 		};
 
+		struct ModerateData {
+			absl::optional<std::string> videoroom;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
+
+			FIELDS_MAP("videoroom", videoroom, "error_code", error_code, "error", error);
+		};
+
+		struct ModeratePluginData {
+			absl::optional<std::string> plugin;
+			absl::optional<ModerateData> data;
+
+			FIELDS_MAP("plugin", plugin, "data", data);
+		};
+
+		struct ModerateResponse {
+			absl::optional<std::string> janus;
+			absl::optional<std::string> transaction;
+			absl::optional<int64_t> session_id;
+			absl::optional<int64_t> sender;
+			absl::optional<ModeratePluginData> plugindata;
+
+			FIELDS_MAP("janus", janus, "transaction", transaction, "session_id", session_id, "sender", sender, "plugindata", plugindata);
+		};
+
 		/*
 		* To get a list of the available rooms(excluded those configured or
 		*created as private rooms) you can make use of the \c list request,
@@ -1064,26 +1093,26 @@ namespace vi {
 		};
 
 		/*
-		 * For more drill - down manipulations of a subscription, a \c configure
-		 * request can be used instead.This request allows subscribers to dynamically
+		 * For more drill-down manipulations of a subscription, a \c configure
+		 * request can be used instead. This request allows subscribers to dynamically
 		 * change some properties associated to their media subscription, e.g.,
-		 *in terms of what should and should not be sent at a specific time.A
-		 * \c configure request must be formatted as follows :
+		 * in terms of what should and should not be sent at a specific time. A
+		 * \c configure request must be formatted as follows:
 		*/
 		//\verbatim
-		//{
-		//	"request" : "configure",
-		//  "mid" : < mid of the m - line to refer to for this configure request; optional > ,
-		//  "send" : < true | false, depending on whether the mindex media should be relayed or not; optional > ,
-		//  "substream" : < substream to receive(0 - 2), in case simulcasting is enabled; optional > ,
-		//	"temporal" : < temporal layers to receive(0 - 2), in case simulcasting is enabled; optional > ,
-		//	"fallback" : <How much time(in us, default 250000) without receiving packets will make us drop to the substream below>,
-		//	"spatial_layer" : < spatial layer to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
-		//	"temporal_layer" : < temporal layers to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
-		//	"audio_level_average" : "<if provided, overrides the room audio_level_average for this user; optional>",
-		//	"audio_active_packets" : "<if provided, overrides the room audio_active_packets for this user; optional>",
-		//	"restart" : <trigger an ICE restart; optional>
-		//}
+		 /*{
+		 *	"request" : "configure",
+		 *		"mid" : < mid of the m - line to refer to for this configure request; optional > ,
+		 *		"send" : < true | false, depending on whether the mindex media should be relayed or not; optional > ,
+		 *		"substream" : < substream to receive(0 - 2), in case simulcasting is enabled; optional > ,
+		 *		"temporal" : < temporal layers to receive(0 - 2), in case simulcasting is enabled; optional > ,
+		 *		"fallback" : <How much time(in us, default 250000) without receiving packets will make us drop to the substream below>,
+		 *		"spatial_layer" : < spatial layer to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
+		 *		"temporal_layer" : < temporal layers to receive(0 - 2), in case VP9 - SVC is enabled; optional > ,
+		 *		"audio_level_average" : "<if provided, overrides the room audio_level_average for this user; optional>",
+		 *		"audio_active_packets" : "<if provided, overrides the room audio_active_packets for this user; optional>",
+		 *		"restart" : < trigger an ICE restart; optional >
+		 }*/
 		//\endverbatim
 
 		struct SubscriberConfigureRequest {
@@ -1115,39 +1144,35 @@ namespace vi {
 
 		/*
 		 * Notice that the same event will also be sent whenever the publisher
-		 * feed disappears for reasons other than an explicit \c unpublish, e.g.,
-		 *because the handle was closed or the user lost their connection.
+		 * feed disappears for reasons other than an explicit \c unpublish , e.g.,
+		 * because the handle was closed or the user lost their connection.
 		 * Besides, notice that you can publish and unpublish multiple times
 		 * within the context of the same publisher handle.
 		 *
 		 * As anticipated above, you can use a request called \c configure to
-		 * tweak some of the properties of an active publisher session.This
-		 * request must be formatted as follows :
+		 * tweak some of the properties of an active publisher session. This
+		 * request must be formatted as follows:
+		 *
 		*/
 		//\verbatim
-		//{
-		//	"request" : "configure",
-		//	"bitrate" : < bitrate cap to return via REMB; optional, overrides the global room value if present(unless bitrate_cap is set) > ,
-		//	"keyframe" : <true | false, whether we should send this publisher a keyframe request>,
-		//	"record" : < true | false, whether this publisher should be recorded or not; optional > ,
-		//	"filename" : "<if recording, the base path/file to use for the recording files; optional>",
-		//	"display" : "<new display name to use in the room; optional>",
-		//	"audio_active_packets" : "<new audio_active_packets to overwrite in the room one; optional>",
-		//	"audio_level_average" : "<new audio_level_average to overwrite the room one; optional>",
-		//	"mid" : < mid of the m - line to refer to for this configure request; optional > ,
-		//		"send" : < true | false, depending on whether the media addressed by the above mid should be relayed or not; optional > ,
-		//		"descriptions" : [
-		//			// Updated descriptions for the published streams; see "publish" for syntax; optional
-		//		]
-		//}
+		 /*{
+		 *	"request" : "configure",
+		 *		"bitrate" : < bitrate cap to return via REMB; optional, overrides the global room value if present(unless bitrate_cap is set) > ,
+		 *		"keyframe" : <true | false, whether we should send this publisher a keyframe request>,
+		 *		"record" : < true | false, whether this publisher should be recorded or not; optional > ,
+		 *		"filename" : "<if recording, the base path/file to use for the recording files; optional>",
+		 *		"display" : "<new display name to use in the room; optional>",
+		 *		"audio_active_packets" : "<new audio_active_packets to overwrite in the room one; optional>",
+		 *		"audio_level_average" : "<new audio_level_average to overwrite the room one; optional>",
+		 *		"mid" : < mid of the m - line to refer to for this configure request; optional > ,
+		 *		"send" : < true | false, depending on whether the media addressed by the above mid should be relayed or not; optional > ,
+		 *		"descriptions" : [
+		 *			// Updated descriptions for the published streams; see "publish" for syntax; optional
+		 *		]
+		 }*/
 		//\endverbatim
 		struct PublisherConfigureRequest {
 			absl::optional<std::string> request = "configure";
-			absl::optional<bool> audio = false;
-			absl::optional<bool> video = false;
-			absl::optional<bool> data = false;
-			absl::optional<std::string> mid;
-			absl::optional<bool> send = false;
 			absl::optional<int64_t> bitrate;
 			absl::optional<bool> keyframe;
 			absl::optional<bool> record;
@@ -1155,7 +1180,8 @@ namespace vi {
 			absl::optional<std::string> display;
 			absl::optional<int64_t> audio_level_average;
 			absl::optional<int64_t> audio_active_packets;
-
+			absl::optional<std::string> mid;
+			absl::optional<bool> send = false;
 			struct Description {
 				absl::optional<std::string> mid;
 				absl::optional<std::string> description;
@@ -1165,11 +1191,6 @@ namespace vi {
 			absl::optional<std::vector<Description>> descriptions;
 
 			FIELDS_MAP("request", request,
-				"audio", audio,
-				"video", video,
-				"data", data,
-				"mid", mid,
-				"send", send,
 				"bitrate", bitrate,
 				"keyframe", keyframe,
 				"record", record,
@@ -1177,6 +1198,8 @@ namespace vi {
 				"display", display,
 				"audio_level_average", audio_level_average,
 				"audio_active_packets", audio_active_packets,
+				"mid", mid,
+				"send", send,
 				"descriptions", descriptions
 			);
 		};

@@ -61,12 +61,10 @@ namespace vi {
 
 		void stopRtcStatsReport();
 
-
 	protected:
 		void prepareWebrtc(bool isOffer, std::shared_ptr<PrepareWebrtcEvent> event);
 
 		void prepareStreams(std::shared_ptr<PrepareWebrtcEvent> event, rtc::scoped_refptr<webrtc::MediaStreamInterface> stream);
-
 
 		void createDataChannel(const std::string& dcLabel, rtc::scoped_refptr<webrtc::DataChannelInterface> incoming);
 

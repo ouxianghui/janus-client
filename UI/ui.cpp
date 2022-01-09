@@ -17,13 +17,14 @@
 #include "video_room_event_adapter.h"
 #include "video_room_dialog.h"
 #include "i_video_room_api.h"
-#include "room_info_dialog.h"
 #include "media_event_adapter.h"
 #include "participants_event_adapter.h"
 #include "media_controller.h"
 #include "participants_controller.h"
 #include "video_room_client_interface.h"
 #include "app_delegate.h"
+#include "join_room_dialog.h"
+#include "create_room_dialog.h"
 
 UI::UI(QWidget *parent)
 	: QMainWindow(parent)
@@ -291,19 +292,34 @@ void UI::on_actionConsole_triggered(bool checked)
 
 void UI::on_actionCreateRoom_triggered()
 {
-
+	if (_vrc) {
+		CreateRoomDialog* dlg = new CreateRoomDialog(this);
+		if (dlg->exec() == QDialog::Accepted) {
+			auto req = std::make_shared<vi::vr::CreateRoomRequest>();
+			req->request = "create";
+			req->room = dlg->roomId();
+			req->description = dlg->description();
+			req->secret = dlg->secret();
+			req->pin = dlg->pin();
+			req->permanent = dlg->permanent();
+			req->is_private = dlg->isPrivate();
+			_vrc->create(req);
+		}
+		dlg->deleteLater();
+	}
 }
 
 void UI::on_actionJoinRoom_triggered(bool checked)
 {
     if (_vrc) {
-        RoomInfoDialog dlg;
-        if (dlg.exec() == QDialog::Accepted) {
+        JoinRoomDialog* dlg = new JoinRoomDialog(this);
+        if (dlg->exec() == QDialog::Accepted) {
             auto req = std::make_shared<vi::vr::PublisherJoinRequest>();
             req->request = "join";
-            req->room = dlg.getRoomId();
-            req->ptype = "publisher";
-            req->display = "ADSL32";
+			req->ptype = "publisher";
+            req->room = dlg->roomId();
+            req->display = dlg->displayName();
+			req->pin = dlg->pin();
             _vrc->join(req);
         }
     }

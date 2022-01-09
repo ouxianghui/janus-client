@@ -81,36 +81,36 @@ namespace vi {
 
 	void PluginClient::attach()
 	{
-		if (auto ss = _pluginContext->signalingService.lock()) {
-			if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-				ss->attach(_pluginContext->plugin, _pluginContext->opaqueId, shared_from_this());
+		if (auto sc = _pluginContext->signalingClient.lock()) {
+			if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+				sc->attach(_pluginContext->plugin, _pluginContext->opaqueId, shared_from_this());
 			}
 		}
 	}
 
 	void PluginClient::sendMessage(std::shared_ptr<MessageEvent> event)
 	{
-		if (auto ss = _pluginContext->signalingService.lock()) {
-			if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-				ss->sendMessage(_pluginContext->handleId, event);
+		if (auto sc = _pluginContext->signalingClient.lock()) {
+			if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+				sc->sendMessage(_pluginContext->handleId, event);
 			}
 		}
 	}
 
 	void PluginClient::hangup(bool sendRequest)
 	{
-		if (auto ss = _pluginContext->signalingService.lock()) {
-			if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-				ss->hangup(_pluginContext->handleId, sendRequest);
+		if (auto sc = _pluginContext->signalingClient.lock()) {
+			if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+				sc->hangup(_pluginContext->handleId, sendRequest);
 			}
 		}
 	}
 
 	void PluginClient::detach(std::shared_ptr<DetachEvent> event)
 	{
-		if (auto ss = _pluginContext->signalingService.lock()) {
-			if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-				ss->detach(_pluginContext->handleId, event);
+		if (auto sc = _pluginContext->signalingClient.lock()) {
+			if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+				sc->detach(_pluginContext->handleId, event);
 			}
 		}
 	}
@@ -134,12 +134,12 @@ namespace vi {
 						return;
 					}
 
-					auto ss = self->pluginContext()->signalingService.lock();
-					if (!ss) {
+					auto sc = self->pluginContext()->signalingClient.lock();
+					if (!sc) {
 						return;
 					}
 
-					if (ss->sessionStatus() !=SessionStatus::CONNECTED) {
+					if (sc->sessionStatus() !=SessionStatus::CONNECTED) {
 						return;
 					}
 
@@ -1482,9 +1482,9 @@ namespace vi {
 				event->candidate.sdpMLineIndex = (int)candidate->sdp_mline_index();
 				event->candidate.completed = false;
 
-				if (auto ss = _pluginContext->signalingService.lock()) {
-					if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-						ss->sendTrickleCandidate(_pluginContext->handleId, event);
+				if (auto sc = _pluginContext->signalingClient.lock()) {
+					if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+						sc->sendTrickleCandidate(_pluginContext->handleId, event);
 					}
 				}
 			}
@@ -1495,9 +1495,9 @@ namespace vi {
 			if (_pluginContext->trickle) {
 				auto event = std::make_shared<TrickleCandidateEvent>();
 				event->candidate.completed = true;
-				if (auto ss = _pluginContext->signalingService.lock()) {
-					if (ss->sessionStatus() == SessionStatus::CONNECTED) {
-						ss->sendTrickleCandidate(_pluginContext->handleId, event);
+				if (auto sc = _pluginContext->signalingClient.lock()) {
+					if (sc->sessionStatus() == SessionStatus::CONNECTED) {
+						sc->sendTrickleCandidate(_pluginContext->handleId, event);
 					}
 				}
 			}

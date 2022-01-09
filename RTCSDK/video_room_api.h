@@ -40,6 +40,10 @@ namespace vi {
 
 		void unpublish(std::shared_ptr<vr::UnpublishRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) override;
 
+		void subscribe(std::shared_ptr<vr::SubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) override;
+
+		void unsubscribe(std::shared_ptr<vr::UnsubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) override;
+
 		void startPeerConnection(std::shared_ptr<vr::StartPeerConnectionRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) override;
 
 		void pausePeerConnection(std::shared_ptr<vr::PausePeerConnectionRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback) override;
@@ -51,6 +55,8 @@ namespace vi {
 		void allowed(std::shared_ptr<vr::AllowedRequest> request, std::function<void(std::shared_ptr<vr::AllowedResponse>)> callback) override;
 
 		void kick(std::shared_ptr<vr::KickRequest> request, std::function<void(std::shared_ptr<vr::KickResponse>)> callback) override;
+
+		void moderate(std::shared_ptr<vr::ModerateRequest> request, std::function<void(std::shared_ptr<vr::ModerateResponse>)> callback) override;
 
 		void fetchRoomsList(std::shared_ptr<vr::FetchRoomsListRequest> request, std::function<void(std::shared_ptr<vr::FetchRoomsListResponse>)> callback) override;
 

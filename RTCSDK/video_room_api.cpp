@@ -39,7 +39,7 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<vr::RoomCurdResponse> rar = fromJsonString<vr::RoomCurdResponse>(response, err);
+			std::shared_ptr<vr::RoomCurdResponse> jr = fromJsonString<vr::RoomCurdResponse>(response, err);
 
 			if (!err.empty()) {
 				DLOG("parse JanusResponse failed");
@@ -47,7 +47,7 @@ namespace vi {
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
@@ -112,7 +112,7 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<JanusResponse> rar = fromJsonString<JanusResponse>(response, err);
+			std::shared_ptr<JanusResponse> jr = fromJsonString<JanusResponse>(response, err);
 
 			if (!err.empty()) {
 				DLOG("parse JanusResponse failed");
@@ -120,7 +120,7 @@ namespace vi {
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
@@ -189,6 +189,26 @@ namespace vi {
 		action(json, callback);
 	}
 
+	void VideoRoomApi::subscribe(std::shared_ptr<vr::SubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback)
+	{
+		std::string json = request->toJsonStr();
+		if (json.empty()) {
+			DLOG("empty json string");
+			return;
+		}
+		action(json, callback);
+	}
+
+	void VideoRoomApi::unsubscribe(std::shared_ptr<vr::UnsubscribeRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback)
+	{
+		std::string json = request->toJsonStr();
+		if (json.empty()) {
+			DLOG("empty json string");
+			return;
+		}
+		action(json, callback);
+	}
+
 	void VideoRoomApi::startPeerConnection(std::shared_ptr<vr::StartPeerConnectionRequest> request, std::function<void(std::shared_ptr<JanusResponse>)> callback)
 	{
 		std::string json = request->toJsonStr();
@@ -245,15 +265,15 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<vr::AllowedResponse> rar = fromJsonString<vr::AllowedResponse>(response, err);
+			std::shared_ptr<vr::AllowedResponse> jr = fromJsonString<vr::AllowedResponse>(response, err);
 
 			if (!err.empty()) {
-				DLOG("parse JanusResponse failed");
+				DLOG("parse AllowedResponse failed");
 				return;
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
@@ -278,15 +298,15 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<vr::KickResponse> rar = fromJsonString<vr::KickResponse>(response, err);
+			std::shared_ptr<vr::KickResponse> jr = fromJsonString<vr::KickResponse>(response, err);
 
 			if (!err.empty()) {
-				DLOG("parse JanusResponse failed");
+				DLOG("parse KickResponse failed");
 				return;
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
@@ -294,6 +314,40 @@ namespace vi {
 		event->callback = cb;
 		pluginClient->sendMessage(event);
 	}
+
+	void VideoRoomApi::moderate(std::shared_ptr<vr::ModerateRequest> request, std::function<void(std::shared_ptr<vr::ModerateResponse>)> callback)
+	{
+		auto pluginClient = _pluginClient.lock();
+		if (!pluginClient) {
+			DLOG("invalid plugin client");
+			return;
+		}
+		std::shared_ptr<MessageEvent> event = std::make_shared<vi::MessageEvent>();
+		auto lambda = [callback](bool success, const std::string& response) {
+			DLOG("response: {}", response.c_str());
+			if (response.empty()) {
+				return;
+			}
+
+			std::string err;
+
+			std::shared_ptr<vr::ModerateResponse> jr = fromJsonString<vr::ModerateResponse>(response, err);
+
+			if (!err.empty()) {
+				DLOG("parse ModerateResponse failed");
+				return;
+			}
+
+			if (callback) {
+				callback(jr);
+			}
+		};
+		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
+		event->message = request->toJsonStr();
+		event->callback = cb;
+		pluginClient->sendMessage(event);
+	}
+
 
 	void VideoRoomApi::fetchRoomsList(std::shared_ptr<vr::FetchRoomsListRequest> request, std::function<void(std::shared_ptr<vr::FetchRoomsListResponse>)> callback)
 	{
@@ -311,15 +365,15 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<vr::FetchRoomsListResponse> rar = fromJsonString<vr::FetchRoomsListResponse>(response, err);
+			std::shared_ptr<vr::FetchRoomsListResponse> jr = fromJsonString<vr::FetchRoomsListResponse>(response, err);
 
 			if (!err.empty()) {
-				DLOG("parse JanusResponse failed");
+				DLOG("parse FetchRoomsListResponse failed");
 				return;
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);
@@ -344,15 +398,15 @@ namespace vi {
 
 			std::string err;
 
-			std::shared_ptr<vr::FetchParticipantsResponse> rar = fromJsonString<vr::FetchParticipantsResponse>(response, err);
+			std::shared_ptr<vr::FetchParticipantsResponse> jr = fromJsonString<vr::FetchParticipantsResponse>(response, err);
 
 			if (!err.empty()) {
-				DLOG("parse JanusResponse failed");
+				DLOG("parse FetchParticipantsResponse failed");
 				return;
 			}
 
 			if (callback) {
-				callback(rar);
+				callback(jr);
 			}
 		};
 		std::shared_ptr<vi::EventCallback> cb = std::make_shared<vi::EventCallback>(lambda);

@@ -83,8 +83,8 @@ namespace vi {
 
 	void RTCEngine::startup()
 	{
-		auto ss = uFactory->getSignalingClient();
-		ss->connect(_options.serverUrl);
+		auto sc = uFactory->getSignalingClient();
+		sc->connect(_options.serverUrl);
 	}
 
 	void RTCEngine::shutdown()
@@ -94,8 +94,8 @@ namespace vi {
 
 	std::shared_ptr<VideoRoomClientInterface> RTCEngine::createVideoRoomClient()
 	{
-		auto ss = uFactory->getSignalingClient();
-		return VideoRoomClientProxy::Create(TMgr->thread("plugin-client"), std::make_shared<vi::VideoRoomClient>(ss, _pcf));
+		auto sc = uFactory->getSignalingClient();
+		return VideoRoomClientProxy::Create(TMgr->thread("plugin-client"), std::make_shared<vi::VideoRoomClient>(sc, _pcf));
 	}
 
 	std::shared_ptr<IUnifiedFactory> RTCEngine::getUnifiedFactory()

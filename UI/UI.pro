@@ -27,39 +27,38 @@ RCC_DIR += ./GeneratedFiles
 win32:RC_FILE = UI.rc
 
 FORMS += \
+    create_room_dialog.ui \
     gallery_view.ui \
     janus_connection_dialog.ui \
+    join_room_dialog.ui \
     participant_item_view.ui \
     participants_list_view.ui \
-    room_info_dialog.ui \
-    ui.ui \
-    video_room_dialog.ui
+    ui.ui
 
 HEADERS += \
+    create_room_dialog.h \
     gallery_view.h \
     gl_defines.h \
     gl_video_renderer.h \
     gl_video_shader.h \
     i420_texture_cache.h \
     janus_connection_dialog.h \
+    join_room_dialog.h \
     participant_item_view.h \
     participants_list_view.h \
-    room_info_dialog.h \
-    ui.h \
-    video_room_dialog.h
-
+    ui.h
 SOURCES += \
+    create_room_dialog.cpp \
     gallery_view.cpp \
     gl_video_renderer.cpp \
     gl_video_shader.cpp \
     i420_texture_cache.cpp \
     janus_connection_dialog.cpp \
+    join_room_dialog.cpp \
     main_qt.cpp \
     participant_item_view.cpp \
     participants_list_view.cpp \
-    room_info_dialog.cpp \
-    ui.cpp \
-    video_room_dialog.cpp
+    ui.cpp
 
 RESOURCES += \
     ui.qrc

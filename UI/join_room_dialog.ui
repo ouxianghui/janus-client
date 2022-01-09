@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>RoomInfoDialog</class>
- <widget class="QDialog" name="RoomInfoDialog">
+ <class>JoinRoomDialog</class>
+ <widget class="QDialog" name="JoinRoomDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>69</height>
+    <width>640</width>
+    <height>128</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>RoomInfoDialog</string>
+   <string>Join Room</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <layout class="QHBoxLayout" name="horizontalLayout">
+    <layout class="QHBoxLayout" name="horizontalLayout" stretch="2,8">
      <item>
       <widget class="QLabel" name="label">
        <property name="text">
@@ -28,6 +28,45 @@
        <property name="text">
         <string>1234</string>
        </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,8">
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>Display Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="displayNameLineEdit">
+       <property name="text">
+        <string>test</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3" stretch="2,8">
+     <item>
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>PIN:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="pinLineEdit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>
@@ -52,7 +91,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>RoomInfoDialog</receiver>
+   <receiver>JoinRoomDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -68,7 +107,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>RoomInfoDialog</receiver>
+   <receiver>JoinRoomDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

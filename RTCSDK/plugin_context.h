@@ -31,7 +31,7 @@ namespace vi {
 		int64_t handleId = -1;
 		std::string handleToken;
 		std::atomic_bool detached = false;
-		std::weak_ptr<SignalingClientInterface> signalingService;
+		std::weak_ptr<SignalingClientInterface> signalingClient;
 
 		std::vector<webrtc::PeerConnectionInterface::IceServer> iceServers;
 
@@ -58,8 +58,8 @@ namespace vi {
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> localStream;
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
 
-		PluginContext(std::weak_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf_)
-			: signalingService(ss)
+		PluginContext(std::weak_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf_)
+			: signalingClient(sc)
 			, pcf(pcf_){}
 
 		~PluginContext() {
