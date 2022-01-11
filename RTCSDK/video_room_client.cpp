@@ -81,16 +81,26 @@ namespace vi {
 	void VideoRoomClient::create(std::shared_ptr<vr::CreateRoomRequest> request)
 	{
 		if (_videoRoomApi) {
-			_videoRoomApi->create(request, [this](std::shared_ptr<vr::RoomCurdResponse> response) {
-				if (response->janus == "ack") {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
-						observer->onCreateRoom(0);
+			_videoRoomApi->create(request, [this, request](std::shared_ptr<vr::RoomCurdResponse> response) {
+				if (response->janus == "success") {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([request, response](const auto& observer) {
+						if (response->plugindata->data.videoroom.value_or("") == "created") {
+							auto result = std::make_shared<CreateRoomResult>();
+							result->roomId = response->plugindata->data.room.value_or(0);
+							result->description = request->description;
+							result->secret = request->secret;
+							result->pin = request->pin;
+							observer->onCreateRoom(result, 0);
+						}
+						else {
+							observer->onCreateRoom(nullptr, response->plugindata->data.error_code.value_or(0));
+						}
 					});
 				}
 				else {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([request](const auto& observer) {
 						// TODO: replace it with enum, a global error code
-						observer->onCreateRoom(1);
+						observer->onCreateRoom(nullptr, 1);
 					});
 				}
 			});
@@ -106,14 +116,14 @@ namespace vi {
 		if (_videoRoomApi) {
 			_videoRoomApi->join(request, [this](std::shared_ptr<JanusResponse> response) {
 				if (response->janus == "ack") {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
-						observer->onJoinRoom(0);
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([roomId = _roomId](const auto& observer) {
+						observer->onJoinRoom(roomId, 0);
 					});
 				}
 				else {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([roomId = _roomId](const auto& observer) {
 						// TODO: replace it with enum, a global error code
-						observer->onJoinRoom(2);
+						observer->onJoinRoom(roomId, 1);
 					});
 				}
 			});
@@ -125,14 +135,14 @@ namespace vi {
 		if (_videoRoomApi) {
 			_videoRoomApi->leave(request, [this](std::shared_ptr<JanusResponse> response) {
 				if (response->janus == "ack") {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
-						observer->onLeaveRoom(0);
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([roomId = _roomId](const auto& observer) {
+						observer->onLeaveRoom(roomId, 0);
 					});
 				}
 				else {
-					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([](const auto& observer) {
+					UniversalObservable<IVideoRoomEventHandler>::notifyObservers([roomId = _roomId](const auto& observer) {
 						// TODO: replace it with enum, a global error code
-						observer->onLeaveRoom(3);
+						observer->onLeaveRoom(roomId, 1);
 					});
 				}
 			});

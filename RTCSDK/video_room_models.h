@@ -574,8 +574,10 @@ namespace vi {
 			absl::optional<int64_t> room;
 			absl::optional<bool> permanent;
 			absl::optional<bool> exists;
+			absl::optional<int64_t> error_code;
+			absl::optional<std::string> error;
 
-			FIELDS_MAP("videoroom", videoroom, "room", room, "permanent", permanent, "exists", exists);
+			FIELDS_MAP("videoroom", videoroom, "room", room, "permanent", permanent, "exists", exists, "error_code", error_code, "error", error);
 		};
 
 		struct RoomCurdPluginData {

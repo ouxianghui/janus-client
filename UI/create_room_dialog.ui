@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>640</width>
-    <height>264</height>
+    <height>294</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Create Room</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -79,6 +79,24 @@
      </item>
      <item>
       <widget class="QLineEdit" name="pinLineEdit">
+       <property name="alignment">
+        <set>Qt::AlignCenter</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_9" stretch="2,8">
+     <item>
+      <widget class="QLabel" name="label_7">
+       <property name="text">
+        <string>Display Name:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="displayNameLineEdit">
        <property name="alignment">
         <set>Qt::AlignCenter</set>
        </property>

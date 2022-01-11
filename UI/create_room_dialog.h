@@ -28,6 +28,8 @@ public:
 
     bool isPrivate();
 
+    std::string displayName();
+
 private:
     Ui::CreateRoomDialog *ui;
 };

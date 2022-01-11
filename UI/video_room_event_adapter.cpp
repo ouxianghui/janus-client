@@ -17,17 +17,17 @@ VideoRoomEventAdapter::~VideoRoomEventAdapter()
 
 // IVideoRoomEventHandler
 
-void VideoRoomEventAdapter::onCreateRoom(int32_t errorCode)
+void VideoRoomEventAdapter::onCreateRoom(std::shared_ptr<vi::CreateRoomResult> result, int32_t errorCode)
 {
-	emit createRoom(errorCode);
+	emit createRoom(result, errorCode);
 }
 
-void VideoRoomEventAdapter::onJoinRoom(int32_t errorCode)
+void VideoRoomEventAdapter::onJoinRoom(int64_t roomId, int32_t errorCode)
 {
-	emit joinRoom(errorCode);
+	emit joinRoom(roomId, errorCode);
 }
 
-void VideoRoomEventAdapter::onLeaveRoom(int32_t errorCode)
+void VideoRoomEventAdapter::onLeaveRoom(int64_t roomId, int32_t errorCode)
 {
-	emit leaveRoom(errorCode);
+	emit leaveRoom(roomId, errorCode);
 }

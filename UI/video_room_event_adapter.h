@@ -27,16 +27,16 @@ public:
 private:
 	// IVideoRoomEventHandler
 
-	void onCreateRoom(int32_t errorCode) override;
+	void onCreateRoom(std::shared_ptr<vi::CreateRoomResult> result, int32_t errorCode) override;
 
-	void onJoinRoom(int32_t errorCode) override;
+	void onJoinRoom(int64_t roomId, int32_t errorCode) override;
 
-	void onLeaveRoom(int32_t errorCode) override;
+	void onLeaveRoom(int64_t roomId, int32_t errorCode) override;
 
 signals:
-	void createRoom(int32_t errorCode);
+	void createRoom(std::shared_ptr<vi::CreateRoomResult> result, int32_t errorCode);
 
-	void joinRoom(int32_t errorCode);
+	void joinRoom(int64_t roomId, int32_t errorCode);
 
-	void leaveRoom(int32_t errorCode);
+	void leaveRoom(int64_t roomId, int32_t errorCode);
 };

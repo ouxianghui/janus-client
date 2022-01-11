@@ -124,17 +124,28 @@ void UI::onError(int32_t code)
 
 }
 
-void UI::onCreateRoom(int32_t errorCode)
+void UI::onCreateRoom(std::shared_ptr<vi::CreateRoomResult> result, int32_t errorCode)
 {
-
+	if (_vrc && errorCode == 0 && result) {
+		auto req = std::make_shared<vi::vr::PublisherJoinRequest>();
+		req->request = "join";
+		req->ptype = "publisher";
+		req->room = result->roomId.value_or(0);
+		req->display = _displayName;
+		req->pin = result->pin.value_or("");
+		_vrc->join(req);
+	}
+	else {
+		DLOG("create room failed, code = {}", errorCode);
+	}
 }
 
-void UI::onJoinRoom(int32_t errorCode)
+void UI::onJoinRoom(int64_t roomId, int32_t errorCode)
 {
-
+	DLOG("join room '{}', code = {}", roomId, errorCode);
 }
 
-void UI::onLeaveRoom(int32_t errorCode)
+void UI::onLeaveRoom(int64_t roomId, int32_t errorCode)
 {
 	if (_vrc) {
 		_vrc->detach();
@@ -304,8 +315,9 @@ void UI::on_actionCreateRoom_triggered()
 			req->permanent = dlg->permanent();
 			req->is_private = dlg->isPrivate();
 			_vrc->create(req);
+
+			_displayName = dlg->displayName();
 		}
-		dlg->deleteLater();
 	}
 }
 

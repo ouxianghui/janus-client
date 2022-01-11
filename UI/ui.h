@@ -46,11 +46,11 @@ private slots:
 
 	// IVideoRoomEventHandler
 
-	void onCreateRoom(int32_t errorCode);
+	void onCreateRoom(std::shared_ptr<vi::CreateRoomResult> result, int32_t errorCode);
 
-	void onJoinRoom(int32_t errorCode);
+	void onJoinRoom(int64_t roomId, int32_t errorCode);
 
-	void onLeaveRoom(int32_t errorCode);
+	void onLeaveRoom(int64_t roomId, int32_t errorCode);
 
 
 	// IMediaControlEventHandler
@@ -122,4 +122,6 @@ private:
 	std::shared_ptr<ParticipantsEventAdapter> _participantsEventAdapter;
 
 	std::shared_ptr<ParticipantsListView> _participantsListView;
+
+	std::string _displayName;
 };
