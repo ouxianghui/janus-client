@@ -30,7 +30,6 @@ namespace vi {
 
         void kick(int64_t pid) override;
 
-
         std::map<int64_t, std::shared_ptr<Participant>>& participants();
 
         void createParticipant(std::shared_ptr<Participant> participant);

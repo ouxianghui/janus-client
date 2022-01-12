@@ -21,21 +21,21 @@ namespace vi {
 
 		virtual void unregisterEventHandler(std::shared_ptr<IMediaControlEventHandler> handler) = 0;
 
-		virtual int32_t remoteVolume(const std::string& pid) = 0;
+		virtual void muteLocalAudio(bool mute) = 0;
 
-		virtual int32_t localVolume(const std::string& pid) = 0;
+		virtual bool isLocalAudioMuted() = 0;
 
-		virtual void muteAudio(const std::string& pid) = 0;
+		virtual void muteLocalVideo(bool mute) = 0;
 
-		virtual void unmuteAudio(const std::string& pid) = 0;
+		virtual bool isLocalVideoMuted() = 0;
 
-		virtual bool isAudioMuted(const std::string& pid) = 0;
+		virtual void muteAudio(int64_t pid, const std::string& mid, bool mute) = 0;
 
-		virtual void muteVideo(const std::string& pid) = 0;
+		virtual bool isAudioMuted(int64_t pid) = 0;
 
-		virtual void unmuteVideo(const std::string& pid) = 0;
+		virtual void muteVideo(int64_t pid, const std::string& mid, bool mute) = 0;
 
-		virtual bool isVideoMuted(const std::string& pid) = 0;
+		virtual bool isVideoMuted(int64_t pid) = 0;
     };
 
 	BEGIN_WEAK_PROXY_MAP(MediaController)
@@ -44,13 +44,13 @@ namespace vi {
 		WEAK_PROXY_METHOD0(void, destroy)
 		WEAK_PROXY_METHOD1(void, registerEventHandler, std::shared_ptr<IMediaControlEventHandler>)
 		WEAK_PROXY_METHOD1(void, unregisterEventHandler, std::shared_ptr<IMediaControlEventHandler>)
-		WEAK_PROXY_METHOD1(int32_t, remoteVolume, const std::string&)
-		WEAK_PROXY_METHOD1(int32_t, localVolume, const std::string&)
-		WEAK_PROXY_METHOD1(void, muteAudio, const std::string&)
-		WEAK_PROXY_METHOD1(void, unmuteAudio, const std::string&)
-		WEAK_PROXY_METHOD1(bool, isAudioMuted, const std::string&)
-		WEAK_PROXY_METHOD1(void, muteVideo, const std::string&)
-		WEAK_PROXY_METHOD1(void, unmuteVideo, const std::string&)
-		WEAK_PROXY_METHOD1(bool, isVideoMuted, const std::string&)
+		WEAK_PROXY_METHOD1(void, muteLocalAudio, bool)
+		WEAK_PROXY_METHOD0(bool, isLocalAudioMuted)
+		WEAK_PROXY_METHOD1(void, muteLocalVideo, bool)
+		WEAK_PROXY_METHOD0(bool, isLocalVideoMuted)
+		WEAK_PROXY_METHOD3(void, muteAudio, int64_t, const std::string&, bool)
+		WEAK_PROXY_METHOD1(bool, isAudioMuted, int64_t)
+		WEAK_PROXY_METHOD3(void, muteVideo, int64_t, const std::string&, bool)
+		WEAK_PROXY_METHOD1(bool, isVideoMuted, int64_t)
 	END_WEAK_PROXY_MAP()
 }

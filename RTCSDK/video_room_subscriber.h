@@ -15,7 +15,12 @@ namespace vi {
 	class VideoRoomSubscriber : public PluginClient, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf, const std::string& pluginName, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController);
+		VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> sc, 
+			rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf, 
+			const std::string& pluginName, 
+			const std::string& opaqueId,
+			std::shared_ptr<MediaController> mc,
+			std::shared_ptr<IVideoRoomApi> api);
 
 		~VideoRoomSubscriber();
 
@@ -24,8 +29,6 @@ namespace vi {
 		void registerEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
 
 		void unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler);
-
-		void setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi);
 
 		void setRoomId(int64_t roomId);
 

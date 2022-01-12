@@ -18,8 +18,8 @@
 #include "participants_controller.h"
 
 namespace vi {
-	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
-		: PluginClient(ss, pcf)
+	VideoRoomClient::VideoRoomClient(std::shared_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
+		: PluginClient(sc, pcf)
 	{
 		_pluginContext->plugin = "janus.plugin.videoroom";
 		_pluginContext->opaqueId = "videoroom-" + StringUtils::randomString(12);
@@ -34,17 +34,16 @@ namespace vi {
 	{
 		PluginClient::init();
 
-		_mediaController = std::make_shared<MediaController>();
+		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
+
+		_mediaController = std::make_shared<MediaController>(std::dynamic_pointer_cast<VideoRoomClient>(PluginClient::shared_from_this()));
 		_mediaControllerProxy = MediaControllerProxy::Create(TMgr->thread("plugin-client"), _mediaController);
 
 		_participantsController = std::make_shared<ParticipantsContrller>();
 		_participantsControllerProxy = ParticipantsContrllerProxy::Create(TMgr->thread("plugin-client"), _participantsController);
 
-		_videoRoomApi = std::make_shared<VideoRoomApi>(shared_from_this());
-
-		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingClient.lock(), _pluginContext->pcf, _pluginContext->plugin, _pluginContext->opaqueId, _mediaController);
+		_subscriber = std::make_shared<VideoRoomSubscriber>(_pluginContext->signalingClient.lock(), _pluginContext->pcf, _pluginContext->plugin, _pluginContext->opaqueId, _mediaController, _videoRoomApi);
 		_subscriber->init();
-		_subscriber->setRoomApi(_videoRoomApi);
 	}
 
 	void VideoRoomClient::destroy()
@@ -247,7 +246,7 @@ namespace vi {
         				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {}", pub.id.value(), pub.display.value_or(""));
 
-					auto participant = std::make_shared<Participant>(pub.id.value(), pub.display.value_or(""));
+					auto participant = std::make_shared<Participant>(pub.id.value(), pub);
 					createParticipant(participant);
 				}
 				_subscriber->subscribeTo(publishers);
@@ -263,7 +262,7 @@ namespace vi {
 				DLOG("Got a list of available publishers/feeds:");
 				for (const auto& pub : publishers) {
 					DLOG("  >> [{}] {})", pub.id.value(), pub.display.value_or(""));
-					auto participant = std::make_shared<Participant>(pub.id.value(), pub.display.value_or(""));
+					auto participant = std::make_shared<Participant>(pub.id.value(), pub);
 					createParticipant(participant);
 				}
 				_subscriber->subscribeTo(publishers);
@@ -435,216 +434,4 @@ namespace vi {
 	{
 		DLOG("RTC Stats Report: {}", report->ToJson());
 	}
-
-	//int32_t SignalingClient::getVolume(int64_t handleId, bool isRemote, const std::string& mid)
-//{
-//	const auto& pluginClient = getHandler(handleId);
-//	if (!pluginClient) {
-//		DLOG("Invalid handle");
-//	}
-
-//	const auto& context = pluginClient->pluginContext()->webrtcContext;
-
-//	return 0;
-//}
-
-//int32_t SignalingClient::remoteVolume(int64_t handleId, const std::string& mid)
-//{
-//	return getVolume(handleId, true, mid);
-//}
-
-//int32_t SignalingClient::localVolume(int64_t handleId, const std::string& mid)
-//{
-//	return getVolume(handleId, false, mid);
-//}
-
-//bool SignalingClient::isAudioMuted(int64_t handleId, const std::string& mid)
-//{
-//	return isMuted(handleId, true, mid);
-//}
-
-//bool SignalingClient::isVideoMuted(int64_t handleId, const std::string& mid)
-//{
-//	return isMuted(handleId, false, mid);
-//}
-
-//bool SignalingClient::isMuted(int64_t handleId, bool isVideo, const std::string& mid)
-//{
-//	const auto& pluginClient = getHandler(handleId);
-//	if (!pluginClient) {
-//		DLOG("Invalid handle");
-//		return true;
-//	}
-
-//	const auto& context = pluginClient->pluginContext()->webrtcContext;
-//	if (!context) {
-//		return true;
-//	}
-//	if (!context->pc) {
-//		DLOG("Invalid PeerConnection");
-//		return true;
-//	}
-//	if (!context->localStream) {
-//		DLOG("Invalid local MediaStream");
-//		return true;
-//	}
-//	if (isVideo) {
-//		// Check video track
-//		if (context->localStream->GetVideoTracks().size() == 0) {
-//			DLOG("No video track");
-//			return true;
-//		}
-//		if (!mid.empty() && _pluginContext->unifiedPlan) {
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
-//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
-//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
-//			});
-//			if (it == transceivers.end()) {
-//				DLOG("No video transceiver with mid: {}", mid);
-//				return true;
-//			}
-//			if (!(*it)->sender() || !(*it)->sender()->track()) {
-//				DLOG("No video sender with mid: {}", mid);
-//				return true;
-//			}
-
-//			return (*it)->sender()->track()->enabled();
-//		}
-//		else {
-//			return !context->localStream->GetVideoTracks()[0]->enabled();
-//		}
-//	}
-//	else {
-//		// Check audio track
-//		if (context->localStream->GetAudioTracks().size() == 0) {
-//			DLOG("No audio track");
-//			return true;
-//		}
-//		if (!mid.empty() && _pluginContext->unifiedPlan) {
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
-//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
-//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
-//			});
-//			if (it == transceivers.end()) {
-//				DLOG("No audio transceiver with mid: {}", mid);
-//				return true;
-//			}
-//			if (!(*it)->sender() || !(*it)->sender()->track()) {
-//				DLOG("No audio sender with mid: {}", mid);
-//				return true;
-//			}
-
-//			return (*it)->sender()->track()->enabled();
-//		}
-//		else {
-//			return !context->localStream->GetAudioTracks()[0]->enabled();
-//		}
-//	}
-//	return true;
-//}
-
-//bool SignalingClient::muteAudio(int64_t handleId, const std::string& mid)
-//{
-//	return mute(handleId, false, true, mid);
-//}
-
-//bool SignalingClient::muteVideo(int64_t handleId, const std::string& mid)
-//{
-//	return mute(handleId, true, true, mid);
-//}
-
-//bool SignalingClient::unmuteAudio(int64_t handleId, const std::string& mid)
-//{
-//	return mute(handleId, false, false, mid);
-//}
-
-//bool SignalingClient::unmuteVideo(int64_t handleId, const std::string& mid)
-//{
-//	return mute(handleId, true, false, mid);
-//}
-
-//bool SignalingClient::mute(int64_t handleId, bool isVideo, bool mute, const std::string& mid)
-//{
-//	const auto& pluginClient = getHandler(handleId);
-//	if (!pluginClient) {
-//		DLOG("Invalid handle");
-//		return false;
-//	}
-
-//	const auto& context = pluginClient->pluginContext()->webrtcContext;
-//	if (!context) {
-//		return false;
-//	}
-//	if (!context->pc) {
-//		DLOG("Invalid PeerConnection");
-//		return false;
-//	}
-//	if (!context->localStream) {
-//		DLOG("Invalid local MediaStream");
-//		return false;
-//	}
-
-//	bool enabled = mute ? false : true;
-
-//	if (isVideo) {
-//		// Mute/unmute video track
-//		if (context->localStream->GetVideoTracks().size() == 0) {
-//			DLOG("No video track");
-//			return false;
-//		}
-//		if (!mid.empty() && _pluginContext->unifiedPlan) {
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
-//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
-//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_VIDEO;
-//			});
-//			if (it == transceivers.end()) {
-//				DLOG("No video transceiver with mid: {}", mid);
-//				return true;
-//			}
-//			if (!(*it)->sender() || !(*it)->sender()->track()) {
-//				DLOG("No video sender with mid: {}", mid);
-//				return true;
-//			}
-//			return (*it)->sender()->track()->set_enabled(enabled);
-//		}
-//		else {
-//			return context->localStream->GetVideoTracks()[0]->set_enabled(enabled);
-//		}
-//	}
-//	else {
-//		// Mute/unmute audio track
-//		if (context->localStream->GetAudioTracks().size() == 0) {
-//			DLOG("No audio track");
-//			return false;
-//		}
-//		if (!mid.empty() && _pluginContext->unifiedPlan) {
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>> transceivers = context->pc->GetTransceivers();
-//			std::vector<rtc::scoped_refptr<webrtc::RtpTransceiverInterface>>::iterator it = std::find_if(transceivers.begin(), transceivers.end(),
-//				[mid](const rtc::scoped_refptr<webrtc::RtpTransceiverInterface>& transceiver) {
-//				return transceiver->mid().value_or("") == mid && transceiver->media_type() == cricket::MediaType::MEDIA_TYPE_AUDIO;
-//			});
-//			if (it == transceivers.end()) {
-//				DLOG("No audio transceiver with mid: {}", mid);
-//				return true;
-//			}
-//			if (!(*it)->sender() || !(*it)->sender()->track()) {
-//				DLOG("No audio sender with mid: {}", mid);
-//				return true;
-//			}
-//			return (*it)->sender()->track()->set_enabled(enabled);
-//		}
-//		else {
-//			return context->localStream->GetAudioTracks()[0]->set_enabled(enabled);
-//		}
-//	}
-//	return false;
-//}
-
-//std::string SignalingClient::getBitrate(int64_t handleId, const std::string& mid)
-//{
-//	return "";
-//}
 }

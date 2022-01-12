@@ -26,7 +26,7 @@
      <item>
       <widget class="QLineEdit" name="serverUrlLineEdit">
        <property name="text">
-        <string>ws://192.168.0.110:8188/ws</string>
+        <string>ws://192.168.0.109:8188/ws</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignCenter</set>

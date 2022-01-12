@@ -178,25 +178,25 @@ void UI::onRemoteVideoMuted(const std::string& pid, bool muted)
 
 void UI::onMediaStatus(bool isActive, const std::string& reason)
 {
-	//if (isActive) {
-	//	ui.actionAudio->setEnabled(true);
-	//	ui.actionVideo->setEnabled(true);
-	//	if (_vrc) {
-	//		if (_vrc->isAudioMuted("")) {
-	//			ui.actionAudio->setChecked(false);
-	//		}
-	//		else {
-	//			ui.actionAudio->setChecked(true);
-	//		}
+	if (isActive) {
+		ui.actionAudio->setEnabled(true);
+		ui.actionVideo->setEnabled(true);
+		if (_vrc) {
+			if (_vrc->mediaContrller()->isLocalAudioMuted()) {
+				ui.actionAudio->setChecked(false);
+			}
+			else {
+				ui.actionAudio->setChecked(true);
+			}
 
-	//		if (_vrc->isVideoMuted("")) {
-	//			ui.actionVideo->setChecked(false);
-	//		}
-	//		else {
-	//			ui.actionVideo->setChecked(true);
-	//		}
-	//	}
-	//}
+			if (_vrc->mediaContrller()->isLocalVideoMuted()) {
+				ui.actionVideo->setChecked(false);
+			}
+			else {
+				ui.actionVideo->setChecked(true);
+			}
+		}
+	}
 }
 
 void UI::onCreateParticipant(std::shared_ptr<vi::Participant> participant)
@@ -343,12 +343,12 @@ void UI::on_actionAudio_triggered(bool checked)
 		return;
 	}
 
-	//if (checked) {
-	//	_vrc->unmuteAudio("");
-	//}
-	//else {
-	//	_vrc->muteAudio("");
-	//}
+	if (checked) {
+		_vrc->mediaContrller()->muteLocalAudio(false);
+	}
+	else {
+		_vrc->mediaContrller()->muteLocalAudio(true);
+	}
 }
 
 void UI::on_actionVideo_triggered(bool checked)
@@ -357,11 +357,12 @@ void UI::on_actionVideo_triggered(bool checked)
 		return;
 	}
 
-	//if (checked) {
-	//	_vrc->unmuteVideo("");
-	//} else {
-	//	_vrc->muteVideo("");
-	//}
+	if (checked) {
+		_vrc->mediaContrller()->muteLocalVideo(false);
+	}
+	else {
+		_vrc->mediaContrller()->muteLocalVideo(true);
+	}
 }
 
 void UI::on_actionLeaveRoom_triggered()

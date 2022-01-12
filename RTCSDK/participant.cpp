@@ -9,9 +9,9 @@
 #include "video_room_models.h"
 
 namespace vi {
-	Participant::Participant(int64_t id, const std::string& displayName)
+	Participant::Participant(int64_t id, const vr::Publisher& context)
 		: _id(id)
-		, _displayName(displayName)
+		, _context(context)
 	{
 
 	}

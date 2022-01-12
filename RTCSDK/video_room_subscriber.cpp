@@ -12,9 +12,15 @@
 
 namespace vi {
 
-	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf, const std::string& plugin, const std::string& opaqueId, std::shared_ptr<MediaController> mediaController)
-		: PluginClient(ss, pcf)
-		, _mediaController(mediaController)
+	VideoRoomSubscriber::VideoRoomSubscriber(std::shared_ptr<SignalingClientInterface> sc, 
+		rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf,
+		const std::string& plugin,
+		const std::string& opaqueId, 
+		std::shared_ptr<MediaController> mc,
+		std::shared_ptr<IVideoRoomApi> api)
+		: PluginClient(sc, pcf)
+		, _mediaController(mc)
+		, _videoRoomApi(api)
 	{
 		_pluginContext->plugin = plugin;
 		_pluginContext->opaqueId = opaqueId;
@@ -39,11 +45,6 @@ namespace vi {
 	void VideoRoomSubscriber::unregisterEventHandler(std::shared_ptr<IVideoRoomEventHandler> handler)
 	{
 		UniversalObservable<IVideoRoomEventHandler>::removeObserver(handler);
-	}
-
-	void VideoRoomSubscriber::setRoomApi(std::shared_ptr<IVideoRoomApi> videoRoomApi)
-	{
-		_videoRoomApi = videoRoomApi;
 	}
 
 	void VideoRoomSubscriber::setRoomId(int64_t roomId)

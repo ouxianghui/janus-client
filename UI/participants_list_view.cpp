@@ -25,12 +25,12 @@ void ParticipantsListView::addParticipant(std::shared_ptr<vi::Participant> parti
 	if (!participant) {
 		return;
 	}
-    ParticipantItemView* view = new ParticipantItemView(participant, this);
-	view->setDisplayName(participant->displayName());
+    ParticipantItemView* view = new ParticipantItemView(participant, _vrc.lock(), this);
+	view->setDisplayName(participant->context().display.value_or(""));
 
     QListWidgetItem* item = new QListWidgetItem(ui.listWidgetParticipants);
 	item->setSizeHint(QSize(0, 50));
-    QVariant var(participant->getId());
+    QVariant var(participant->id());
     item->setData(Qt::UserRole+1, var);
     ui.listWidgetParticipants->addItem(item);
     ui.listWidgetParticipants->setItemWidget(item, view);
@@ -47,7 +47,7 @@ void ParticipantsListView::removeParticipant(std::shared_ptr<vi::Participant> pa
         QListWidgetItem* item = ui.listWidgetParticipants->item(i);
         if (item) {
             QVariant var = item->data(Qt::UserRole+1);
-            if (var.toULongLong() == participant->getId()) {
+            if (var.toULongLong() == participant->id()) {
                 QWidget *widget = ui.listWidgetParticipants->itemWidget(item);
                 if (nullptr != widget)
                 {

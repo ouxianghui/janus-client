@@ -56,7 +56,6 @@ namespace vi {
 		rtc::scoped_refptr<StatsObserver> statsObserver;
 
 		rtc::scoped_refptr<webrtc::MediaStreamInterface> localStream;
-		rtc::scoped_refptr<webrtc::MediaStreamInterface> remoteStream;
 
 		PluginContext(std::weak_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf_)
 			: signalingClient(sc)

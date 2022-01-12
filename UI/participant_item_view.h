@@ -7,6 +7,7 @@
 
 namespace vi {
     class Participant;
+    class VideoRoomClientInterface;
 }
 
 class ParticipantItemView : public QWidget
@@ -14,7 +15,7 @@ class ParticipantItemView : public QWidget
 	Q_OBJECT
 
 public:
-    ParticipantItemView(std::shared_ptr<vi::Participant> participant, QWidget *parent = Q_NULLPTR);
+    ParticipantItemView(std::shared_ptr<vi::Participant> participant, std::shared_ptr<vi::VideoRoomClientInterface> vrc, QWidget *parent = Q_NULLPTR);
 
 	~ParticipantItemView();
 
@@ -39,4 +40,6 @@ private:
 	Ui::ParticipantItemView ui;
 
     std::weak_ptr<vi::Participant> _participant;
+
+    std::weak_ptr<vi::VideoRoomClientInterface> _vrc;
 };

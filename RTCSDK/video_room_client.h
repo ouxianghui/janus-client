@@ -28,7 +28,7 @@ namespace vi {
 	class VideoRoomClient : public PluginClient, public VideoRoomClientInterface, public UniversalObservable<IVideoRoomEventHandler>
 	{
 	public:
-		VideoRoomClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf);
+		VideoRoomClient(std::shared_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf);
 
 		~VideoRoomClient();
 
@@ -53,6 +53,10 @@ namespace vi {
 		std::shared_ptr<ParticipantsContrllerInterface> participantsController() override;
 
 		std::shared_ptr<MediaControllerInterface> mediaContrller() override;
+
+		int64_t roomId() { return _roomId; }
+
+		std::shared_ptr<IVideoRoomApi> videoRoomApi() { return _videoRoomApi; }
 
 	protected:
 

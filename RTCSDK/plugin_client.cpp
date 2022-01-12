@@ -32,9 +32,9 @@
 #include "absl/types/optional.h"
 
 namespace vi {
-	PluginClient::PluginClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
+	PluginClient::PluginClient(std::shared_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf)
 	{
-		_pluginContext = std::make_shared<PluginContext>(ss, pcf);
+		_pluginContext = std::make_shared<PluginContext>(sc, pcf);
 
 		_rtcStatsTaskScheduler = TaskScheduler::create();
 	}
@@ -1530,7 +1530,9 @@ namespace vi {
 			if (!track) {
 				return;
 			}
-			self->_trackIdsMap[track->id()] = transceiver->mid().value_or("");
+
+			DLOG("remote track: {}, stream-id: {}", track->id(), transceiver->receiver()->stream_ids()[0]);
+			self->_receiverId2Mid[transceiver->receiver()->id()] = transceiver->mid().value_or("");
 			self->onRemoteTrack(track, transceiver->mid().value_or(""), true);
 		});
 	}
@@ -1553,11 +1555,8 @@ namespace vi {
 			if (!context) {
 				return;
 			}
-			if (self->_trackIdsMap.find(track->id()) != self->_trackIdsMap.end()) {
-				self->onRemoteTrack(track, self->_trackIdsMap[track->id()], false);
-				auto it = self->_trackIdsMap.find(track->id());
-				self->_trackIdsMap.erase(it);
-			}
+
+			self->onRemoteTrack(track, self->_receiverId2Mid[receiver->id()], false);
 		});
 	}
 

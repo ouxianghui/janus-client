@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>400</width>
-    <height>38</height>
+    <height>39</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -28,12 +28,24 @@
        <property name="text">
         <string>audio</string>
        </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
       </widget>
      </item>
      <item>
       <widget class="QToolButton" name="toolButtonVideo">
        <property name="text">
         <string>video</string>
+       </property>
+       <property name="checkable">
+        <bool>true</bool>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
        </property>
       </widget>
      </item>

@@ -8,22 +8,24 @@
 
 #include "plugin_client.h"
 #include "i_video_room_event_handler.h"
+#include "video_room_models.h"
 
 namespace vi {
 	class Participant
 	{
 	public:
-		Participant(int64_t id, const std::string& displayName);
+		Participant(int64_t id, const vr::Publisher& context);
 
 		~Participant();
 
-		uint64_t getId() { return _id; }
+		uint64_t id() { return _id; }
 
-		const std::string& displayName() { return _displayName; }
+		vr::Publisher& context() { return _context; }
 
 	private:
 		int64_t _id;
-		std::string _displayName;
+
+		vr::Publisher _context;
 	};
 }
 

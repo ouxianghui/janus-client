@@ -53,7 +53,7 @@ namespace vi {
 
     void ParticipantsContrller::createParticipant(std::shared_ptr<Participant> participant)
     {
-        _participantsMap[participant->getId()] = participant;
+        _participantsMap[participant->id()] = participant;
         UniversalObservable<IParticipantsControlEventHandler>::notifyObservers([wself = weak_from_this(), participant](const auto& observer) {
             observer->onCreateParticipant(participant);
         });

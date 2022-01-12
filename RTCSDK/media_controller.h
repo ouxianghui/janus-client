@@ -11,6 +11,8 @@ namespace webrtc {
 }
 
 namespace vi {
+    class VideoRoomClient;
+    class IVideoRoomApi;
 
     class MediaController
         : public MediaControllerInterface
@@ -18,7 +20,7 @@ namespace vi {
         , public std::enable_shared_from_this<MediaController>
     {
     public:
-        MediaController();
+        MediaController(std::shared_ptr<VideoRoomClient> vrc);
 
         ~MediaController();
 
@@ -30,25 +32,21 @@ namespace vi {
 
 		void unregisterEventHandler(std::shared_ptr<IMediaControlEventHandler> handler) override;
 
-		int32_t remoteVolume(const std::string& pid) override;
+        void muteLocalAudio(bool mute) override;
 
-		int32_t localVolume(const std::string& pid) override;
+        bool isLocalAudioMuted() override;
 
-		void muteAudio(const std::string& pid) override;
+        void muteLocalVideo(bool mute) override;
 
-		void unmuteAudio(const std::string& pid) override;
+        bool isLocalVideoMuted() override;
 
-		bool isAudioMuted(const std::string& pid) override;
+        void muteAudio(int64_t pid, const std::string& mid, bool mute) override;
 
-		void muteVideo(const std::string& pid) override;
+        bool isAudioMuted(int64_t pid) override;
 
-		void unmuteVideo(const std::string& pid) override;
+        void muteVideo(int64_t pid, const std::string& mid, bool mute) override;
 
-		bool isVideoMuted(const std::string& pid) override;
-
-        std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>>& localStream();
-
-        std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>>& remoteStreams();
+        bool isVideoMuted(int64_t pid) override;
 
         void onWebrtcStatus(bool isActive, const std::string& reason);
 
@@ -57,12 +55,13 @@ namespace vi {
         void onRemoteTrack(rtc::scoped_refptr<webrtc::MediaStreamTrackInterface> track, const std::string& mid, bool on);
 
     private:
+        bool isLocalMuted(bool isVideo);
 
-        // key: trackId
-        std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _localStreams;
+        bool muteLocal(bool isVideo, bool mute);
 
-        // key: mid
-        std::map<std::string, rtc::scoped_refptr<webrtc::MediaStreamInterface>> _remoteStreams;
+    private:
+
+        std::weak_ptr<VideoRoomClient> _vrc;
     };
 
 }

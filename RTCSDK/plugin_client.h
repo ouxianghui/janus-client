@@ -22,7 +22,7 @@ namespace vi {
 		, public std::enable_shared_from_this<PluginClient>
 	{
 	public:
-		PluginClient(std::shared_ptr<SignalingClientInterface> ss, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf);
+		PluginClient(std::shared_ptr<SignalingClientInterface> sc, rtc::scoped_refptr<webrtc::PeerConnectionFactoryInterface> pcf);
 
 		~PluginClient();
 
@@ -128,8 +128,8 @@ namespace vi {
 
 		rtc::Thread* _eventHandlerThread = nullptr;
 
-		// key: trackId, value: mid
-		std::unordered_map<std::string, std::string> _trackIdsMap;
+		// key: mid, value: receiver-id
+		std::unordered_map<std::string, std::string> _receiverId2Mid;
 	};
 }
 
