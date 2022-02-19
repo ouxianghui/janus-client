@@ -35,7 +35,7 @@ Get the code:
   
 ## Server
 
-* [janus-gateway](https://github.com/meetecho/janus-gateway.git) Checkout the 'multistream' branch
+* [janus-gateway](https://github.com/meetecho/janus-gateway.git)
 
 
 ## Author
