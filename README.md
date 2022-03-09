@@ -24,7 +24,7 @@
 
 ## Arch
 
-<img src="https://github.com/ouxianghui/janus-client/blob/multistream/arch.jpg" width="740" height="1620" /><br>
+<img src="https://github.com/ouxianghui/janus-client/blob/main/arch.jpg" width="740" height="1620" /><br>
 
 ## Compile
 Get the code:
