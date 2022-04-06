@@ -100,7 +100,7 @@ void GLVideoRenderer::paintGL()
 			viewportY = (float)(height() - viewportH) / 2.0f;
 		}
 
-		glViewport(viewportX, viewportY, viewportW, viewportH);
+		glViewport(viewportX * devicePixelRatio(), viewportY * devicePixelRatio(), viewportW * devicePixelRatio(), viewportH * devicePixelRatio());
 	}
 	
 	glClear(GL_COLOR_BUFFER_BIT);
